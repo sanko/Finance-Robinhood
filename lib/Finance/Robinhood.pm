@@ -14,7 +14,7 @@ use lib '../../lib';
 use Finance::Robinhood::Account;
 use Finance::Robinhood::Instrument;
 #
-has token => (is => 'rw');
+has token => (is => 'ro', writer => '_set_token');
 #
 my $base = 'https://api.robinhood.com/';
 
@@ -66,60 +66,45 @@ my %headers = (
 
 sub login {
     my ($self, $username, $password) = @_;
-    $client = HTTP::Tiny->new() if !defined $client;
 
     # Make API Call
-    $res = $client->post_form($base . $endpoints{login},
-                              {username => $username,
-                               password => $password
-                              },
-                              {headers => \%headers}
+    my $rt = _send_request(undef,
+                           $base . $endpoints{login},
+                           {username => $username,
+                            password => $password
+                           }
     );
 
-    # Make sure the API returned happy.
-    if ($res->{status} != '200') {
-        $self->errors(
-                'auth(): Robinhood API did not return a status code of 200. ('
-                    . $res->{content}
-                    . ')');
-        return !1;
-    }
-
-    # Decode the response.
-    my $json = $res->{content};
-    my $rt   = decode_json($json);
-
     # Make sure we have a token.
-    if (!defined($rt->{token})) {
+    if (!$rt || !defined($rt->{token})) {
         $self->errors('auth(): Robinhood API did not return a valid token.');
         return !1;
     }
 
     # Set the token we just received.
-    return $self->token($rt->{token});
+    return $self->_set_token($rt->{token});
 }
 #
 # Return the account of the user.
 #
 sub get_account {
     my ($self, $url) = @_;
-    return $self->_send_request($url, 'get_account()');
+    return $self->_send_request($url);
 }
 #
 # Return the accounts of the user.
 #
 sub get_accounts {
     my ($self) = @_;
-    my $return = $self->_send_request($base . $endpoints{'accounts'},
-                                      'get_accounts()');
+    my $return = $self->_send_request($base . $endpoints{'accounts'});
     $return // return !1;
     ddx $return;
 
     # TODO: Deal with next and previous results? Multiple accounts?
     return map {
-        ddx $self->_send_request($_->{url},       'get_account()');
-        ddx $self->_send_request($_->{portfolio}, 'get_account()');
-        ddx $self->_send_request($_->{positions}, 'get_account()');
+        ddx $self->_send_request($_->{url});
+        ddx $self->_send_request($_->{portfolio});
+        ddx $self->_send_request($_->{positions});
         Finance::Robinhood::Account->new($_)
     } @{$return->{results}};
 }
@@ -128,7 +113,7 @@ sub get_accounts {
 #
 sub get_portfolio {
     my ($self, $url) = @_;
-    return $self->_send_request($url, 'get_portfolio()');
+    return $self->_send_request($url);
 }
 #
 # Return the positions for an account.
@@ -143,8 +128,7 @@ sub get_current_positions {
                                        . sprintf(
                                              $endpoints{'accounts/positions'},
                                              $account->account_number()
-                                       ),
-                                   'get_postions()'
+                                       )
     );
 
     # Now loop through and get the ticker information.
@@ -155,12 +139,8 @@ sub get_current_positions {
         if ($result->{'quantity'} > 0) {
 
             # TODO: If the call fails, deal with it as ()
-            my $instrument =
-                Finance::Robinhood::Instrument->new(
-                                 $self->_send_request($result->{'instrument'},
-                                                      'get_postions()'
-                                 )
-                );
+            my $instrument = Finance::Robinhood::Instrument->new(
+                               $self->_send_request($result->{'instrument'}));
 
             # Add on to the new array.
             push @rt, $instrument;
@@ -168,6 +148,31 @@ sub get_current_positions {
     }
     return @rt;
 }
+
+=cut
+
+    def get_account_number(self):
+        ''' Returns the brokerage account number of the account logged in.
+        This is currently only used for placing orders, so you can ignore
+        method. '''
+        res = self.session.get(self.endpoints['accounts'])
+        if res.status_code == 200:
+            accountURL = res.json()['results'][0]['url']
+            account_number = accountURL[accountURL.index('accounts')+9:-1]
+            return account_number
+        else:
+            raise Exception("Could not retrieve account number: " + res.text)
+
+    def instrument(self, symbol):
+        ''' Generates an instrument object. Currently this is only used for
+        placing orders, and generating and using the instrument object are handled
+        for you, so you can ignore this method'''
+        res = self.session.get(self.endpoints['instruments'], params={'query':symbol.upper()})
+        if res.status_code == 200:
+            return res.json()['results']
+        else:
+            raise Exception("Could not generate instrument object: " + res.text)
+=cut
 
 sub get_quote {
     my $self = ref $_[0] ? shift : ();    # might be undef but thtat's okay
@@ -194,7 +199,7 @@ sub quote_price {
 # Send request to API.
 #
 sub _send_request {
-    my ($self, $url) = @_;
+    my ($self, $url, $post) = @_;
 
     # Make sure we have a token.
     if (defined $self && !defined($self->token)) {
@@ -209,22 +214,29 @@ sub _send_request {
     #$url = $url =~ m[$base] ? $url : $base .$url;
     # Make API call.
     warn $url;
-    $res = $client->get($url,
-                        {'headers' => {%headers,
-                                       ($self
-                                        ?
-                                            ('Authorization' => 'Token '
-                                             . $self->token())
-                                        : ()
-                                       )
-                         }
-                        }
+
+    #warn $post;
+    $res = $client->request((defined $post ? 'POST' : 'GET'),
+                            $url,
+                            {'headers' => {%headers,
+                                           ($self && defined $self->token()
+                                            ? ('Authorization' => 'Token '
+                                               . $self->token())
+                                            : ()
+                                           )
+                             },
+                             (defined $post
+                              ? (content =>
+                                  $client->www_form_urlencode($post))
+                              : ()
+                             )
+                            }
     );
 
     # Make sure the API returned happy
     #ddx $res;
-    if ($res->{status} != '200') {
-        carp 'Robinhood did not return a status code of 200. ('
+    if ($res->{status} != 200 && $res->{status} != 201) {
+        carp 'Robinhood did not return a status code of 200 or 201. ('
             . $res->{status} . ')';
         return !1;
     }
