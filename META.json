@@ -1,5 +1,5 @@
 {
-   "abstract" : "It's new $module",
+   "abstract" : "Trade stocks and ETFs with free brokerage Robinhood",
    "author" : [
       "Sanko Robinson <sanko@cpan.org>"
    ],
@@ -52,6 +52,17 @@
       }
    },
    "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/sanko/Finance-Robinhood/issues"
+      },
+      "homepage" : "https://github.com/sanko/Finance-Robinhood",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/sanko/Finance-Robinhood.git",
+         "web" : "https://github.com/sanko/Finance-Robinhood"
+      }
+   },
    "version" : "0.01",
    "x_serialization_backend" : "JSON::PP version 2.27300"
 }
