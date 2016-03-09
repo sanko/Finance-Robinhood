@@ -1,0 +1,4 @@
+name = "Finance-Robinhood"
+# badges = ["travis"]
+module_maker="ModuleBuildTiny"
+
