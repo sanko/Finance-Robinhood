@@ -52,32 +52,29 @@ my %endpoints = ('accounts'                => 'accounts/',
 # Send a username and password to Robinhood to get back a token.
 #
 my ($client, $res);
+my %headers = (
+    'Accept' => '*/*',
+
+    #'Accept-Encoding' => 'gzip, deflate',
+    'Accept-Language' =>
+        'en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5',
+    'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
+    'X-Robinhood-API-Version' => '1.0.0',
+    'Connection'              => 'keep-alive',
+    'User-Agent' => 'Robinhood/823 (iPhone; iOS 7.1.2; Scale/2.00)'
+);
 
 sub login {
     my ($self, $username, $password) = @_;
     $client = HTTP::Tiny->new() if !defined $client;
 
     # Make API Call
-    $res = $client->post_form(
-        $base . $endpoints{login},
-        {username => $username,
-         password => $password
-        },
-        {headers => {
-             'Accept' => '*/*',
-
-             #'Accept-Encoding' => 'gzip, deflate',
-             'Accept-Language' =>
-                 'en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5',
-             'Content-Type' =>
-                 'application/x-www-form-urlencoded; charset=utf-8',
-             'X-Robinhood-API-Version' => '1.0.0',
-             'Connection'              => 'keep-alive',
-             'User-Agent' => 'Robinhood/823 (iPhone; iOS 7.1.2; Scale/2.00)'
-         }
-        }
+    $res = $client->post_form($base . $endpoints{login},
+                              {username => $username,
+                               password => $password
+                              },
+                              {headers => \%headers}
     );
-    ddx $res;
 
     # Make sure the API returned happy.
     if ($res->{status} != '200') {
@@ -212,22 +209,16 @@ sub _send_request {
     #$url = $url =~ m[$base] ? $url : $base .$url;
     # Make API call.
     warn $url;
-    $res = $client->get(
-        $url,
-        {'headers' => {
-             'Accept' => '*/*',
-
-             #'Accept-Encoding' => 'gzip, deflate',
-             'Accept-Language' =>
-                 'en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5',
-             'Content-Type' =>
-                 'application/x-www-form-urlencoded; charset=utf-8',
-             'X-Robinhood-API-Version' => '1.0.0',
-             'Connection'              => 'keep-alive',
-             'User-Agent' => 'Robinhood/823 (iPhone; iOS 7.1.2; Scale/2.00)',
-             ($self ? ('Authorization' => 'Token ' . $self->token()) : ())
-         }
-        }
+    $res = $client->get($url,
+                        {'headers' => {%headers,
+                                       ($self
+                                        ?
+                                            ('Authorization' => 'Token '
+                                             . $self->token())
+                                        : ()
+                                       )
+                         }
+                        }
     );
 
     # Make sure the API returned happy
