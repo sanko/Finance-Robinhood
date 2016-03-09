@@ -14,7 +14,7 @@ __END__
 
 =head1 NAME
 
-Finance::Robinhood - It's new $module
+Finance::Robinhood - Perl wrapper for the Robinhood stock trading service
 
 =head1 SYNOPSIS
 
@@ -22,7 +22,8 @@ Finance::Robinhood - It's new $module
 
 =head1 DESCRIPTION
 
-Finance::Robinhood is ...
+Finance::Robinhood is a client for the (currently) private API behind the
+free stock trading app for mobile devices.
 
 =head1 LICENSE
 
