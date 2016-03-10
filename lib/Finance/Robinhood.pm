@@ -309,6 +309,13 @@ use in future calls to C<new( ... )>.
 Returns a list of Financial::Robinhood::Account objects related to the
 currently logged in user.
 
+=head2 C<instrument( ... )>
+
+    my $msft = $rh->instrument('MSFT');
+
+Generates a new Finance::Robinhood::Instrument object related to the security
+identified.
+
 =head2 C<quote( ... )>
 
     my %msft  = $rh->quote('MSFT');
