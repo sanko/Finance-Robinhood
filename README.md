@@ -50,6 +50,54 @@ use in future calls to `new( ... )`.
 Returns a list of Financial::Robinhood::Account objects related to the
 currently logged in user.
 
+## `instrument( ... )`
+
+    my $msft = $rh->instrument('MSFT');
+    my $msft = Finance::Robinhood::instrument('MSFT');
+
+When a single string is passed, only the exact match for the given symbol is
+returned as a Finance::Robinhood::Instrument object.
+
+    my $msft = $rh->instrument({id => '50810c35-d215-4866-9758-0ada4ac79ffa'});
+    my $msft = Finance::Robinhood::instrument({id => '50810c35-d215-4866-9758-0ada4ac79ffa'});
+
+If a hash reference is passed with an `id` key, the single result is returned
+as a Finance::Robinhood::Instrument object.
+
+    my $results = $rh->instrument({query => 'solar'});
+    my $results = Finance::Robinhood::instrument({query => 'solar'});
+
+If a hash reference is passed with a `query` key, results are returned as a
+hash reference with cursor keys (`next` and `previous`). The matching
+securities are Finance::Robinhood::Instrument objects which may be found in
+the `results` key as a list.
+
+    my $results = $rh->instrument({cursor => 'cD04NjQ5'});
+    my $results = Finance::Robinhood::instrument({cursor => 'cD04NjQ5'});
+
+Results to a query may generate more than a single page of results. To gather
+them, use the `next` or `previous` values.
+
+    my $results = $rh->instrument( );
+    my $results = Finance::Robinhood::instrument( );
+
+Returns a sample list of top securities as Finance::Robinhood::Instrument
+objects along with `next` and `previous` cursor values.
+
+# `place_sell_order( ... )`
+
+    $rh->place_sell_order($instrument, $number, $type);
+
+Sells a given `$number` of shares of the given `$instrument`. Currently,
+only `'market'` type sales have been tested. If the sale was sucessful, the
+return value is a hash which contains the following keys among others:
+
+    state                   If the trade was sucessful, this should be "confirmed"
+    created_at              Raw timestamp the trade was request was submitted
+    side                    'buy' or 'sell'
+    quantity                The number of shares sold in this transaction
+    type                    The type of sale (market, stop_limit, etc.)
+
 ## `quote( ... )`
 
     my %msft  = $rh->quote('MSFT');
