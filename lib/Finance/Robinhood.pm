@@ -173,14 +173,55 @@ sub get_current_positions {
 =cut
 
 sub instrument {
+#my $msft      = Finance::Robinhood::instrument('MSFT');
+#my $msft      = $rh->instrument('MSFT');
+#my ($results) = $rh->instrument({query  => 'FREE'});
+#my ($results) = $rh->instrument({cursor => 'cD04NjQ5'});
+#my $msft      = $rh->instrument({id     => '50810c35-d215-4866-9758-0ada4ac79ffa'});
+    my $self = shift if ref $_[0] && ref $_[0] eq __PACKAGE__;
+    my ($type) = @_;
+    my $result = _send_request($self,
+                               $base
+                                   . $endpoints{instruments}
+                                   . (  !defined $type ? ''
+                                      : !ref $type     ? '?query=' . $type
+                                      : ref $type eq 'HASH'
+                                          && defined $type->{cursor}
+                                      ? '?cursor=' . $type->{cursor}
+                                      : ref $type eq 'HASH'
+                                          && defined $type->{query}
+                                      ? '?query=' . $type->{query}
+                                      : ref $type eq 'HASH'
+                                          && defined $type->{id}
+                                      ? $type->{id} . '/'
+                                      : ''
+                                   )
+    );
+    $result // return !1;
 
-    # TODO: Make this functional without login(...)
-    my ($self, $symbol) = @_;
-    my $result = $self->_send_request(
-                       $base . $endpoints{instruments} . '?query=' . $symbol);
-    return $result ?
-        map { Finance::Robinhood::Instrument->new($_) } @{$result->{results}}
-        : ();
+    #ddx $result;
+    my $retval = ();
+    if (defined $type && !ref $type) {
+        ($retval) = map { Finance::Robinhood::Instrument->new($_) }
+            grep { $_->{symbol} eq $type } @{$result->{results}};
+    }
+    elsif (defined $type && ref $type eq 'HASH' && defined $type->{id}) {
+        $retval = Finance::Robinhood::Instrument->new($result);
+    }
+    else {
+        $result->{previous} =~ m[\?cursor=(.+)]
+            if defined $result->{previous};
+        my $prev = $1 // ();
+        $result->{next} =~ m[\?cursor=(.+)] if defined $result->{next};
+        my $next = $1 // ();
+        $retval = {results => [map { Finance::Robinhood::Instrument->new($_) }
+                                   @{$result->{results}}
+                   ],
+                   previous => $prev,
+                   next     => $next
+        };
+    }
+    return $retval;
 }
 
 sub get_quote {
@@ -374,9 +415,36 @@ currently logged in user.
 =head2 C<instrument( ... )>
 
     my $msft = $rh->instrument('MSFT');
+    my $msft = Finance::Robinhood::instrument('MSFT');
 
-Generates a new Finance::Robinhood::Instrument object related to the security
-identified.
+When a single string is passed, only the exact match for the given symbol is
+returned as a Finance::Robinhood::Instrument object.
+
+    my $msft = $rh->instrument({id => '50810c35-d215-4866-9758-0ada4ac79ffa'});
+    my $msft = Finance::Robinhood::instrument({id => '50810c35-d215-4866-9758-0ada4ac79ffa'});
+
+If a hash reference is passed with an C<id> key, the single result is returned
+as a Finance::Robinhood::Instrument object.
+
+    my $results = $rh->instrument({query => 'solar'});
+    my $results = Finance::Robinhood::instrument({query => 'solar'});
+
+If a hash reference is passed with a C<query> key, results are returned as a
+hash reference with cursor keys (C<next> and C<previous>). The matching
+securities are Finance::Robinhood::Instrument objects which may be found in
+the C<results> key as a list.
+
+    my $results = $rh->instrument({cursor => 'cD04NjQ5'});
+    my $results = Finance::Robinhood::instrument({cursor => 'cD04NjQ5'});
+
+Results to a query may generate more than a single page of results. To gather
+them, use the C<next> or C<previous> values.
+
+    my $results = $rh->instrument( );
+    my $results = Finance::Robinhood::instrument( );
+
+Returns a sample list of top securities as Finance::Robinhood::Instrument
+objects along with C<next> and C<previous> cursor values.
 
 =head2 C<quote( ... )>
 
