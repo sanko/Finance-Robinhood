@@ -15,6 +15,20 @@ use Finance::Robinhood::Account;
 use Finance::Robinhood::Instrument;
 #
 has token => (is => 'ro', writer => '_set_token');
+has account => (
+    is  => 'ro',
+    isa => sub {
+        die "$_[0] is not an ::Account!"
+            unless ref $_[0] eq 'Finance::Robinhood::Account';
+    },
+    builder => 1,
+    lazy    => 1
+);
+
+sub _build_account {
+    my $acct = shift->_get_accounts();
+    return $acct ? $acct->[0] : ();
+}
 #
 my $base = 'https://api.robinhood.com/';
 
@@ -85,28 +99,22 @@ sub login {
     return $self->_set_token($rt->{token});
 }
 #
-# Return the account of the user.
-#
-sub get_account {
-    my ($self, $url) = @_;
-    return $self->_send_request($url);
-}
-#
 # Return the accounts of the user.
 #
-sub get_accounts {
+sub _get_accounts {
     my ($self) = @_;
     my $return = $self->_send_request($base . $endpoints{'accounts'});
     $return // return !1;
-    ddx $return;
 
     # TODO: Deal with next and previous results? Multiple accounts?
-    return map {
-        ddx $self->_send_request($_->{url});
-        ddx $self->_send_request($_->{portfolio});
-        ddx $self->_send_request($_->{positions});
-        Finance::Robinhood::Account->new($_)
-    } @{$return->{results}};
+    return [
+        map {
+            #        ddx $self->_send_request($_->{url});
+            #        ddx $self->_send_request($_->{portfolio});
+            #        ddx $self->_send_request($_->{positions});
+            Finance::Robinhood::Account->new($_)
+        } @{$return->{results}}
+    ];
 }
 #
 # Returns the porfillo summery of an account by url.
