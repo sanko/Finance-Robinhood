@@ -165,6 +165,7 @@ sub get_current_positions {
 =cut
 
 sub instrument {
+
     # TODO: Make this functional without login(...)
     my ($self, $symbol) = @_;
     my $result = $self->_send_request(
@@ -195,6 +196,59 @@ sub quote_price {
     return shift->get_quote(shift)->[0]{last_trade_price};
 }
 
+sub _place_order {
+    my ($self, $instrument, $quantity, $side, $order_type, $bid_price,
+        $time_in_force, $stop_price)
+        = @_;
+    $time_in_force //= 'gfd';
+
+    # Make API Call
+    my $rt = $self->_send_request(
+        $base . $endpoints{'orders'},
+        {account    => $base . $endpoints{'account'} . $self->account() . '/',
+         instrument => $instrument->id(),
+         quantity   => $quantity,
+         side       => $side,
+         symbol     => $instrument->symbol(),
+         time_in_force => $time_in_force,
+         trigger       => 'immediate',
+         type          => $order_type,
+         (  $order_type eq 'market' ? (price => $instrument->bid_price())
+          : $order_type eq 'limit'  ? (price => $bid_price)
+          : $order_type eq 'stop_loss' ? (stop_price => $stop_price)
+          : $order_type eq 'stop_limit'
+          ? (price => $bid_price, stop_price => $stop_price)
+          :
+
+            # TODO: stop_limit and stop_loss order types are works in progress
+              ()
+         )
+        }
+    );
+    ddx $rt;
+
+    # TODO: whoa
+}
+
+sub place_buy_order { # TODO: Test and document
+    my ($self, $instrument, $quantity, $order_type, $bid_price) = @_;
+
+#    def place_sell_order(self, symbol, quantity, order_type=None, bid_price=None):
+#
+    return
+        $self->_place_order($instrument, $quantity, 'buy',
+                            $order_type, $bid_price);
+}
+
+sub place_sell_order { # TODO: Test and document
+    my ($self, $instrument, $quantity, $order_type, $bid_price) = @_;
+
+#    def place_sell_order(self, symbol, quantity, order_type=None, bid_price=None):
+#
+    return
+        $self->_place_order($instrument, $quantity, 'sell',
+                            $order_type, $bid_price);
+}
 # ---------------- Private Helper Functions --------------- //
 # Send request to API.
 #
