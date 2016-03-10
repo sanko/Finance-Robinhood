@@ -162,17 +162,17 @@ sub get_current_positions {
             return account_number
         else:
             raise Exception("Could not retrieve account number: " + res.text)
-
-    def instrument(self, symbol):
-        ''' Generates an instrument object. Currently this is only used for
-        placing orders, and generating and using the instrument object are handled
-        for you, so you can ignore this method'''
-        res = self.session.get(self.endpoints['instruments'], params={'query':symbol.upper()})
-        if res.status_code == 200:
-            return res.json()['results']
-        else:
-            raise Exception("Could not generate instrument object: " + res.text)
 =cut
+
+sub instrument {
+    # TODO: Make this functional without login(...)
+    my ($self, $symbol) = @_;
+    my $result = $self->_send_request(
+                       $base . $endpoints{instruments} . '?query=' . $symbol);
+    return $result ?
+        map { Finance::Robinhood::Instrument->new($_) } @{$result->{results}}
+        : ();
+}
 
 sub get_quote {
     my $self = ref $_[0] ? shift : ();    # might be undef but thtat's okay
