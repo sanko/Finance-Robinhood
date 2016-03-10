@@ -251,19 +251,26 @@ sub _place_order {
         = @_;
     $time_in_force //= 'gfd';
 
-    # Make API Call
+#warn $base . $endpoints{'orders'};
+#warn $base . $endpoints{'accounts'} . $self->account()->account_number() . '/';
+# Make API Call
+    ddx $instrument;
     my $rt = $self->_send_request(
         $base . $endpoints{'orders'},
-        {account    => $base . $endpoints{'account'} . $self->account() . '/',
-         instrument => $instrument->id(),
-         quantity   => $quantity,
-         side       => $side,
-         symbol     => $instrument->symbol(),
+        {account => $base
+             . $endpoints{'accounts'}
+             . $self->account()->account_number() . '/',
+         instrument    => $instrument->url(),
+         quantity      => $quantity,
+         side          => $side,
+         symbol        => $instrument->symbol(),
          time_in_force => $time_in_force,
          trigger       => 'immediate',
          type          => $order_type,
-         (  $order_type eq 'market' ? (price => $instrument->bid_price())
-          : $order_type eq 'limit'  ? (price => $bid_price)
+         ($order_type eq 'market' ?
+              (    #price => $instrument->bid_price()
+              )
+          : $order_type eq 'limit'     ? (price      => $bid_price)
           : $order_type eq 'stop_loss' ? (stop_price => $stop_price)
           : $order_type eq 'stop_limit'
           ? (price => $bid_price, stop_price => $stop_price)
@@ -279,7 +286,7 @@ sub _place_order {
     # TODO: whoa
 }
 
-sub place_buy_order { # TODO: Test and document
+sub place_buy_order {    # TODO: Test and document
     my ($self, $instrument, $quantity, $order_type, $bid_price) = @_;
 
 #    def place_sell_order(self, symbol, quantity, order_type=None, bid_price=None):
@@ -289,7 +296,7 @@ sub place_buy_order { # TODO: Test and document
                             $order_type, $bid_price);
 }
 
-sub place_sell_order { # TODO: Test and document
+sub place_sell_order {    # TODO: Test and document
     my ($self, $instrument, $quantity, $order_type, $bid_price) = @_;
 
 #    def place_sell_order(self, symbol, quantity, order_type=None, bid_price=None):
@@ -341,7 +348,7 @@ sub _send_request {
     if ($res->{status} != 200 && $res->{status} != 201) {
         carp 'Robinhood did not return a status code of 200 or 201. ('
             . $res->{status} . ')';
-        return !1;
+        return ();
     }
 
     # Decode the response.
@@ -445,6 +452,20 @@ them, use the C<next> or C<previous> values.
 
 Returns a sample list of top securities as Finance::Robinhood::Instrument
 objects along with C<next> and C<previous> cursor values.
+
+=head1 C<place_sell_order( ... )>
+
+    $rh->place_sell_order($instrument, $number, $type);
+
+Sells a given C<$number> of shares of the given C<$instrument>. Currently,
+only C<'market'> type sales have been tested. If the sale was sucessful, the
+return value is a hash which contains the following keys among others:
+
+    state                   If the trade was sucessful, this should be "confirmed"
+    created_at              Raw timestamp the trade was request was submitted
+    side                    'buy' or 'sell'
+    quantity                The number of shares sold in this transaction
+    type                    The type of sale (market, stop_limit, etc.)
 
 =head2 C<quote( ... )>
 
