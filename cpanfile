@@ -8,7 +8,7 @@ requires 'JSON::Tiny';
 requires 'strictures';
 requires 'namespace::clean';
 
-requires 'DateTime::Tiny';
+requires 'DateTime';
 
 on 'test' => sub {
     requires 'Test::More', '0.98';

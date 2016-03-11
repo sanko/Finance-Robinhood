@@ -5,16 +5,34 @@ our $VERSION = "0.01";
 use Moo;
 use strictures 2;
 use namespace::clean;
-use DateTime::Tiny;
+use DateTime;
 #
 has $_ => (is => 'ro', required => 1) for (qw[is_open]);
 has $_ => (
     is       => 'ro',
     required => 1,
     coerce   => sub {
-        $_[0] =~ s[[^\-:\dT]][]g;
-        $_[0] .= 'T00:00:00' if $_[0] !~ m[T\d\d:\d\d:\d\d];
-        DateTime::Tiny->from_string($_[0]);
+        $_[0]
+            =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
+
+        # "2016-03-11T17:59:48.026546Z",
+        #warn 'Y:' . $1;
+        #warn 'M:' . $2;
+        #warn 'D:' . $3;
+        #warn 'h:' . $4;
+        #warn 'm:' . $5;
+        #warn 's:' . $6;
+        #warn 'n:' . $7;
+        #warn 'z:' . $8;
+        DateTime->new(year       => $1,
+                      month      => $2,
+                      day        => $3,
+                      hour       => $4,
+                      minute     => $5,
+                      second     => $6,
+                      nanosecond => $7,
+                      time_zone  => $8
+        );
     }
 ) for (qw[closes_at date opens_at]);
 has $_ => (is => 'bare', required => 1, reader => "_get_$_")
