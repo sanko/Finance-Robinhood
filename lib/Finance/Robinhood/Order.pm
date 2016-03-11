@@ -43,9 +43,6 @@ has $_ => (is => 'bare', required => 1, accessor => "_get_$_")
 sub account {
 }
 
-sub cancel {
-}
-
 sub executions {
 }
 sub instrument { }
@@ -64,7 +61,8 @@ Finance::Robinhood::Order - Securities trade order
 
     my $rh = Finance::Robinhood->new( token => ... );
     my $bill = $rh->instrument('MSFT');
-    my $order = $MC->place_buy_order({type => 'market', quantity => 3, instrument => $bill});
+    my $order = $MC->place_buy_order({type => 'market', quantity => 3000, instrument => $bill});
+    $rh->cancel_order( $order ); # Oh, wait!
 
 =head1 DESCRIPTION
 

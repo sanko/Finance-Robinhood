@@ -250,7 +250,7 @@ sub _place_order {
     my ($self, $instrument, $quantity, $side, $order_type, $bid_price,
         $time_in_force, $stop_price)
         = @_;
-    $time_in_force //= 'gfd';
+    $time_in_force //= 'gfd'; # Good For Day
 
 #warn $base . $endpoints{'orders'};
 #warn $base . $endpoints{'accounts'} . $self->account()->account_number() . '/';
@@ -315,6 +315,12 @@ sub place_sell_order {    # TODO: Test and document
         $self->_place_order($instrument, $quantity, 'sell',
                             $order_type, $bid_price);
 }
+
+sub cancel_order {
+    my ($self, $order) = @_;
+    return $self->_send_request($order->_get_cancel(), {});
+}
+
 # ---------------- Private Helper Functions --------------- //
 # Send request to API.
 #
@@ -476,6 +482,13 @@ return value is a hash which contains the following keys among others:
     side                    'buy' or 'sell'
     quantity                The number of shares sold in this transaction
     type                    The type of sale (market, stop_limit, etc.)
+
+=head2 C<cancel_order( ... )>
+
+    my $order = $rh->place_sell_order($instrument, $number, $type);
+    $rh->cancel_order( $order ); # Whoops! Nevermind!
+
+Cancels a buy or sell order if called before the order is executed.
 
 =head2 C<quote( ... )>
 

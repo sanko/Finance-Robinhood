@@ -98,6 +98,13 @@ return value is a hash which contains the following keys among others:
     quantity                The number of shares sold in this transaction
     type                    The type of sale (market, stop_limit, etc.)
 
+## `cancel_order( ... )`
+
+    my $order = $rh->place_sell_order($instrument, $number, $type);
+    $rh->cancel_order( $order ); # Whoops! Nevermind!
+
+Cancels a buy or sell order if called before the order is executed.
+
 ## `quote( ... )`
 
     my %msft  = $rh->quote('MSFT');
