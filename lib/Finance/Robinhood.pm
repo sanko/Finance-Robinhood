@@ -316,6 +316,31 @@ sub place_sell_order {    # TODO: Test and document
                             $order_type, $bid_price);
 }
 
+sub list_orders {
+    my ($self, $type) = @_;
+    my $result = $self->_send_request(      $base
+                                          . $endpoints{orders}
+                                          . (ref $type
+                                                 && ref $type eq 'HASH'
+                                                 && defined $type->{cursor} ?
+                                                 '?cursor=' . $type->{cursor}
+                                             : ''
+                                          )
+    );
+    $result // return !1;
+    return () if !$result;
+    $result->{previous} =~ m[\?cursor=(.+)$] if defined $result->{previous};
+    my $prev = $1 // ();
+    $result->{next} =~ m[\?cursor=(.+)$] if defined $result->{next};
+    my $next = $1 // ();
+    return {
+          results => [
+              map { Finance::Robinhood::Order->new($_) } @{$result->{results}}
+          ],
+          previous => $prev,
+          next     => $next
+    };
+}
 sub cancel_order {
     my ($self, $order) = @_;
     return $self->_send_request($order->_get_cancel(), {});
@@ -469,19 +494,21 @@ them, use the C<next> or C<previous> values.
 Returns a sample list of top securities as Finance::Robinhood::Instrument
 objects along with C<next> and C<previous> cursor values.
 
-=head1 C<place_sell_order( ... )>
+=head2 C<place_buy_order( ... )>
+
+    $rh->place_buy_order($instrument, $number, $type);
+
+Puts in an order to buy a given C<$number> of shares of the given
+C<$instrument>. Currently, only C<'market'> type sales have been tested. A
+Finance::Robinhood::Order object is returned if the order was sucessful.
+
+=head2 C<place_sell_order( ... )>
 
     $rh->place_sell_order($instrument, $number, $type);
 
-Sells a given C<$number> of shares of the given C<$instrument>. Currently,
-only C<'market'> type sales have been tested. If the sale was sucessful, the
-return value is a hash which contains the following keys among others:
-
-    state                   If the trade was sucessful, this should be "confirmed"
-    created_at              Raw timestamp the trade was request was submitted
-    side                    'buy' or 'sell'
-    quantity                The number of shares sold in this transaction
-    type                    The type of sale (market, stop_limit, etc.)
+Puts in an order to sell a given C<$number> of shares of the given
+C<$instrument>. Currently, only C<'market'> type sales have been tested. A
+Finance::Robinhood::Order object is returned if the order was sucessful.
 
 =head2 C<cancel_order( ... )>
 
@@ -489,6 +516,20 @@ return value is a hash which contains the following keys among others:
     $rh->cancel_order( $order ); # Whoops! Nevermind!
 
 Cancels a buy or sell order if called before the order is executed.
+
+=head2 C<list_orders( ... )>
+
+    my $orders = $rh->list_orders( );
+
+Requests a list of all orders ordered from newest to oldest. Executed and even
+cancelled orders are returned in a C<results> key as Finance::Robinhood::Order
+objects. Cursor keys C<next> and C<previous> may also be present.
+
+    my $more_orders = $rh->list_orders({ cursor => $orders->{next} });
+
+You'll likely generate more than a hand full of buy and sell orders which
+would generate more than a single page of results. To gather them, use the
+C<next> or C<previous> values.
 
 =head2 C<quote( ... )>
 
