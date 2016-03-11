@@ -32,7 +32,7 @@ has $_ => (
                       hour       => $4,
                       minute     => $5,
                       second     => $6,
-                      nanosecond => $7,
+                      (defined $7 ? (nanosecond => $7): ()),
                       time_zone  => $8
         );
     }
