@@ -5,7 +5,7 @@ requires 'Carp';
 requires 'Data::Dump';
 requires 'Moo';
 requires 'JSON::Tiny';
-requires 'strictures';
+requires 'strictures', '2';
 requires 'namespace::clean';
 
 requires 'DateTime';
