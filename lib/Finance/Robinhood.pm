@@ -13,6 +13,7 @@ use namespace::clean;
 use lib '../../lib';
 use Finance::Robinhood::Account;
 use Finance::Robinhood::Instrument;
+use Finance::Robinhood::Order;
 #
 has token => (is => 'ro', writer => '_set_token');
 has account => (
@@ -282,12 +283,21 @@ sub _place_order {
         }
     );
     ddx $rt;
-
-    # TODO: whoa
+    return $rt ? Finance::Robinhood::Order->new($rt) : ();
 }
 
 sub place_buy_order {    # TODO: Test and document
     my ($self, $instrument, $quantity, $order_type, $bid_price) = @_;
+
+    # TODO: Make this accept a hash with keys:
+    # { bid_price  => $int,
+    #   quantity   => $int,
+    #   instrument => Finance::Robinhood::Instrument,
+    #   # Optional w/ defaults
+    #   trigger    => 'gfd' (Good For Day, other options are 'gtc' Good Till Cancelled, 'oco' Order Cancels Other)
+    #   time       => 'immediate' (execute trade now or cancel, other option is 'day' where the trade is canceled if not executed by day's end)
+    #   type       => 'market'
+    # }
 
 #    def place_sell_order(self, symbol, quantity, order_type=None, bid_price=None):
 #
