@@ -225,7 +225,7 @@ sub instrument {
     return $retval;
 }
 
-sub get_quote {
+sub quote {
     my $self = ref $_[0] ? shift : ();    # might be undef but thtat's okay
     if (scalar @_ > 1) {
         my $quote =
@@ -233,13 +233,13 @@ sub get_quote {
                           $base . $endpoints{quotes} . '?symbols=' . join ',',
                           @_);
         return $quote
-            ?
-            {map { delete $_->{symbol} => $_ } @{$quote->{results}}}
+            ? (map { Finance::Robinhood::Quote->new($_) } @{$quote->{results}})
             : ();
     }
-    my $quote
-        = _send_request($self, $base . $endpoints{'quotes'} . shift . '/');
-    return $quote ? {delete $quote->{symbol} => $quote} : ();
+    my $quote = _send_request($self, $endpoints{'quotes'} . shift . '/');
+    return $quote ?
+        Finance::Robinhood::Quote->new($quote)
+        : ();
 }
 
 sub quote_price {
@@ -534,25 +534,14 @@ C<next> or C<previous> values.
 =head2 C<quote( ... )>
 
     my %msft  = $rh->quote('MSFT');
-    my %quotes = $rh->quote('APPL', 'GOOG', 'MA');
+    my $swa  = Finance::Robinhood::quote('LUV');
 
-    my $swa  = Financial::Robinhood::quote('LUV');
-    my %quotes = Financial::Robinhood::quote('LUV');
+    my ($ios, $plus, $work) = $rh->quote('APPL', 'GOOG', 'MA');
+    my ($bird, $plane, $superman) = Finance::Robinhood::quote('LUV', 'JBLU', 'DAL');
 
-Requests current information about a security which is returned as a hash.
-Data is organized by symbol which in turn contains the following keys:
-
-    adjusted_previous_close
-    ask_price
-    ask_size
-    bid_price
-    bid_size
-    last_extended_hours_trade_price
-    last_trade_price
-    previous_close
-    previous_close_date
-    trading_halted
-    updated_at
+Requests current information about a security which is returned as a
+Finance::Robinhood::Quote object. If C<quote( ... )> is given a list of
+symbols, the objects are returned as a list.
 
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.
