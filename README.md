@@ -47,7 +47,7 @@ use in future calls to `new( ... )`.
 
 ## `get_accounts( ... )`
 
-Returns a list of Financial::Robinhood::Account objects related to the
+Returns a list of Finance::Robinhood::Account objects related to the
 currently logged in user.
 
 ## `instrument( ... )`
@@ -124,25 +124,14 @@ would generate more than a single page of results. To gather them, use the
 ## `quote( ... )`
 
     my %msft  = $rh->quote('MSFT');
-    my %quotes = $rh->quote('APPL', 'GOOG', 'MA');
+    my $swa  = Finance::Robinhood::quote('LUV');
 
-    my $swa  = Financial::Robinhood::quote('LUV');
-    my %quotes = Financial::Robinhood::quote('LUV');
+    my ($ios, $plus, $work) = $rh->quote('APPL', 'GOOG', 'MA');
+    my ($bird, $plane, $superman) = Finance::Robinhood::quote('LUV', 'JBLU', 'DAL');
 
-Requests current information about a security which is returned as a hash.
-Data is organized by symbol which in turn contains the following keys:
-
-    adjusted_previous_close
-    ask_price
-    ask_size
-    bid_price
-    bid_size
-    last_extended_hours_trade_price
-    last_trade_price
-    previous_close
-    previous_close_date
-    trading_halted
-    updated_at
+Requests current information about a security which is returned as a
+Finance::Robinhood::Quote object. If `quote( ... )` is given a list of
+symbols, the objects are returned as a list.
 
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.

@@ -6,6 +6,7 @@ use Carp;
 our $VERSION = "0.01";
 use Data::Dump qw[ddx];
 use Moo;
+use HTTP::Tiny;
 use JSON::Tiny qw[decode_json];
 use strictures 2;
 use namespace::clean;
@@ -14,6 +15,7 @@ use lib '../../lib';
 use Finance::Robinhood::Account;
 use Finance::Robinhood::Instrument;
 use Finance::Robinhood::Order;
+use Finance::Robinhood::Quote;
 #
 has token => (is => 'ro', writer => '_set_token');
 has account => (
@@ -63,6 +65,7 @@ my %endpoints = ('accounts'                => 'accounts/',
                  'user/investment_profile' => 'user/investment_profile/',
                  'watchlists'              => 'watchlists/'
 );
+$endpoints{$_} = $base . $endpoints{$_} for keys %endpoints;
 #
 # Send a username and password to Robinhood to get back a token.
 #
@@ -84,7 +87,7 @@ sub login {
 
     # Make API Call
     my $rt = _send_request(undef,
-                           $base . $endpoints{login},
+                           $endpoints{login},
                            {username => $username,
                             password => $password
                            }
@@ -104,7 +107,7 @@ sub login {
 #
 sub _get_accounts {
     my ($self) = @_;
-    my $return = $self->_send_request($base . $endpoints{'accounts'});
+    my $return = $self->_send_request($endpoints{'accounts'});
     $return // return !1;
 
     # TODO: Deal with next and previous results? Multiple accounts?
@@ -133,12 +136,10 @@ sub get_current_positions {
     my @rt;
 
     # Get the positions.
-    my $pos = $self->_send_request($base
-                                       . sprintf(
-                                             $endpoints{'accounts/positions'},
-                                             $account->account_number()
-                                       )
-    );
+    my $pos
+        = $self->_send_request(
+         sprintf($endpoints{'accounts/positions'}, $account->account_number())
+        );
 
     # Now loop through and get the ticker information.
     for my $result (@{$pos->{results}}) {
@@ -174,6 +175,7 @@ sub get_current_positions {
 =cut
 
 sub instrument {
+
 #my $msft      = Finance::Robinhood::instrument('MSFT');
 #my $msft      = $rh->instrument('MSFT');
 #my ($results) = $rh->instrument({query  => 'FREE'});
@@ -182,8 +184,7 @@ sub instrument {
     my $self = shift if ref $_[0] && ref $_[0] eq __PACKAGE__;
     my ($type) = @_;
     my $result = _send_request($self,
-                               $base
-                                   . $endpoints{instruments}
+                               $endpoints{instruments}
                                    . (  !defined $type ? ''
                                       : !ref $type     ? '?query=' . $type
                                       : ref $type eq 'HASH'
@@ -230,8 +231,7 @@ sub quote {
     if (scalar @_ > 1) {
         my $quote =
             _send_request($self,
-                          $base . $endpoints{quotes} . '?symbols=' . join ',',
-                          @_);
+                          $endpoints{quotes} . '?symbols=' . join ',', @_);
         return $quote
             ? (map { Finance::Robinhood::Quote->new($_) } @{$quote->{results}})
             : ();
@@ -243,23 +243,22 @@ sub quote {
 }
 
 sub quote_price {
-    return shift->get_quote(shift)->[0]{last_trade_price};
+    return shift->quote(shift)->[0]{last_trade_price};
 }
 
 sub _place_order {
     my ($self, $instrument, $quantity, $side, $order_type, $bid_price,
         $time_in_force, $stop_price)
         = @_;
-    $time_in_force //= 'gfd'; # Good For Day
+    $time_in_force //= 'gfd';    # Good For Day
 
-#warn $base . $endpoints{'orders'};
-#warn $base . $endpoints{'accounts'} . $self->account()->account_number() . '/';
-# Make API Call
+    #warn $endpoints{'orders'};
+    #warn $endpoints{'accounts'} . $self->account()->account_number() . '/';
+    # Make API Call
     ddx $instrument;
     my $rt = $self->_send_request(
-        $base . $endpoints{'orders'},
-        {account => $base
-             . $endpoints{'accounts'}
+        $endpoints{'orders'},
+        {account => $endpoints{'accounts'}
              . $self->account()->account_number() . '/',
          instrument    => $instrument->url(),
          quantity      => $quantity,
@@ -318,8 +317,7 @@ sub place_sell_order {    # TODO: Test and document
 
 sub list_orders {
     my ($self, $type) = @_;
-    my $result = $self->_send_request(      $base
-                                          . $endpoints{orders}
+    my $result = $self->_send_request($endpoints{orders}
                                           . (ref $type
                                                  && ref $type eq 'HASH'
                                                  && defined $type->{cursor} ?
@@ -350,6 +348,8 @@ sub cancel_order {
 # Send request to API.
 #
 sub _send_request {
+
+    # TODO: Expose errors (400:{detail=>'Not enough shares to sell'}, etc.)
     my ($self, $url, $post) = @_;
 
     # Make sure we have a token.
@@ -457,7 +457,7 @@ use in future calls to C<new( ... )>.
 
 =head2 C<get_accounts( ... )>
 
-Returns a list of Financial::Robinhood::Account objects related to the
+Returns a list of Finance::Robinhood::Account objects related to the
 currently logged in user.
 
 =head2 C<instrument( ... )>
