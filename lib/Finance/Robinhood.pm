@@ -362,9 +362,8 @@ sub _send_request {
     # Setup request client.
     $client = HTTP::Tiny->new() if !defined $client;
 
-    #$url = $url =~ m[$base] ? $url : $base .$url;
     # Make API call.
-    warn $url;
+    #warn $url;
 
     #warn $post;
     $res = $client->request((defined $post ? 'POST' : 'GET'),
