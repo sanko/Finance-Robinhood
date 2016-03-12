@@ -50,7 +50,7 @@
             "Moo" : "0",
             "namespace::clean" : "0",
             "perl" : "5.008001",
-            "strictures" : "0"
+            "strictures" : "2"
          }
       },
       "test" : {
