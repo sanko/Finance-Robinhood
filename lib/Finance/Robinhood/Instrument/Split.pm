@@ -40,7 +40,7 @@ has $_ => (is => 'bare', required => 1, reader => "_get_$_")
 
 sub instrument {
     my $result
-        = Finance::Robinhood::_send_request(undef, shift->_get_instrument());
+        = Finance::Robinhood::_send_request(undef, 'GET', shift->_get_instrument());
     return $result ?
         map { Finance::Robinhood::Instrument->new($_) } @{$result->{results}}
         : ();

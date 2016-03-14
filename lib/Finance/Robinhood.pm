@@ -86,7 +86,7 @@ sub login {
     my ($self, $username, $password) = @_;
 
     # Make API Call
-    my $rt = _send_request(undef,
+    my $rt = _send_request(undef, 'GET',
                            $endpoints{login},
                            {username => $username,
                             password => $password
@@ -107,7 +107,7 @@ sub login {
 #
 sub _get_accounts {
     my ($self) = @_;
-    my $return = $self->_send_request($endpoints{'accounts'});
+    my $return = $self->_send_request('GET', $endpoints{'accounts'});
     $return // return !1;
 
     # TODO: Deal with next and previous results? Multiple accounts?
@@ -125,7 +125,7 @@ sub _get_accounts {
 #
 sub get_portfolio {
     my ($self, $url) = @_;
-    return $self->_send_request($url);
+    return $self->_send_request('GET', $url);
 }
 #
 # Return the positions for an account.
@@ -136,9 +136,11 @@ sub get_current_positions {
     my @rt;
 
     # Get the positions.
-    my $pos
-        = $self->_send_request(
-         sprintf($endpoints{'accounts/positions'}, $account->account_number())
+    my $pos =
+        $self->_send_request('GET',
+                             sprintf($endpoints{'accounts/positions'},
+                                     $account->account_number()
+                             )
         );
 
     # Now loop through and get the ticker information.
@@ -149,7 +151,7 @@ sub get_current_positions {
         if ($result->{'quantity'} > 0) {
 
             # TODO: If the call fails, deal with it as ()
-            my $instrument = Finance::Robinhood::Instrument->new(
+            my $instrument = Finance::Robinhood::Instrument->new('GET',
                                $self->_send_request($result->{'instrument'}));
 
             # Add on to the new array.
@@ -183,7 +185,7 @@ sub instrument {
 #my $msft      = $rh->instrument({id     => '50810c35-d215-4866-9758-0ada4ac79ffa'});
     my $self = shift if ref $_[0] && ref $_[0] eq __PACKAGE__;
     my ($type) = @_;
-    my $result = _send_request($self,
+    my $result = _send_request($self, 'GET',
                                $endpoints{instruments}
                                    . (  !defined $type ? ''
                                       : !ref $type     ? '?query=' . $type
@@ -230,13 +232,16 @@ sub quote {
     my $self = ref $_[0] ? shift : ();    # might be undef but thtat's okay
     if (scalar @_ > 1) {
         my $quote =
-            _send_request($self,
+            _send_request($self, 'GET',
                           $endpoints{quotes} . '?symbols=' . join ',', @_);
         return $quote
-            ? (map { Finance::Robinhood::Quote->new($_) } @{$quote->{results}})
+            ?
+            (map { Finance::Robinhood::Quote->new($_) }
+             @{$quote->{results}})
             : ();
     }
-    my $quote = _send_request($self, $endpoints{'quotes'} . shift . '/');
+    my $quote
+        = _send_request($self, 'GET', $endpoints{'quotes'} . shift . '/');
     return $quote ?
         Finance::Robinhood::Quote->new($quote)
         : ();
@@ -317,10 +322,12 @@ sub place_sell_order {    # TODO: Test and document
 
 sub list_orders {
     my ($self, $type) = @_;
-    my $result = $self->_send_request($endpoints{orders}
+    my $result = $self->_send_request('GET',
+                                      $endpoints{orders}
                                           . (ref $type
                                                  && ref $type eq 'HASH'
-                                                 && defined $type->{cursor} ?
+                                                 && defined $type->{cursor}
+                                             ?
                                                  '?cursor=' . $type->{cursor}
                                              : ''
                                           )
@@ -341,7 +348,7 @@ sub list_orders {
 }
 sub cancel_order {
     my ($self, $order) = @_;
-    return $self->_send_request($order->_get_cancel(), {});
+    return $self->_send_request('GET', $order->_get_cancel(), {});
 }
 
 # ---------------- Private Helper Functions --------------- //
@@ -350,7 +357,7 @@ sub cancel_order {
 sub _send_request {
 
     # TODO: Expose errors (400:{detail=>'Not enough shares to sell'}, etc.)
-    my ($self, $url, $post) = @_;
+    my ($self, $verb, $url, $data) = @_;
 
     # Make sure we have a token.
     if (defined $self && !defined($self->token)) {
@@ -366,18 +373,17 @@ sub _send_request {
     #warn $url;
 
     #warn $post;
-    $res = $client->request((defined $post ? 'POST' : 'GET'),
-                            $url,
-                            {'headers' => {%headers,
-                                           ($self && defined $self->token()
-                                            ? ('Authorization' => 'Token '
-                                               . $self->token())
-                                            : ()
-                                           )
+    $res = $client->request($verb, $url,
+                            {headers => {%headers,
+                                         ($self && defined $self->token()
+                                          ? (Authorization => 'Token '
+                                             . $self->token())
+                                          : ()
+                                         )
                              },
-                             (defined $post
+                             (defined $data
                               ? (content =>
-                                  $client->www_form_urlencode($post))
+                                  $client->www_form_urlencode($data))
                               : ()
                              )
                             }
@@ -396,10 +402,10 @@ sub _send_request {
 
     #ddx $res;
     #warn $res->{content};
-    my $rt = decode_json($json);
+    my $rt = $json ? decode_json($json) : ();
 
     # Return happy.
-    return $rt;
+    return wantarray ? ($rt, $res) : $rt;
 }
 1;
 

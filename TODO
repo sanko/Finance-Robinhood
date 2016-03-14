@@ -1,2 +1,127 @@
 - Test limit, etc. buy and sell order types
 - Gather dividends
+
+
+
+
+- API
+	- Add instrument to watchlist	POST /watchlists/$instrumentId/				
+	- Cancel ACH Transfer			POST /ach/transfers/$id/cancel/		
+	- Cancel buy/sell Order			POST /orders/$orderId/cancel/		
+	- Add ACH Bank account			POST /ach/relationships/			{account ($account_id)
+																		 bank_routing_number
+																		 bank_account_number	
+																		 bank_account_type ('checking' or 'savings')	
+																		 bank_account_holder_name
+																		 bank_account_nickname	
+																		}
+	- Account Application			PUT  /applications/individual/		???
+	- Create Inst Acct Verification	POST /ach/iav/create/				{access_token
+																		 iav_account_id
+																		 account ($account_id)
+																		 bank_account_type ('checking' or 'savings')	
+																		 bank_account_holder_name
+																		}
+	- Create User					PUT  /user/							???
+	- Create Watchlist				POST /watchlists/					{name}
+	- Delete Auto Deposit			DELETE /ach/deposit_schedules/$autoDepositId/
+	- Delete device					DELETE /notifications/devices/$deviceId/
+	- Delete Instrument				DELETE /watchlists/$watchlistName/$instrumentId/
+	- Dismiss Card					POST /midlands/notifications/stack/$cardId/dismiss/
+	- Create Sweep Account			PUT  /user/additional_info/ 		{sweep_consent}
+	- Establish Referral			POST /midlands/referral/instant/	???
+	- Get Account					GET /accounts/$id/
+	- Get Accounts					GET /accounts/
+	- Get ACH Relationship			GET /ach/relationships/$achRelationshipId/
+	- Get ACH Relationships			GET /ach/relationships/				{cursor => optional}
+	- Get ACH Transfer				GET /ach/transfers/$id/
+	- Get ACH Transfers				GET /ach/transfers/					{cursor => optional}
+	- Get Application By Type		GET /applications/$type/
+	- Get Applications				GET /applications/
+	- Get Auto Deposit				GET /ach/deposit_schedules/$automaticDepositId/
+	- Get Auto Deposits				GET /ach/deposit_schedules/
+	- Get CIP Questions				GET /user/cip_questions/
+	- Get Config Vitals				GET /midlands/conficurations/vitals/android/
+	- Get Day Trade Check			GET /accounts/$id/day_trade_checks/?instrument=$id
+	- Get Devices					GET /notificatins/devices/
+	- Get Dividend					GET /dividends/$dividendId/
+	- Get Dividends					GET /dividends/						{cursor}
+	- Get DOcument					GET /documents/$id/
+	- Get Document Download URL		GET /documents/$id/download/
+	- Get Documents					GET /documents/
+	- Get Fundamental				GET /fundamentals/$symbol/
+	- Get Historical Portfolios		GET /portfolios/historicals/$accountNumber/?interval=$i&span=$s
+	- Get Historical Quotes			GET /quotes/historicals/$symbol/?interval=$i&span=$s
+	- Get Instrument				GET /instruments/$instrumentId/
+	- Get Margin Settings			GET /settings/margin/$accountNumber/
+	- Get Margin Upgrades			GET /margin/upgrades/
+	- Get Market					GET /markets/$mic/
+	- Get Market Hours				GET /markets/$mic/hours/$date/
+	- Get Markets					GET /markets/
+	- Get Mismatches				GET /user/identity_mismatch/
+	- Get News						GET /midlands/news/$instrumentSymbol/
+	- Get Notification Settings		GET /settings/notifications/
+	- Get Order						GET /orders/$orderId/
+	- Get Orders					GET /orders/?updated_at=[gte]&cursor=[$cursor]
+	- Get Orders By Instrument		GET /orders/updated_at=[gte]&cursor=[$cursor]&instrument=$instrument
+	- Get Portfolio					GET /portfolios/$accountNumber/
+	- Get Position					GET /positions/$accountNumber/$instrumentId/
+	- Get Positions					GET /positions/?nonzero=true&account=$accountID&cursor=[$cursor]
+	- Get Queued ACH Deposit		GET /ach/iav/queued_deposit/
+	- Get Quote						GET /quotes/$symbol/
+	- Get Quotes					GET /quotes/?[symbols=$csv_symbols][&cursor=$cursor]
+	- Get Recent Day Trades			GET /accounts/$id/recent_day_trades/?cursor=$cursor
+	- Get Referral Campaign Info	GET /midlands/referral/instand/information/
+	- Get Referral Code				GET /midlands/referral/code/
+	- Get Referrals					GET /midlands/referral/instand/referrals/?curosr=$cursor
+	- Get Instant Eligibility		GET /midlands/permissions/instant/
+	- Get Top Mover					GET /midlands/movers/sp500/?direction=$direction
+	- Get User						GET /user/
+	- Get User Additional Info		GET /user/additional_info/
+	- Get User Basic Info			GET /user/basic_info/
+	- Get User Employment			GET /user/employment/
+	- Get User Investment Profile	GET /user/investment_profile/
+	- Get Watchlist					GET /watchlists/$watchlistName/?cursor=$cursor
+	- Get Watchlists				GET /watchlists/
+	- Log out						POST /api-token-logout/
+	- Log in						POST /api-token-auth/?username=$username&password=$password
+	- Mark Doc Request Uploaded		PATCH /upload/document_request/$rhid/?state=$state
+	- Populate Watchlist			POST /watchlists/$watchlist/bulk_add/?symbols=$csv_symbols
+	- Post ACH Transfer				POST /ach/transfers/  											{???}
+	- Add Device					POST /notifications/devices/			???
+	- IAV AuthMfaAnswer				POST /ach/iav/auth/mfa/					{bank_institution, access_token, mfa}
+	- IAV Auth Request				POST /ach/iav/auth/						{bank_institution, username, password, pin}
+	- Place Order					POST /orders/							{account,
+																			 instrument,
+																			 type=market|limit|stop_limit|stop_loss, 
+																			 side=buy|sell, 
+																			 timeInForce=gfd|gtc|fok|ioc|opg, 
+																			 trigger=immediate|on_close|stop, 
+																			 price, 
+																			 stopPrice, 
+																			 quantity, 
+																			 quote}
+	- Post Queued ACH Deposit		POST /ach/iav/queued_deposit/
+	- Put Notification Settings		PUT /settings/notifications/			???
+	- Query Instruments				GET /instruments/?query=$query
+	- Reorder Positions				GET /positions/?ordering=$ordering
+	- Reorder Watchlist				POST /watchlists/$watchlistName/reorder/	{ids}
+	- Password Reset Request		POST /password_reset/request/				{email}
+	- Reset Password				POST /password/reset/						{token, username, password}
+	- Submit Additional User Info	PUT /user/additional_info/					{???}
+	- Submit Basic User Info		PUT /user/basic_info/						???
+	- Submit User Employment Info	PUT /user/employment/						???
+	- Submit Investment Profile		PUT /user/investment_profile/				???
+	- Delete Bank Account			POST /ach/relationships/$bankId/unlink/
+	- Update Day Trade Setting		PATCH /settings/margin/$acctNumber/			{$margin_settings}
+	- Update User					PATCH /user/								???
+	- Update Basic Info				PATCH /user/basic_info/						???
+	- Update To Margin				POST /margin/upgrades/						???
+	- Verify Microdeposits			POST /ach/relationships/$id/micro_deposits/veryify/	{first_amount_cents, second_amount_cents}
+	- 
+	
+	
+	
+	
+	
+	

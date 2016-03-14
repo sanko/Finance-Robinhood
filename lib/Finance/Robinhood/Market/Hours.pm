@@ -40,13 +40,13 @@ has $_ => (is => 'bare', required => 1, reader => "_get_$_")
 
 sub next_open_hours {
     my $data = Finance::Robinhood::_send_request(undef,
-                                               shift->_get_next_open_hours());
+                                        'GET', shift->_get_next_open_hours());
     return $data ? Finance::Robinhood::Market::Hours->new($data) : ();
 }
 
 sub previous_open_hours {
     my $data = Finance::Robinhood::_send_request(undef,
-                                           shift->_get_previous_open_hours());
+                                    'GET', shift->_get_previous_open_hours());
     return $data ? Finance::Robinhood::Market::Hours->new($data) : ();
 }
 1;
