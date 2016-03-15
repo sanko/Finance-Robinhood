@@ -30,7 +30,7 @@ sub instruments {
     return $self->_get_rh()->_paginate(
         {results => [
              map {
-                 my ($ins, ())
+                 my ($ins)
                      = $self->_get_rh()
                      ->_send_request('GET', $_->{instrument});
                  $ins
