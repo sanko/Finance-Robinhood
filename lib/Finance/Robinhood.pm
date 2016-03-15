@@ -365,7 +365,7 @@ sub delete_watchlist {
     my ($result, $response)
         = $self->_send_request('DELETE',
                            $endpoints{watchlists} . $watchlist->name() . '/');
-    return $response->{status} == 204 ? 1 : !1;
+    return $result->{status} == 204 ? 1 : !1;
 }
 
 sub watchlists {
@@ -383,15 +383,24 @@ sub watchlists {
     );
     $result // return !1;
     return () if !$result;
-    $result->{previous} =~ m[\?cursor=(.+)$] if defined $result->{previous};
+    return $self->_paginate($result, 'Finance::Robinhood::Watchlist');
+}
+
+sub _paginate {    # Paginates results
+    my ($self, $res, $class) = @_;
+    $res->{previous} =~ m[\?cursor=(.+)$] if defined $res->{previous};
     my $prev = $1 // ();
-    $result->{next} =~ m[\?cursor=(.+)$] if defined $result->{next};
+    $res->{next} =~ m[\?cursor=(.+)$] if defined $res->{next};
     my $next = $1 // ();
-    return {results => [map { Finance::Robinhood::Watchlist->new($_) }
-                            @{$result->{results}}
-            ],
-            previous => $prev,
-            next     => $next
+    return {
+        results => [
+            map {
+                ddx %$_, ($self ? (rh => $self) : ());
+                $class->new(%$_, ($self ? (rh => $self) : ()))
+            } @{$res->{results}}
+        ],
+        previous => $prev,
+        next     => $next
     };
 }
 
@@ -439,6 +448,7 @@ sub _send_request {
         carp 'Robinhood did not return a status code of 200 or 201. ('
             . $res->{status} . ')';
         return ();
+        return wantarray ? ((), $res) : ();
     }
 
     # Decode the response.
