@@ -10,10 +10,66 @@ use JSON::Tiny qw[decode_json];
 use strictures 2;
 use namespace::clean;
 #
-has $_ => (is => 'ro', required => 1, writer => "_set_$_")
-    for ( qw[name] );
-has $_ => (is => 'ro', writer => "_set_$_")
-    for ( qw[instruments] );
+has $_ => (is => 'ro', required => 1, writer => "_set_$_") for (qw[name]);
+has $_ => (
+    is       => 'bare',
+    required => 1,
+    writer   => "_set_$_",
+    reader   => "_get_$_",
+    isa      => sub {
+        die "$_[0] is not an Finance::Robinhood object!"
+            unless ref $_[0] eq 'Finance::Robinhood';
+    },
+    weak_ref => 1
+) for (qw[rh]);
+
+sub instruments {
+    my $self = shift;
+    my $res  = $self->_get_rh()->_send_request('GET',
+                    Finance::Robinhood::endpoint('watchlists') . $self->name);
+    return $self->_get_rh()->_paginate(
+        {results => [
+             map {
+                 my ($ins, ())
+                     = $self->_get_rh()
+                     ->_send_request('GET', $_->{instrument});
+                 $ins
+             } @{delete $res->{results}}
+         ],
+         %$res
+        },
+        'Finance::Robinhood::Instrument'
+    );
+}
+
+sub bulk_add_instruments {
+    my ($self, @symbols) = @_;
+    ddx $self->_get_rh()->_send_request(
+                  'POST',
+                  sprintf(Finance::Robinhood::endpoint('watchlists/bulk_add'),
+                          $self->name
+                  ),
+                  {symbols => join ',', @symbols}
+    );
+}
+sub add_instrument {
+    my ($self, $instrument) = @_;
+    ddx $self->_get_rh()->_send_request(
+                  'POST',
+                  sprintf(Finance::Robinhood::endpoint('watchlists'),
+                          $self->name
+                  )
+    );
+}
+sub delete_instrument {
+    my ($self, $instrument) = @_;
+    return $self->_get_rh()->_send_request(
+                  'DELETE',
+                  sprintf(Finance::Robinhood::endpoint('watchlists'),
+                          $self->name
+                  ) . $instrument->id()
+    ) ? 1 : !1;
+}
 1;
 
 =encoding utf-8
@@ -45,22 +101,22 @@ C<Finance::Robinhood->create_watchlist( ... )>.
 
 Watchlists are rather simple in themselves.
 
-=head2 C<delete( ... )>
-
-This deletes the watchlist from Robinhood.
-
 =head2 C<delete_instrument( ... )>
+
+    $watchlist->delete_instrument( $instrument );
 
 Removes a financial instrument from the watchlist.
 
 =head2 C<add_instrument( ... )>
 
+    $watchlist->add_instrument( $instrument );
+
 Adds a financial instrument to the watchlist. Attempts to add an instrument a
 second time will fail.
 
-=head2 C<populate( ... )>
+=head2 C<bulk_add_instruments( ... )>
 
-    $watchlist->populate(qw[APPL MSFT FB]);
+    $watchlist->bulk_add_instruments(qw[APPL MSFT FB]);
 
 Add multiple instruments in a single API call and by their symbols with this.
 

@@ -64,9 +64,11 @@ my %endpoints = ('accounts'                => 'accounts/',
                  'user/basic_info'         => 'user/basic_info/',
                  'user/employment'         => 'user/employment/',
                  'user/investment_profile' => 'user/investment_profile/',
-                 'watchlists'              => 'watchlists/'
+                 'watchlists'              => 'watchlists/',
+                 'watchlists/bulk_add'     => 'watchlists/%s/bulk_add/'
 );
 $endpoints{$_} = $base . $endpoints{$_} for keys %endpoints;
+sub endpoint { return $endpoints{+shift} // () }
 #
 # Send a username and password to Robinhood to get back a token.
 #
@@ -263,6 +265,7 @@ sub _place_order {
     # Make API Call
     ddx $instrument;
     my $rt = $self->_send_request(
+        'GET',
         $endpoints{'orders'},
         {account => $endpoints{'accounts'}
              . $self->account()->account_number() . '/',
@@ -357,7 +360,9 @@ sub create_watchlist {
     my ($self, $name) = @_;
     my $result = $self->_send_request('POST', $endpoints{watchlists},
                                       {name => $name});
-    return $result ? Finance::Robinhood::Watchlist($result) : ();
+    return $result ?
+        Finance::Robinhood::Watchlist->new(rh => $self, %$result)
+        : ();
 }
 
 sub delete_watchlist {
