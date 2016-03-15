@@ -136,6 +136,30 @@ symbols, the objects are returned as a list.
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.
 
+## `create_watchlist( ... )`
+
+    my $watchlist = $rh->create_watchlist( 'Energy' );
+
+You can create new Finance::Robinhood::Watchlist objects.
+
+## `delete_watchlist( ... )`
+
+    $rh->delete_watchlist( $watchlist );
+
+You may remove a watchlist with this method.
+
+## `watchlists( ... )`
+
+    my $watchlists = $rh->watchlists( );
+
+Returns all your current watchlists as a paginated list of
+Finance::Robinhood::Watchlists.
+
+    my $more = $rh->watchlists( { cursor => $watchlists->{next} } );
+
+In case where you have more than one page of watchlists, use the `next` and
+`previous` cursor strings.
+
 # LEGAL
 
 This is a simple wrapper around the API used in the official apps. The author

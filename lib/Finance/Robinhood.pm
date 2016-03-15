@@ -16,6 +16,7 @@ use Finance::Robinhood::Account;
 use Finance::Robinhood::Instrument;
 use Finance::Robinhood::Order;
 use Finance::Robinhood::Quote;
+use Finance::Robinhood::Watchlist;
 #
 has token => (is => 'ro', writer => '_set_token');
 has account => (
@@ -351,6 +352,49 @@ sub cancel_order {
     return $self->_send_request('GET', $order->_get_cancel(), {});
 }
 
+
+sub create_watchlist {
+    my ($self, $name) = @_;
+    my $result = $self->_send_request('POST', $endpoints{watchlists},
+                                      {name => $name});
+    return $result ? Finance::Robinhood::Watchlist($result) : ();
+}
+
+sub delete_watchlist {
+    my ($self, $watchlist) = @_;
+    my ($result, $response)
+        = $self->_send_request('DELETE',
+                           $endpoints{watchlists} . $watchlist->name() . '/');
+    return $response->{status} == 204 ? 1 : !1;
+}
+
+sub watchlists {
+    my ($self, $cursor) = @_;
+    my $result = $self->_send_request('GET',
+                                      $endpoints{watchlists}
+                                          . (
+                                            ref $cursor
+                                                && ref $cursor eq 'HASH'
+                                                && defined $cursor->{cursor}
+                                            ?
+                                                '?cursor=' . $cursor->{cursor}
+                                            : ''
+                                          )
+    );
+    $result // return !1;
+    return () if !$result;
+    $result->{previous} =~ m[\?cursor=(.+)$] if defined $result->{previous};
+    my $prev = $1 // ();
+    $result->{next} =~ m[\?cursor=(.+)$] if defined $result->{next};
+    my $next = $1 // ();
+    return {results => [map { Finance::Robinhood::Watchlist->new($_) }
+                            @{$result->{results}}
+            ],
+            previous => $prev,
+            next     => $next
+    };
+}
+
 # ---------------- Private Helper Functions --------------- //
 # Send request to API.
 #
@@ -550,6 +594,30 @@ symbols, the objects are returned as a list.
 
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.
+
+=head2 C<create_watchlist( ... )>
+
+    my $watchlist = $rh->create_watchlist( 'Energy' );
+
+You can create new Finance::Robinhood::Watchlist objects.
+
+=head2 C<delete_watchlist( ... )>
+
+    $rh->delete_watchlist( $watchlist );
+
+You may remove a watchlist with this method.
+
+=head2 C<watchlists( ... )>
+
+    my $watchlists = $rh->watchlists( );
+
+Returns all your current watchlists as a paginated list of
+Finance::Robinhood::Watchlists.
+
+    my $more = $rh->watchlists( { cursor => $watchlists->{next} } );
+
+In case where you have more than one page of watchlists, use the C<next> and
+C<previous> cursor strings.
 
 =head1 LEGAL
 
