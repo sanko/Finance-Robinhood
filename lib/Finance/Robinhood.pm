@@ -51,6 +51,7 @@ my %endpoints = ('accounts'                => 'accounts/',
                  'fundamentals'            => 'fundamentals/%s',
                  'instruments'             => 'instruments/',
                  'login'                   => 'api-token-auth/',
+                 'logout'                  => 'api-token-logout/',
                  'margin_upgrades'         => 'margin/upgrades/',
                  'markets'                 => 'markets/',
                  'notifications'           => 'notifications/',
@@ -104,6 +105,16 @@ sub login {
 
     # Set the token we just received.
     return $self->_set_token($rt->{token});
+}
+
+sub logout {
+    my ($self, $username, $password) = @_;
+
+    # Make API Call
+    my $rt = _send_request(undef, 'POST', $endpoints{logout});
+
+    # The old token is now invalid, so we might as well delete it
+    return $self->_set_token(());
 }
 #
 # Return the accounts of the user.
@@ -452,7 +463,6 @@ sub _send_request {
     if ($res->{status} != 200 && $res->{status} != 201) {
         carp 'Robinhood did not return a status code of 200 or 201. ('
             . $res->{status} . ')';
-        return ();
         return wantarray ? ((), $res) : ();
     }
 
@@ -518,6 +528,14 @@ You must do this if you do not have an authorization token.
 
 If login was sucessful, a valid token is returned which should be stored for
 use in future calls to C<new( ... )>.
+
+=head2 C<logout( )>
+
+    my $token = $rh->login($user, $password);
+    $rh->logout( ); # Goodbye!
+
+Logs you out of Robinhood by invalidating the token returned by
+C<login( ... )> and passed to C<new(...)>.
 
 =head2 C<get_accounts( ... )>
 
