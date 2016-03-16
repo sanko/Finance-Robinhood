@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Carp;
 our $VERSION = "0.01";
-use Data::Dump qw[ddx];
 use Moo;
 use JSON::Tiny qw[decode_json];
 use strictures 2;
@@ -42,33 +41,37 @@ sub instruments {
     );
 }
 
-sub bulk_add_instruments {
+sub bulk_add_symbols {
     my ($self, @symbols) = @_;
-    ddx $self->_get_rh()->_send_request(
+    my $result =
+        $self->_get_rh()->_send_request(
                   'POST',
                   sprintf(Finance::Robinhood::endpoint('watchlists/bulk_add'),
                           $self->name
                   ),
                   {symbols => join ',', @symbols}
-    );
+        );
+    return $result ?
+        map {
+        my ($instrument)
+            = $self->_get_rh()->_send_request('GET', $_->{instrument});
+        Finance::Robinhood::Instrument->new($instrument)
+        } @{$result}
+        : ();
 }
+
 sub add_instrument {
     my ($self, $instrument) = @_;
-    ddx $self->_get_rh()->_send_request(
-                  'POST',
-                  sprintf(Finance::Robinhood::endpoint('watchlists'),
-                          $self->name
-                  )
-    );
+    return $self->_get_rh()->_send_request('POST',
+            sprintf(Finance::Robinhood::endpoint('watchlists'), $self->name));
 }
+
 sub delete_instrument {
     my ($self, $instrument) = @_;
-    return $self->_get_rh()->_send_request(
-                  'DELETE',
-                  sprintf(Finance::Robinhood::endpoint('watchlists'),
-                          $self->name
-                  ) . $instrument->id()
-    ) ? 1 : !1;
+    return
+        $self->_get_rh()->_send_request('DELETE',
+              sprintf(Finance::Robinhood::endpoint('watchlists'), $self->name)
+                  . $instrument->id()) ? 1 : !1;
 }
 1;
 
@@ -114,17 +117,13 @@ Removes a financial instrument from the watchlist.
 Adds a financial instrument to the watchlist. Attempts to add an instrument a
 second time will fail.
 
-=head2 C<bulk_add_instruments( ... )>
+=head2 C<bulk_add_symbols( ... )>
 
-    $watchlist->bulk_add_instruments(qw[APPL MSFT FB]);
+    $watchlist->bulk_add_symbols(qw[MSFT FB GOOGL]);
 
 Add multiple instruments in a single API call and by their symbols with this.
 
 ...easier than looping through the symbols yourself, right?
-
-=head2 C<reorder( ... )>
-
-TODO
 
 =head1 LEGAL
 
