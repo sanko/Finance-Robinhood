@@ -1,6 +1,6 @@
 requires 'perl', '5.008001';
 
-requires 'HTTP::Tiny';
+requires 'HTTP::Tiny', '0.056';
 requires 'Carp';
 requires 'Data::Dump';
 requires 'Moo';

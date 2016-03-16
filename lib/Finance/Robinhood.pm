@@ -6,7 +6,7 @@ use Carp;
 our $VERSION = "0.01";
 use Data::Dump qw[ddx];
 use Moo;
-use HTTP::Tiny;
+use HTTP::Tiny '0.056';
 use JSON::Tiny qw[decode_json];
 use strictures 2;
 use namespace::clean;
