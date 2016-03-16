@@ -5,8 +5,9 @@ use_ok $_ for qw(
     Finance::Robinhood
 );
 subtest 'skippy' => sub {
-    plan skip_all => 'Missing token!' if !defined $ENV{RHTOKEN};
-    my $rh = Finance::Robinhood->new(token => $ENV{RHTOKEN});
+    plan skip_all => 'Missing token!' if !defined $ENV{RHUSER} || ! defined $ENV{RHPASSWORD};
+    my $rh = Finance::Robinhood->new();
+    ok $rh->login($ENV{RHUSER}, $ENV{RHPASSWORD}), '->login(...)';
     my $msft = $rh->quote('MSFT');
     isa_ok $msft, 'Finance::Robinhood::Quote', 'Gathered quote data for MSFT';
     isa_ok $msft->refresh(), 'Finance::Robinhood::Quote', 'Refreshed data';

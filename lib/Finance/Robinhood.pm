@@ -89,7 +89,7 @@ sub login {
     my ($self, $username, $password) = @_;
 
     # Make API Call
-    my $rt = _send_request(undef, 'GET',
+    my $rt = _send_request(undef, 'POST',
                            $endpoints{login},
                            {username => $username,
                             password => $password
