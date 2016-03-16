@@ -45,6 +45,14 @@ You must do this if you do not have an authorization token.
 If login was sucessful, a valid token is returned which should be stored for
 use in future calls to `new( ... )`.
 
+## `logout( )`
+
+    my $token = $rh->login($user, $password);
+    $rh->logout( ); # Goodbye!
+
+Logs you out of Robinhood by invalidating the token returned by
+`login( ... )` and passed to `new(...)`.
+
 ## `get_accounts( ... )`
 
 Returns a list of Finance::Robinhood::Account objects related to the
