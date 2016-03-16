@@ -85,6 +85,7 @@ my %headers = (
     'Connection'              => 'keep-alive',
     'User-Agent' => 'Robinhood/823 (iPhone; iOS 7.1.2; Scale/2.00)'
 );
+sub errors { shift; carp shift; }
 
 sub login {
     my ($self, $username, $password) = @_;
