@@ -23,8 +23,15 @@ subtest 'skippy' => sub {
         = qw[AAPL TWTR TSLA NFLX FB MSFT DIS GPRO SBUX F BABA BAC FIT YHOO GE];
     my @instruments = $watchlist->bulk_add_symbols(@symbols);
     is $#instruments, $#symbols, 'added symbols match our bulk add';
-    is_deeply \@instruments, $watchlist->instruments()->{results},
+    my ($instruments_persistant) = $watchlist->instruments()->{results};
+    is_deeply \@instruments, $instruments_persistant,
         'verify persistant state';
+    my $_a = shift @$instruments_persistant;
+    my $_b = shift @instruments;
+    $watchlist->delete_instrument($_a);
+    ($instruments_persistant) = $watchlist->instruments()->{results};
+    is_deeply \@instruments, $instruments_persistant,
+        'verify persistant state after delete';
     ok $rh->delete_watchlist($watchlist), '->delete_watchlist( ... )';
     {
         my ($found)
