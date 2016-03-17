@@ -62,16 +62,14 @@ sub bulk_add_symbols {
 
 sub add_instrument {
     my ($self, $instrument) = @_;
-    return $self->_get_rh()->_send_request('POST',
-            sprintf(Finance::Robinhood::endpoint('watchlists'), $self->name));
+    return $self->_get_rh()->_send_request('POST', Finance::Robinhood::endpoint('watchlists') . $self->name() . '/');
 }
 
 sub delete_instrument {
     my ($self, $instrument) = @_;
     return
         $self->_get_rh()->_send_request('DELETE',
-              sprintf(Finance::Robinhood::endpoint('watchlists'), $self->name)
-                  . $instrument->id()) ? 1 : !1;
+              Finance::Robinhood::endpoint('watchlists') . $self->name() . '/' . $instrument->id() . '/') ? 1 : !1;
 }
 1;
 

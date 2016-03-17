@@ -11,9 +11,9 @@ subtest 'skippy' => sub {
     my $msft = $rh->quote('MSFT');
     isa_ok $msft, 'Finance::Robinhood::Quote', 'Gathered quote data for MSFT';
     isa_ok $msft->refresh(), 'Finance::Robinhood::Quote', 'Refreshed data';
-    my ($southwest, $jetblue, $delta) = $rh->quote('LUV', 'JBLU', 'DAL');
-    is $southwest->symbol(), 'LUV',  'Southwest Airlines';
-    is $jetblue->symbol(),   'JBLU', 'JetBlue Airways';
-    is $delta->symbol(),     'DAL',  'Delta Air Lines';
+    my $results = $rh->quote('LUV', 'JBLU', 'DAL');
+    is $results->{results}[0]->symbol(), 'LUV',  'Southwest Airlines';
+    is $results->{results}[1]->symbol(), 'JBLU', 'JetBlue Airways';
+    is $results->{results}[2]->symbol(), 'DAL',  'Delta Air Lines';
 };
 done_testing;

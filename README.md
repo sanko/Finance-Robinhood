@@ -131,15 +131,15 @@ would generate more than a single page of results. To gather them, use the
 
 ## `quote( ... )`
 
-    my %msft  = $rh->quote('MSFT');
+    my %msft = $rh->quote('MSFT');
     my $swa  = Finance::Robinhood::quote('LUV');
 
-    my ($ios, $plus, $work) = $rh->quote('APPL', 'GOOG', 'MA');
-    my ($bird, $plane, $superman) = Finance::Robinhood::quote('LUV', 'JBLU', 'DAL');
+    my $quotes = $rh->quote('APPL', 'GOOG', 'MA');
+    my $quotes = Finance::Robinhood::quote('LUV', 'JBLU', 'DAL');
 
 Requests current information about a security which is returned as a
 Finance::Robinhood::Quote object. If `quote( ... )` is given a list of
-symbols, the objects are returned as a list.
+symbols, the objects are returned as a paginated list.
 
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.

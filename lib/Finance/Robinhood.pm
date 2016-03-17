@@ -68,8 +68,12 @@ my %endpoints = ('accounts'                => 'accounts/',
                  'watchlists'              => 'watchlists/',
                  'watchlists/bulk_add'     => 'watchlists/%s/bulk_add/'
 );
-$endpoints{$_} = $base . $endpoints{$_} for keys %endpoints;
-sub endpoint { return $endpoints{+shift} // () }
+
+sub endpoint {
+    $endpoints{$_[0]} ?
+        'https://api.robinhood.com/' . $endpoints{+shift}
+        : ();
+}
 #
 # Send a username and password to Robinhood to get back a token.
 #
@@ -92,7 +96,7 @@ sub login {
 
     # Make API Call
     my $rt = _send_request(undef, 'POST',
-                           $endpoints{login},
+                           Finance::Robinhood::endpoint('login'),
                            {username => $username,
                             password => $password
                            }
@@ -112,7 +116,8 @@ sub logout {
     my ($self, $username, $password) = @_;
 
     # Make API Call
-    my $rt = _send_request(undef, 'POST', $endpoints{logout});
+    my $rt = _send_request(undef, 'POST',
+                           Finance::Robinhood::endpoint('logout'));
 
     # The old token is now invalid, so we might as well delete it
     return $self->_set_token(());
@@ -122,7 +127,9 @@ sub logout {
 #
 sub _get_accounts {
     my ($self) = @_;
-    my $return = $self->_send_request('GET', $endpoints{'accounts'});
+    my $return = $self->_send_request('GET',
+                                      Finance::Robinhood::endpoint('accounts')
+    );
     $return // return !1;
 
     # TODO: Deal with next and previous results? Multiple accounts?
@@ -153,7 +160,8 @@ sub get_current_positions {
     # Get the positions.
     my $pos =
         $self->_send_request('GET',
-                             sprintf($endpoints{'accounts/positions'},
+                             sprintf(Finance::Robinhood::endpoint(
+                                                        'accounts/positions'),
                                      $account->account_number()
                              )
         );
@@ -201,7 +209,7 @@ sub instrument {
     my $self = shift if ref $_[0] && ref $_[0] eq __PACKAGE__;
     my ($type) = @_;
     my $result = _send_request($self, 'GET',
-                               $endpoints{instruments}
+                               Finance::Robinhood::endpoint('instruments')
                                    . (  !defined $type ? ''
                                       : !ref $type     ? '?query=' . $type
                                       : ref $type eq 'HASH'
@@ -246,17 +254,21 @@ sub instrument {
 sub quote {
     my $self = ref $_[0] ? shift : ();    # might be undef but thtat's okay
     if (scalar @_ > 1) {
-        my $quote =
-            _send_request($self, 'GET',
-                          $endpoints{quotes} . '?symbols=' . join ',', @_);
-        return $quote
-            ?
-            (map { Finance::Robinhood::Quote->new($_) }
-             @{$quote->{results}})
-            : ();
+        return
+            _paginate(undef,
+                      _send_request($self,
+                                    'GET',
+                                    Finance::Robinhood::endpoint('quotes')
+                                        . '?symbols='
+                                        . join ',',
+                                    @_
+                      ),
+                      'Finance::Robinhood::Quote'
+            );
     }
-    my $quote
-        = _send_request($self, 'GET', $endpoints{'quotes'} . shift . '/');
+    my $quote =
+        _send_request($self, 'GET',
+                      Finance::Robinhood::endpoint('quotes') . shift . '/');
     return $quote ?
         Finance::Robinhood::Quote->new($quote)
         : ();
@@ -278,8 +290,8 @@ sub _place_order {
     ddx $instrument;
     my $rt = $self->_send_request(
         'GET',
-        $endpoints{'orders'},
-        {account => $endpoints{'accounts'}
+        Finance::Robinhood::endpoint('orders'),
+        {account => Finance::Robinhood::endpoint('accounts')
              . $self->account()->account_number() . '/',
          instrument    => $instrument->url(),
          quantity      => $quantity,
@@ -339,7 +351,7 @@ sub place_sell_order {    # TODO: Test and document
 sub list_orders {
     my ($self, $type) = @_;
     my $result = $self->_send_request('GET',
-                                      $endpoints{orders}
+                                      Finance::Robinhood::endpoint('orders')
                                           . (ref $type
                                                  && ref $type eq 'HASH'
                                                  && defined $type->{cursor}
@@ -370,8 +382,11 @@ sub cancel_order {
 
 sub create_watchlist {
     my ($self, $name) = @_;
-    my $result = $self->_send_request('POST', $endpoints{watchlists},
-                                      {name => $name});
+    my $result = $self->_send_request('POST',
+                                      Finance::Robinhood::endpoint(
+                                                                'watchlists'),
+                                      {name => $name}
+    );
     return $result ?
         Finance::Robinhood::Watchlist->new(rh => $self, %$result)
         : ();
@@ -381,14 +396,17 @@ sub delete_watchlist {
     my ($self, $watchlist) = @_;
     my ($result, $response)
         = $self->_send_request('DELETE',
-                           $endpoints{watchlists} . $watchlist->name() . '/');
+                               Finance::Robinhood::endpoint('watchlists')
+                                   . $watchlist->name() . '/'
+        );
     return $result->{status} == 204 ? 1 : !1;
 }
 
 sub watchlists {
     my ($self, $cursor) = @_;
     my $result = $self->_send_request('GET',
-                                      $endpoints{watchlists}
+                                      Finance::Robinhood::endpoint(
+                                                                 'watchlists')
                                           . (
                                             ref $cursor
                                                 && ref $cursor eq 'HASH'
@@ -612,15 +630,15 @@ C<next> or C<previous> values.
 
 =head2 C<quote( ... )>
 
-    my %msft  = $rh->quote('MSFT');
+    my %msft = $rh->quote('MSFT');
     my $swa  = Finance::Robinhood::quote('LUV');
 
-    my ($ios, $plus, $work) = $rh->quote('APPL', 'GOOG', 'MA');
-    my ($bird, $plane, $superman) = Finance::Robinhood::quote('LUV', 'JBLU', 'DAL');
+    my $quotes = $rh->quote('APPL', 'GOOG', 'MA');
+    my $quotes = Finance::Robinhood::quote('LUV', 'JBLU', 'DAL');
 
 Requests current information about a security which is returned as a
 Finance::Robinhood::Quote object. If C<quote( ... )> is given a list of
-symbols, the objects are returned as a list.
+symbols, the objects are returned as a paginated list.
 
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.
