@@ -258,17 +258,11 @@ sub instrument {
 sub quote {
     my $self = ref $_[0] ? shift : ();    # might be undef but thtat's okay
     if (scalar @_ > 1) {
-        return
-            _paginate(undef,
-                      _send_request($self,
-                                    'GET',
-                                    Finance::Robinhood::endpoint('quotes')
-                                        . '?symbols='
-                                        . join ',',
-                                    @_
-                      ),
-                      'Finance::Robinhood::Quote'
-            );
+        my ($result)
+            = _send_request($self, 'GET',
+              Finance::Robinhood::endpoint('quotes') . '?symbols=' . join ',',
+              @_);
+        return _paginate($self, $result, 'Finance::Robinhood::Quote');
     }
     my $quote =
         _send_request($self, 'GET',
