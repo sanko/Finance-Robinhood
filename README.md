@@ -189,6 +189,11 @@ which look like this:
         url => "https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/",
     }
 
+\* Please note that the `url` provided by the API is incorrect! Rather than
+`"https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/"`,
+it should be
+`<"https://api.robinhood.com/**midlands/**notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/"`>.
+
 # LEGAL
 
 This is a simple wrapper around the API used in the official apps. The author

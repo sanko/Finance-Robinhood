@@ -690,6 +690,11 @@ which look like this:
         url => "https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/",
     }
 
+* Please note that the C<url> provided by the API is incorrect! Rather than
+C<"https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/">,
+it should be
+C<<"https://api.robinhood.com/B<midlands/>notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/">>.
+
 =head1 LEGAL
 
 This is a simple wrapper around the API used in the official apps. The author
