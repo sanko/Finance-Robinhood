@@ -377,6 +377,10 @@ sub cancel_order {
     return $self->_send_request('GET', $order->_get_cancel(), {});
 }
 
+sub cards {
+    return shift->_send_request('GET', Finance::Robinhood::endpoint('cards'));
+}
+
 
 sub create_watchlist {
     my ($self, $name) = @_;
@@ -664,6 +668,27 @@ Finance::Robinhood::Watchlists.
 
 In case where you have more than one page of watchlists, use the C<next> and
 C<previous> cursor strings.
+
+=head2 C<cards( )>
+
+    my $cards = $rh->cards( );
+
+Returns the informational cards the Robinhood apps display. These are links to
+news, typically. Currently, these are returned as a paginated list of hashes
+which look like this:
+
+    {   action => "robinhood://web?url=https://finance.yahoo.com/news/spotify-agreement-win-artists-company-003248363.html",
+        call_to_action => "View Article",
+        fixed => bless(do{\(my $o = 0)}, "JSON::Tiny::_Bool"),
+        icon => "news",
+        message => "Spotify Agreement A 'win' For Artists, Company :Billboard Editor",
+        relative_time => "2h",
+        show_if_unsupported => 'fix',
+        time => "2016-03-19T00:32:48Z",
+        title => "Reuters",
+        type => "news",
+        url => "https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/",
+    }
 
 =head1 LEGAL
 

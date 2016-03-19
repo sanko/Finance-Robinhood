@@ -168,6 +168,27 @@ Finance::Robinhood::Watchlists.
 In case where you have more than one page of watchlists, use the `next` and
 `previous` cursor strings.
 
+## `cards( )`
+
+    my $cards = $rh->cards( );
+
+Returns the informational cards the Robinhood apps display. These are links to
+news, typically. Currently, these are returned as a paginated list of hashes
+which look like this:
+
+    {   action => "robinhood://web?url=https://finance.yahoo.com/news/spotify-agreement-win-artists-company-003248363.html",
+        call_to_action => "View Article",
+        fixed => bless(do{\(my $o = 0)}, "JSON::Tiny::_Bool"),
+        icon => "news",
+        message => "Spotify Agreement A 'win' For Artists, Company :Billboard Editor",
+        relative_time => "2h",
+        show_if_unsupported => 'fix',
+        time => "2016-03-19T00:32:48Z",
+        title => "Reuters",
+        type => "news",
+        url => "https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/",
+    }
+
 # LEGAL
 
 This is a simple wrapper around the API used in the official apps. The author
