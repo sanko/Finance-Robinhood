@@ -381,6 +381,12 @@ sub cards {
     return shift->_send_request('GET', Finance::Robinhood::endpoint('cards'));
 }
 
+sub dividends {
+    return
+        shift->_send_request('GET',
+                             Finance::Robinhood::endpoint('dividends'));
+}
+
 
 sub create_watchlist {
     my ($self, $name) = @_;
@@ -694,6 +700,25 @@ which look like this:
 C<"https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/">,
 it should be
 C<<"https://api.robinhood.com/B<midlands/>notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/">>.
+
+=head2 C<dividends( )>
+
+Gathers a paginated list of dividends due (or recently paid) for your account.
+
+C<results> currently contains a list of hashes which look a lot like this:
+
+    { account => "https://api.robinhood.com/accounts/XXXXXXXX/",
+      amount => 0.23,
+      id => "28a46be1-db41-4f75-bf89-76c803a151ef",
+      instrument => "https://api.robinhood.com/instruments/39ff611b-84e7-425b-bfb8-6fe2a983fcf3/",
+      paid_at => undef,
+      payable_date => "2016-04-25",
+      position => "1.0000",
+      rate => "0.2300000000",
+      record_date => "2016-02-29",
+      url => "https://api.robinhood.com/dividends/28a46be1-db41-4f75-bf89-76c803a151ef/",
+      withholding => "0.00",
+    }
 
 =head1 LEGAL
 
