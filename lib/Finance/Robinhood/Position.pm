@@ -5,6 +5,7 @@ our $VERSION = "0.01";
 use Moo;
 use strictures 2;
 use namespace::clean;
+require Finance::Robinhood;
 #
 has $_ => (is => 'ro', required => 1)
     for (qw[average_buy_price intraday_quantity quantity

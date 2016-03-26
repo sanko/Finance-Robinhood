@@ -10,6 +10,7 @@ use HTTP::Tiny '0.056';
 use JSON::Tiny qw[decode_json];
 use strictures 2;
 use namespace::clean;
+use DateTime;
 #
 use lib '../../lib';
 use Finance::Robinhood::Account;
@@ -485,7 +486,7 @@ sub _send_request {
 }
 
 # Coerce strings into DateTime objects
-sub _2datetime {
+sub _2_datetime {
     $_[0]
         =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
 

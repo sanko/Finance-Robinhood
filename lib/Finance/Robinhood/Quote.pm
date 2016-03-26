@@ -5,7 +5,7 @@ our $VERSION = "0.01";
 use Moo;
 use strictures 2;
 use namespace::clean;
-use DateTime;
+require Finance::Robinhood;
 #
 has $_ => (is => 'ro', required => 1)
     for (qw[adjusted_previous_close
