@@ -11,29 +11,7 @@ has $_ => (is => 'ro', required => 1) for (qw[is_open]);
 has $_ => (
     is       => 'ro',
     required => 1,
-    coerce   => sub {
-        $_[0]
-            =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
-
-        # "2016-03-11T17:59:48.026546Z",
-        #warn 'Y:' . $1;
-        #warn 'M:' . $2;
-        #warn 'D:' . $3;
-        #warn 'h:' . $4;
-        #warn 'm:' . $5;
-        #warn 's:' . $6;
-        #warn 'n:' . $7;
-        #warn 'z:' . $8;
-        DateTime->new(year       => $1,
-                      month      => $2,
-                      day        => $3,
-                      hour       => $4,
-                      minute     => $5,
-                      second     => $6,
-                      nanosecond => $7,
-                      time_zone  => $8
-        );
-    }
+    coerce   => \&Finance::Robinhood::_2datetime
 ) for (qw[closes_at date opens_at]);
 has $_ => (is => 'bare', required => 1, reader => "_get_$_")
     for (qw[next_open_hours previous_open_hours]);

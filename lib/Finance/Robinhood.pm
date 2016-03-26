@@ -15,6 +15,7 @@ use lib '../../lib';
 use Finance::Robinhood::Account;
 use Finance::Robinhood::Instrument;
 use Finance::Robinhood::Order;
+use Finance::Robinhood::Position;
 use Finance::Robinhood::Quote;
 use Finance::Robinhood::Watchlist;
 #
@@ -30,7 +31,7 @@ has account => (
 );
 
 sub _build_account {
-    my $acct = shift->_get_accounts();
+    my $acct = shift->_accounts();
     return $acct ? $acct->[0] : ();
 }
 #
@@ -39,8 +40,8 @@ my $base = 'https://api.robinhood.com/';
 # Different endpoints we can call for the API
 my %endpoints = (
                 'accounts'              => 'accounts/',
-                'accounts/portfolio'    => 'accounts/%s/portfolio',
-                'accounts/positions'    => 'accounts/%s/positions',
+                'accounts/portfolios'    => 'portfolios/',
+                'accounts/positions'    => 'positions/',
                 'ach_deposit_schedules' => 'ach/deposit_schedules/',
                 'ach_iav_auth'          => 'ach/iav/auth/',
                 'ach_relationships'     => 'ach/relationships/',
@@ -126,82 +127,57 @@ sub logout {
     # The old token is now invalid, so we might as well delete it
     return $self->_set_token(());
 }
-#
-# Return the accounts of the user.
-#
-sub _get_accounts {
+
+sub accounts {
     my ($self) = @_;
+    # TODO: Deal with next and previous results? Multiple accounts?
     my $return = $self->_send_request('GET',
                                       Finance::Robinhood::endpoint('accounts')
     );
-    $return // return !1;
 
-    # TODO: Deal with next and previous results? Multiple accounts?
-    return [
-        map {
-            #        ddx $self->_send_request($_->{url});
-            #        ddx $self->_send_request($_->{portfolio});
-            #        ddx $self->_send_request($_->{positions});
-            Finance::Robinhood::Account->new($_)
-        } @{$return->{results}}
-    ];
+    return $self->_paginate($return, 'Finance::Robinhood::Account')
 }
 #
 # Returns the porfillo summery of an account by url.
 #
-sub get_portfolio {
-    my ($self, $url) = @_;
-    return $self->_send_request('GET', $url);
-}
+#sub get_portfolio {
+#    my ($self, $url) = @_;
+#    return $self->_send_request('GET', $url);
+#}
 #
 # Return the positions for an account.
 # This is sort of a heavy call as it makes many API calls to populate all the data.
 #
-sub get_current_positions {
-    my ($self, $account) = @_;
-    my @rt;
-
-    # Get the positions.
-    my $pos =
-        $self->_send_request('GET',
-                             sprintf(Finance::Robinhood::endpoint(
-                                                        'accounts/positions'),
-                                     $account->account_number()
-                             )
-        );
-
-    # Now loop through and get the ticker information.
-    for my $result (@{$pos->{results}}) {
-        ddx $result;
-
-        # We ignore past stocks that we traded.
-        if ($result->{'quantity'} > 0) {
-
-            # TODO: If the call fails, deal with it as ()
-            my $instrument = Finance::Robinhood::Instrument->new('GET',
-                               $self->_send_request($result->{'instrument'}));
-
-            # Add on to the new array.
-            push @rt, $instrument;
-        }
-    }
-    return @rt;
-}
-
-=cut
-
-    def get_account_number(self):
-        ''' Returns the brokerage account number of the account logged in.
-        This is currently only used for placing orders, so you can ignore
-        method. '''
-        res = self.session.get(self.endpoints['accounts'])
-        if res.status_code == 200:
-            accountURL = res.json()['results'][0]['url']
-            account_number = accountURL[accountURL.index('accounts')+9:-1]
-            return account_number
-        else:
-            raise Exception("Could not retrieve account number: " + res.text)
-=cut
+#sub get_current_positions {
+#    my ($self, $account) = @_;
+#    my @rt;
+#
+#    # Get the positions.
+#    my $pos =
+#        $self->_send_request('GET',
+#                             sprintf(Finance::Robinhood::endpoint(
+#                                                        'accounts/positions'),
+#                                     $account->account_number()
+#                             )
+#        );
+#
+#    # Now loop through and get the ticker information.
+#    for my $result (@{$pos->{results}}) {
+#        ddx $result;
+#
+#        # We ignore past stocks that we traded.
+#        if ($result->{'quantity'} > 0) {
+#
+#            # TODO: If the call fails, deal with it as ()
+#            my $instrument = Finance::Robinhood::Instrument->new('GET',
+#                               $self->_send_request($result->{'instrument'}));
+#
+#            # Add on to the new array.
+#            push @rt, $instrument;
+#        }
+#    }
+#    return @rt;
+#}
 
 sub instrument {
 
@@ -256,7 +232,7 @@ sub instrument {
 }
 
 sub quote {
-    my $self = ref $_[0] ? shift : ();    # might be undef but thtat's okay
+    my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
     if (scalar @_ > 1) {
         my ($result)
             = _send_request($self, 'GET',
@@ -282,9 +258,9 @@ sub _place_order {
         = @_;
     $time_in_force //= 'gfd';    # Good For Day
 
-    #warn $endpoints{'orders'};
-    #warn $endpoints{'accounts'} . $self->account()->account_number() . '/';
-    # Make API Call
+#warn Finance::Robinhood::endpoint('orders');
+#warn Finance::Robinhood::endpoint('accounts') . $self->account()->account_number() . '/';
+# Make API Call
     ddx $instrument;
     my $rt = $self->_send_request(
         'GET',
@@ -319,16 +295,15 @@ sub _place_order {
 sub place_buy_order {    # TODO: Test and document
     my ($self, $instrument, $quantity, $order_type, $bid_price) = @_;
 
-    # TODO: Make this accept a hash with keys:
-    # { bid_price  => $int,
-    #   quantity   => $int,
-    #   instrument => Finance::Robinhood::Instrument,
-    #   # Optional w/ defaults
-    #   trigger    => 'gfd' (Good For Day, other options are 'gtc' Good Till Cancelled, 'oco' Order Cancels Other)
-    #   time       => 'immediate' (execute trade now or cancel, other option is 'day' where the trade is canceled if not executed by day's end)
-    #   type       => 'market'
-    # }
-
+# TODO: Make this accept a hash with keys:
+# { bid_price  => $int,
+#   quantity   => $int,
+#   instrument => Finance::Robinhood::Instrument,
+#   # Optional w/ defaults
+#   trigger    => 'gfd' (Good For Day, other options are 'gtc' Good Till Cancelled, 'oco' Order Cancels Other)
+#   time       => 'immediate' (execute trade now or cancel, other option is 'day' where the trade is canceled if not executed by day's end)
+#   type       => 'market'
+# }
 #    def place_sell_order(self, symbol, quantity, order_type=None, bid_price=None):
 #
     return
@@ -560,10 +535,13 @@ use in future calls to C<new( ... )>.
 Logs you out of Robinhood by invalidating the token returned by
 C<login( ... )> and passed to C<new(...)>.
 
-=head2 C<get_accounts( ... )>
+=head2 C<accounts( ... )>
 
-Returns a list of Finance::Robinhood::Account objects related to the
+Returns a paginated list of Finance::Robinhood::Account objects related to the
 currently logged in user.
+
+I<Note>: Not sure why the API returns a paginated list of accounts. Perhaps
+in the future a single user will have access to multiple accounts?
 
 =head2 C<instrument( ... )>
 

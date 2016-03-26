@@ -15,29 +15,7 @@ has $_ => (is => 'ro', required => 1)
 has $_ => (
     is       => 'ro',
     required => 1,
-    coerce   => sub {
-        $_[0]
-            =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
-
-        # "2016-03-11T17:59:48.026546Z",
-        #warn 'Y:' . $1;
-        #warn 'M:' . $2;
-        #warn 'D:' . $3;
-        #warn 'h:' . $4;
-        #warn 'm:' . $5;
-        #warn 's:' . $6;
-        #warn 'n:' . $7;
-        #warn 'z:' . $8;
-        DateTime->new(year  => $1,
-                      month => $2,
-                      day   => $3,
-                      (defined $7 ? (hour       => $4) : ()),
-                      (defined $7 ? (minute     => $5) : ()),
-                      (defined $7 ? (second     => $6) : ()),
-                      (defined $7 ? (nanosecond => $7) : ()),
-                      (defined $7 ? (time_zone  => $8) : ())
-        );
-    }
+    coerce   => \&Finance::Robinhood::_2_datetime
 ) for (qw[updated_at previous_close_date]);
 
 sub refresh {
