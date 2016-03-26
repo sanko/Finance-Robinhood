@@ -101,6 +101,11 @@ C<results> are blessed Finance::Robinhood::Position objects.
 
 Paginated list of positions is continued.
 
+    my $positions = $account->positions( {nonzero => 1} )
+
+Returns a paginated list of securities currently owned by this account. This
+is likely what you want.
+
 =head2 C<account_number( )>
 
     my $acct = $account->account_number();
