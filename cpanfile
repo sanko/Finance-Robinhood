@@ -1,4 +1,4 @@
-requires 'perl', '5.008001';
+requires 'perl', '5.010';
 
 requires 'HTTP::Tiny', '0.056';
 requires 'Carp';

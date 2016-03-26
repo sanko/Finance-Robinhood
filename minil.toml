@@ -1,4 +1,4 @@
 name = "Finance-Robinhood"
-# badges = ["travis"]
+badges = ["travis"]
 module_maker="ModuleBuildTiny"
-
+license="artistic_2"
