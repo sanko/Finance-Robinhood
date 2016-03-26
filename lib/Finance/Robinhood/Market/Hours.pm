@@ -11,7 +11,7 @@ has $_ => (is => 'ro', required => 1) for (qw[is_open]);
 has $_ => (
     is       => 'ro',
     required => 1,
-    coerce   => \&Finance::Robinhood::_2datetime
+    coerce   => \&Finance::Robinhood::_2_datetime
 ) for (qw[closes_at date opens_at]);
 has $_ => (is => 'bare', required => 1, reader => "_get_$_")
     for (qw[next_open_hours previous_open_hours]);

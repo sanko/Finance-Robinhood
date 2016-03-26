@@ -10,10 +10,9 @@ require Finance::Robinhood;
 has $_ => (is => 'ro', required => 1)
     for (qw[average_price id cumulative_quantity fees price quantity
          reject_reason side state stop_price time_in_force trigger type url]);
-has $_ => (
-    is       => 'ro',
-    required => 1,
-    coerce   => \&Finance::Robinhood::_2datetime
+has $_ => (is       => 'ro',
+           required => 1,
+           coerce   => \&Finance::Robinhood::_2_datetime
 ) for (qw[created_at last_transaction_at updated_at]);
 has $_ => (is => 'bare', required => 1, accessor => "_get_$_")
     for (qw[account cancel executions instrument position]);
@@ -22,29 +21,46 @@ has $_ => (is => 'bare', required => 1, accessor => "_get_$_", weak_ref => 1)
 
 sub account {
     my $self = shift;
-    my $result = $self->_get_rh()->_send_request('GET', $self->_get_account());
+    my $result
+        = $self->_get_rh()->_send_request('GET', $self->_get_account());
     return $result ? Finance::Robinhood::Account->new($result) : ();
 }
 
 sub executions {
     my $self = shift;
+
     # TODO: Convert settlement_date and timestamp to DateTime objects
-    [map { $_->{settlement_date} = Finance::Robinhood::_2datetime($_->{settlement_date});
-          $_->{timestamp}       = Finance::Robinhood::_2datetime($_->{timestamp}) } @{$self->_get_executions()}];
+    [map {
+         $_->{settlement_date}
+             = Finance::Robinhood::_2_datetime($_->{settlement_date});
+         $_->{timestamp} = Finance::Robinhood::_2_datetime($_->{timestamp})
+     } @{$self->_get_executions()}
+    ];
 }
-sub instrument { my $self = shift;
-    my $result = $self->_get_rh()->_send_request('GET', $self->_get_instrument());
+
+sub instrument {
+    my $self = shift;
+    my $result
+        = $self->_get_rh()->_send_request('GET', $self->_get_instrument());
     return $result ? Finance::Robinhood::Instrument->new($result) : ();
 }
-sub position   {
+
+sub position {
     my $self = shift;
-    my $result = $self->_get_rh()->_send_request('GET', $self->_get_position());
-    return $result ? Finance::Robinhood::Position->new(rh=>$self->_get_rh(), %$result) : ();
+    my $result
+        = $self->_get_rh()->_send_request('GET', $self->_get_position());
+    return $result
+        ?
+        Finance::Robinhood::Position->new(rh => $self->_get_rh(), %$result)
+        : ();
 }
+
 sub cancel {
-    my $self = shift;
+    my $self       = shift;
     my $can_cancel = $self->_get_cancel();
-    return $can_cancel ? $self->_get_rh()->_send_request('GET', $can_cancel) : !1;
+    return $can_cancel ?
+        $self->_get_rh()->_send_request('GET', $can_cancel)
+        : !1;
 }
 1;
 

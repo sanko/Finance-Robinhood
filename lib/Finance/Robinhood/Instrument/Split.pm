@@ -11,7 +11,7 @@ has $_ => (is => 'ro', required => 1) for (qw[divisor multiplier url]);
 has $_ => (
     is       => 'ro',
     required => 1,
-    coerce   => \&Finance::Robinhood::_2datetime
+    coerce   => \&Finance::Robinhood::_2_datetime
 ) for (qw[execution_date]);
 has $_ => (is => 'bare', required => 1, reader => "_get_$_")
     for (qw[instrument]);

@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Carp;
 our $VERSION = "0.01";
-use Data::Dump qw[ddx];
 use Moo;
 use JSON::Tiny qw[decode_json];
 use strictures 2;
@@ -22,17 +21,25 @@ has $_ => (is => 'bare', required => 1, accessor => "_get_$_", weak_ref => 1)
     for (qw[rh]);
 
 sub positions {
-    my ($self) = @_;
-
-    # TODO: Cursors!
-    my ($result)
-        = $self->_get_rh()->_send_request('GET',
-                            Finance::Robinhood::endpoint('accounts/positions')
-                                . '?account='
-                                . $self->account_number()
-                                . '&nonzero=true');
-    return $self->_get_rh()
-        ->_paginate($result, 'Finance::Robinhood::Position');
+    my ($self, $type) = @_;
+    my $result = $self->_get_rh()->_send_request(
+        'GET',
+        sprintf(Finance::Robinhood::endpoint('accounts/positions'),
+                $self->account_number()
+            )
+            . sub {
+            my $opt = shift;
+            return '' if !ref $opt || ref $type ne 'HASH';
+            return '?cursor=' . $opt->{cursor} if defined $opt->{cursor};
+            return '?nonzero=' . ($opt->{nonzero} ? 'true' : 'false')
+                if defined $opt->{nonzero};
+            return '';
+            }
+            ->($type)
+    );
+    return
+        Finance::Robinhood::_paginate($self->_get_rh(), $result,
+                                      'Finance::Robinhood::Position');
 }
 
 sub portfolio {

@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Carp;
 our $VERSION = "0.01";
-use Data::Dump qw[ddx];
 use Moo;
 use JSON::Tiny qw[decode_json];
 use strictures 2;

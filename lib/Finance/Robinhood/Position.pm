@@ -12,7 +12,7 @@ has $_ => (is => 'ro', required => 1)
          shares_held_for_buys shares_held_for_sells url]);
 has $_ => (is       => 'ro',
            required => 1,
-           coerce   => \&Finance::Robinhood::_2datetime
+           coerce   => \&Finance::Robinhood::_2_datetime
 ) for (qw[created_at updated_at]);
 has $_ => (is => 'bare', required => 1, accessor => "_get_$_")
     for (qw[account instrument]);

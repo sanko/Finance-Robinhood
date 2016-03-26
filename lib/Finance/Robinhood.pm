@@ -41,8 +41,8 @@ my $base = 'https://api.robinhood.com/';
 # Different endpoints we can call for the API
 my %endpoints = (
                 'accounts'              => 'accounts/',
-                'accounts/portfolios'    => 'portfolios/',
-                'accounts/positions'    => 'positions/',
+                'accounts/portfolios'   => 'portfolios/',
+                'accounts/positions'    => 'accounts/%s/positions/',
                 'ach_deposit_schedules' => 'ach/deposit_schedules/',
                 'ach_iav_auth'          => 'ach/iav/auth/',
                 'ach_relationships'     => 'ach/relationships/',
@@ -131,12 +131,12 @@ sub logout {
 
 sub accounts {
     my ($self) = @_;
+
     # TODO: Deal with next and previous results? Multiple accounts?
     my $return = $self->_send_request('GET',
                                       Finance::Robinhood::endpoint('accounts')
     );
-
-    return $self->_paginate($return, 'Finance::Robinhood::Account')
+    return $self->_paginate($return, 'Finance::Robinhood::Account');
 }
 #
 # Returns the porfillo summery of an account by url.
@@ -235,11 +235,11 @@ sub instrument {
 sub quote {
     my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
     if (scalar @_ > 1) {
-        my ($result)
-            = _send_request($self, 'GET',
+        my $return =
+            _send_request($self, 'GET',
               Finance::Robinhood::endpoint('quotes') . '?symbols=' . join ',',
               @_);
-        return _paginate($self, $result, 'Finance::Robinhood::Quote');
+        return _paginate($self, $return, 'Finance::Robinhood::Quote');
     }
     my $quote =
         _send_request($self, 'GET',
