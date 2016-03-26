@@ -94,8 +94,12 @@ as a hash with the following keys:
 
     my @positions = $account->positions( );
 
-Returns a paginated list of all securities this account has ever owned. The
-results are blessed Finance::Robinhood::Position objects.
+Returns a paginated list of I<all> securities this account has ever owned. The
+C<results> are blessed Finance::Robinhood::Position objects.
+
+    my $positions = $account->positions( {cursor => ...} )
+
+Paginated list of positions is continued.
 
 =head2 C<account_number( )>
 
