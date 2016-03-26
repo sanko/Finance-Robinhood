@@ -2,7 +2,7 @@ requires 'perl', '5.010';
 
 requires 'HTTP::Tiny', '0.056';
 requires 'Carp';
-requires 'Data::Dump';
+#requires 'Data::Dump';
 requires 'Moo';
 requires 'JSON::Tiny';
 requires 'strictures', '2';

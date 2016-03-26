@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp;
 our $VERSION = "0.01";
-use Data::Dump qw[ddx];
+#use Data::Dump qw[ddx];
 use Moo;
 use HTTP::Tiny '0.056';
 use JSON::Tiny qw[decode_json];
@@ -179,7 +179,6 @@ sub accounts {
 #    }
 #    return @rt;
 #}
-
 sub instrument {
 
 #my $msft      = Finance::Robinhood::instrument('MSFT');
@@ -262,7 +261,7 @@ sub _place_order {
 #warn Finance::Robinhood::endpoint('orders');
 #warn Finance::Robinhood::endpoint('accounts') . $self->account()->account_number() . '/';
 # Make API Call
-    ddx $instrument;
+    #ddx $instrument;
     my $rt = $self->_send_request(
         'GET',
         Finance::Robinhood::endpoint('orders'),
@@ -289,7 +288,7 @@ sub _place_order {
          )
         }
     );
-    ddx $rt;
+    #ddx $rt;
     return $rt ? Finance::Robinhood::Order->new($rt) : ();
 }
 
@@ -357,11 +356,51 @@ sub list_orders {
           next     => $next
     };
 }
+
 sub cancel_order {
     my ($self, $order) = @_;
     return $self->_send_request('GET', $order->_get_cancel(), {});
 }
 
+# TODO:
+#Pulls user info from API and stores it in Robinhood object
+
+#sub get_user_info {
+#    my $self = shift;
+#    my $response
+#        = $self->_send_request('GET', Finance::Robinhood::endpoint('user'));
+    #ddx $response;
+    #ddx $self->_send_request('GET', $response->{additional_info});
+    #ddx $self->_send_request('GET', $response->{basic_info});
+    #ddx $self->_send_request('GET', $response->{employment});
+    #ddx $self->_send_request('GET', $response->{id_info});
+    #ddx $self->_send_request('GET', $response->{international_info});
+    #ddx $self->_send_request('GET', $response->{investment_profile});
+
+    #res = self.session.get(self.endpoints['user'])
+    #if res.status_code == 200:
+    #    self.first_name = res.json()['first_name']
+    #    self.last_name = res.json()['last_name']
+    #else:
+    #    raise Exception("Could not get user info: " + res.text)
+    #res = self.session.get(self.endpoints['user/basic_info'])
+    #if res.status_code == 200:
+    #    res = res.json()
+    #    self.phone_number = res['phone_number']
+    #    self.city = res['city']
+    #    self.number_dependents = res['number_dependents']
+    #    self.citizenship = res['citizenship']
+    #    self.marital_status = res['marital_status']
+    #    self.zipcode = res['zipcode']
+    #    self.state_residence = res['state']
+    #    self.date_of_birth = res['date_of_birth']
+    #    self.address = res['address']
+    #    self.tax_id_ssn = res['tax_id_ssn']
+    #else:
+    #    raise Exception("Could not get basic user info: " + res.text)
+#}
+
+# Methods under construction
 sub cards {
     return shift->_send_request('GET', Finance::Robinhood::endpoint('cards'));
 }
@@ -372,6 +411,19 @@ sub dividends {
                              Finance::Robinhood::endpoint('dividends'));
 }
 
+sub notifications {
+    return
+        shift->_send_request('GET',
+                             Finance::Robinhood::endpoint('notifications'));
+}
+
+sub notifications_devices {
+    return
+        shift->_send_request('GET',
+                             Finance::Robinhood::endpoint(
+                                                      'notifications/devices')
+        );
+}
 
 sub create_watchlist {
     my ($self, $name) = @_;
@@ -448,6 +500,18 @@ sub _send_request {
 
     # Make API call.
     #warn $url;
+    #ddx($verb, $url,
+    #    {headers => {%headers,
+    #                 ($self && defined $self->token()
+    #                  ? (Authorization => 'Token ' . $self->token())
+    #                  : ()
+    #                 )
+    #     },
+    #     (defined $data ? (content => $client->www_form_urlencode($data))
+    #      : ()
+    #     )
+    #    }
+    #);
 
     #warn $post;
     $res = $client->request($verb, $url,
@@ -471,6 +535,7 @@ sub _send_request {
     if ($res->{status} != 200 && $res->{status} != 201) {
         carp 'Robinhood did not return a status code of 200 or 201. ('
             . $res->{status} . ')';
+        #ddx $res;
         return wantarray ? ((), $res) : ();
     }
 

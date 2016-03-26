@@ -43,7 +43,6 @@
       "runtime" : {
          "requires" : {
             "Carp" : "0",
-            "Data::Dump" : "0",
             "DateTime" : "0",
             "HTTP::Tiny" : "0.056",
             "JSON::Tiny" : "0",

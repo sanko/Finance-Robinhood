@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/sanko/Finance-Robinhood.svg?branch=master)](https://travis-ci.org/sanko/Finance-Robinhood)
 # NAME
 
 Finance::Robinhood - Trade stocks and ETFs with free brokerage Robinhood

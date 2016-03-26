@@ -3,3 +3,4 @@ Revision history for Perl extension Finance-Robinhood
 {{$NEXT}}
 
     - First public release
+    - This is an alpha dist. The API will be subject to change!
