@@ -321,6 +321,15 @@ sub place_sell_order {    # TODO: Test and document
                             $order_type, $bid_price);
 }
 
+sub order {
+    my ($self, $order_id) = @_;
+    my $result = $self->_send_request('GET',
+                    Finance::Robinhood::endpoint('orders') . $order_id . '/');
+    return $result ?
+        Finance::Robinhood::Order->new(rh => $self, %$result)
+        : ();
+}
+
 sub list_orders {
     my ($self, $type) = @_;
     my $result = $self->_send_request('GET',
@@ -638,6 +647,13 @@ objects. Cursor keys C<next> and C<previous> may also be present.
 You'll likely generate more than a hand full of buy and sell orders which
 would generate more than a single page of results. To gather them, use the
 C<next> or C<previous> values.
+
+=head2 C<order( ... )>
+
+    my $order = $rh->order( $order_id );
+
+Returns a Finance::Robinhood::Order object which contains information about an
+order and its status.
 
 =head2 C<quote( ... )>
 

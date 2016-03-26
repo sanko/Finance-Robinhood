@@ -53,10 +53,13 @@ use in future calls to `new( ... )`.
 Logs you out of Robinhood by invalidating the token returned by
 `login( ... )` and passed to `new(...)`.
 
-## `get_accounts( ... )`
+## `accounts( ... )`
 
-Returns a list of Finance::Robinhood::Account objects related to the
+Returns a paginated list of Finance::Robinhood::Account objects related to the
 currently logged in user.
+
+_Note_: Not sure why the API returns a paginated list of accounts. Perhaps
+in the future a single user will have access to multiple accounts?
 
 ## `instrument( ... )`
 
@@ -128,6 +131,13 @@ objects. Cursor keys `next` and `previous` may also be present.
 You'll likely generate more than a hand full of buy and sell orders which
 would generate more than a single page of results. To gather them, use the
 `next` or `previous` values.
+
+## `order( ... )`
+
+    my $order = $rh->order( $order_id );
+
+Returns a Finance::Robinhood::Order object which contains information about an
+order and its status.
 
 ## `quote( ... )`
 
