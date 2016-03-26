@@ -2,5 +2,7 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.01 2016-03-26T23:35:04Z
+
     - First public release
     - This is an alpha dist. The API will be subject to change!
