@@ -68,6 +68,7 @@ my %endpoints = (
                 'quotes'                  => 'quotes/',
                 'quotes/historicals'      => 'quotes/historicals/',
                 'user'                    => 'user/',
+                'user/id'                 => 'user/id/',
                 'user/additional_info'    => 'user/additional_info/',
                 'user/basic_info'         => 'user/basic_info/',
                 'user/employment'         => 'user/employment/',
@@ -176,6 +177,20 @@ sub user_id {
         = $self->_send_request('GET',
                                Finance::Robinhood::endpoint('user/id'));
     return $status == 200 ? $data->{id} : ();
+}
+
+sub basic_info {
+    my ($self) = @_;
+    my ($status, $data, $raw)
+        = $self->_send_request('GET',
+                             Finance::Robinhood::endpoint('user/basic_info'));
+    return $status != 200 ?
+        ()
+        : ((map { $_ => _2_datetime(delete $data->{$_}) }
+                qw[date_of_birth updated_at]
+           ),
+           map { m[url] ? () : ($_ => $data->{$_}) } keys %$data
+        );
 }
 
 sub accounts {
@@ -714,6 +729,12 @@ logged in account as a hash.
 
 Returns the ID Robinhood uses to identify this particular account. You could
 also gather this information with the C<user_info( )> method.
+
+=head2 C<basic_info( )>
+
+This method grabs more private information about the user including their date
+of birth, marital status, and the last four digits of their social security
+number.
 
 =head2 C<accounts( ... )>
 

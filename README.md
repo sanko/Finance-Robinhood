@@ -87,6 +87,12 @@ logged in account as a hash.
 Returns the ID Robinhood uses to identify this particular account. You could
 also gather this information with the `user_info( )` method.
 
+## `basic_info( )`
+
+This method grabs more private information about the user including their date
+of birth, marital status, and the last four digits of their social security
+number.
+
 ## `accounts( ... )`
 
 Returns a paginated list of Finance::Robinhood::Account objects related to the
