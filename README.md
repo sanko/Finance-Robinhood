@@ -80,6 +80,13 @@ the username and a token. You must provide a new password.
 Returns very basic information (name, email address, etc.) about the currently
 logged in account as a hash.
 
+## `user_id( )`
+
+    my $user_id = $rh->user_id( );
+
+Returns the ID Robinhood uses to identify this particular account. You could
+also gather this information with the `user_info( )` method.
+
 ## `accounts( ... )`
 
 Returns a paginated list of Finance::Robinhood::Account objects related to the
