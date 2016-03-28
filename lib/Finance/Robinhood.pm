@@ -453,12 +453,12 @@ sub create_watchlist {
 
 sub delete_watchlist {
     my ($self, $watchlist) = @_;
-    my ($result, $response)
+    my ($status, $result, $response)
         = $self->_send_request('DELETE',
                                Finance::Robinhood::endpoint('watchlists')
                                    . $watchlist->name() . '/'
         );
-    return $result->{status} == 204 ? 1 : !1;
+    return $status == 204;
 }
 
 sub watchlists {
