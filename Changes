@@ -2,7 +2,9 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
-    - Pasword reset
+    - Support for initiating and completing a password reset request
+    - User information methods
+    - Require IO::Socket::SSL. Thanks, smokers that failed on 0.01
 
 0.01 2016-03-26T23:35:04Z
 

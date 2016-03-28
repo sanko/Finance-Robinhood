@@ -1,14 +1,14 @@
 requires 'perl', '5.010';
 
 requires 'HTTP::Tiny', '0.056';
-requires 'Carp';
+requires 'Carp', '1.36';
 #requires 'Data::Dump';
-requires 'Moo';
-requires 'JSON::Tiny';
+requires 'Moo', '2.000002';
+requires 'JSON::Tiny', '0.54';
 requires 'strictures', '2';
-requires 'namespace::clean';
-
-requires 'DateTime';
+requires 'namespace::clean', '0.26';
+requires 'IO::Socket::SSL', '2.020';
+requires 'DateTime', '1.23';
 
 on 'test' => sub {
     requires 'Test::More', '0.98';

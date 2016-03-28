@@ -42,12 +42,13 @@
       },
       "runtime" : {
          "requires" : {
-            "Carp" : "0",
-            "DateTime" : "0",
+            "Carp" : "1.36",
+            "DateTime" : "1.23",
             "HTTP::Tiny" : "0.056",
-            "JSON::Tiny" : "0",
-            "Moo" : "0",
-            "namespace::clean" : "0",
+            "IO::Socket::SSL" : "2.020",
+            "JSON::Tiny" : "0.54",
+            "Moo" : "2.000002",
+            "namespace::clean" : "0.26",
             "perl" : "5.010",
             "strictures" : "2"
          }
