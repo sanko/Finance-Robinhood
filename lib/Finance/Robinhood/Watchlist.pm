@@ -68,10 +68,10 @@ sub add_instrument {
 
 sub delete_instrument {
     my ($self, $instrument) = @_;
-    my $ret =
+    my ($status, $ret) =
         $self->_get_rh()->_send_request('DELETE',
-              Finance::Robinhood::endpoint('watchlists') . $self->name() . '/' . $instrument->id() . '/') ? 1 : !1;
-    return $ret;
+              Finance::Robinhood::endpoint('watchlists') . $self->name() . '/' . $instrument->id() . '/');
+    return $status == 204;
 }
 1;
 
