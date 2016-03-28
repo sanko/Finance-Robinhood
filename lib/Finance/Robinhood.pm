@@ -193,6 +193,19 @@ sub basic_info {
         );
 }
 
+sub additional_info {
+    my ($self) = @_;
+    my ($status, $data, $raw)
+        = $self->_send_request('GET',
+                               Finance::Robinhood::endpoint(
+                                                       'user/additional_info')
+        );
+    return $status != 200 ?
+        ()
+        : ((map { $_ => _2_datetime(delete $data->{$_}) } qw[updated_at]),
+           map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
+}
+
 sub accounts {
     my ($self) = @_;
 
@@ -735,6 +748,11 @@ also gather this information with the C<user_info( )> method.
 This method grabs more private information about the user including their date
 of birth, marital status, and the last four digits of their social security
 number.
+
+=head2 C<additional_info( )>
+
+This method grabs information about the user that the SEC would like to know
+including any affilations with publically traded securities.
 
 =head2 C<accounts( ... )>
 

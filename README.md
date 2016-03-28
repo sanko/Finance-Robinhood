@@ -93,6 +93,11 @@ This method grabs more private information about the user including their date
 of birth, marital status, and the last four digits of their social security
 number.
 
+## `additional_info( )`
+
+This method grabs information about the user that the SEC would like to know
+including any affilations with publically traded securities.
+
 ## `accounts( ... )`
 
 Returns a paginated list of Finance::Robinhood::Account objects related to the
