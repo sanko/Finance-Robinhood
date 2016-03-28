@@ -98,6 +98,11 @@ number.
 This method grabs information about the user that the SEC would like to know
 including any affilations with publically traded securities.
 
+## `employment_info( )`
+
+This method grabs information about the user's current employment status and
+(if applicable) current job.
+
 ## `accounts( ... )`
 
 Returns a paginated list of Finance::Robinhood::Account objects related to the

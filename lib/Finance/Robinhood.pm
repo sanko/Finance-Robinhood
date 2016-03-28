@@ -206,6 +206,17 @@ sub additional_info {
            map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
 }
 
+sub employment_info {
+    my ($self) = @_;
+    my ($status, $data, $raw)
+        = $self->_send_request('GET',
+                             Finance::Robinhood::endpoint('user/employment'));
+    return $status != 200 ?
+        ()
+        : ((map { $_ => _2_datetime(delete $data->{$_}) } qw[updated_at]),
+           map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
+}
+
 sub accounts {
     my ($self) = @_;
 
@@ -753,6 +764,11 @@ number.
 
 This method grabs information about the user that the SEC would like to know
 including any affilations with publically traded securities.
+
+=head2 C<employment_info( )>
+
+This method grabs information about the user's current employment status and
+(if applicable) current job.
 
 =head2 C<accounts( ... )>
 
