@@ -58,11 +58,19 @@ Logs you out of Robinhood by forcing the token returned by
 _Note_: This will log you out _everywhere_ because Robinhood generates a
 single authorization token per account at a time!
 
-## `password_reset( ... )`
+## `forgot_password( ... )`
 
-    Finance::Robinhood::password_reset('contact@example.com');
+    Finance::Robinhood::forgot_password('contact@example.com');
 
 This requests a password reset email to be sent from Robinhood.
+
+## `change_password( ... )`
+
+    Finance::Robinhood::change_password( $username, $password, $token );
+
+Robinhood sends a link to the registered email address when the
+`password_reset( ... )` function is called. In the email there is a link with
+the username and a token. You must provide a new password.
 
 ## `accounts( ... )`
 

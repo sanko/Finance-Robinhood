@@ -62,7 +62,8 @@ my %endpoints = (
                 'cards'                 => 'midlands/notifications/stack/',
                 'cards/dismiss' => 'midlands/notifications/stack/%s/dismiss/',
                 'orders'        => 'orders/',
-                'password_reset'          => 'password_reset/request/',
+                'password_reset'          => 'password_reset/',
+                'password_reset/request'  => 'password_reset/request/',
                 'quote'                   => 'quote/',
                 'quotes'                  => 'quotes/',
                 'quotes/historicals'      => 'quotes/historicals/',
@@ -133,13 +134,26 @@ sub logout {
 }
 
 sub forgot_password {
-    my ($self, $email) = @_;
+    my $self = shift if ref $_[0] && ref $_[0] eq __PACKAGE__;
+    my ($email) = @_;
+
+    # Make API Call
+    my ($status, $rt, $raw)
+        = _send_request(undef, 'POST',
+                        Finance::Robinhood::endpoint('password_reset/request'),
+                        {email => $email});
+    return $status == 200;
+}
+
+sub change_password {
+    my $self = shift if ref $_[0] && ref $_[0] eq __PACKAGE__;
+    my ($user, $password, $token) = @_;
 
     # Make API Call
     my ($status, $rt, $raw)
         = _send_request(undef, 'POST',
                         Finance::Robinhood::endpoint('password_reset'),
-                        {email => $email});
+                        {username => $user, password => $password, token => $token});
     return $status == 200;
 }
 
@@ -651,11 +665,19 @@ C<login( ... )> or passed to C<new(...)> to expire.
 I<Note>: This will log you out I<everywhere> because Robinhood generates a
 single authorization token per account at a time!
 
-=head2 C<password_reset( ... )>
+=head2 C<forgot_password( ... )>
 
-    Finance::Robinhood::password_reset('contact@example.com');
+    Finance::Robinhood::forgot_password('contact@example.com');
 
 This requests a password reset email to be sent from Robinhood.
+
+=head2 C<change_password( ... )>
+
+    Finance::Robinhood::change_password( $username, $password, $token );
+
+Robinhood sends a link to the registered email address when the
+C<password_reset( ... )> function is called. In the email there is a link with
+the username and a token. You must provide a new password.
 
 =head2 C<accounts( ... )>
 
