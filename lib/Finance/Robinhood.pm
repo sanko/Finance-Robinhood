@@ -122,11 +122,15 @@ sub logout {
     my ($self, $username, $password) = @_;
 
     # Make API Call
-    my $rt = _send_request(undef, 'POST',
-                           Finance::Robinhood::endpoint('logout'));
+    my ($status, $rt, $raw)
+        = $self->_send_request('POST',
+                               Finance::Robinhood::endpoint('logout'));
+    return $status == 200 ?
 
-    # The old token is now invalid, so we might as well delete it
-    return $self->_set_token(());
+        # The old token is now invalid, so we might as well delete it
+        $self->_set_token(())
+        : ();
+}
 }
 
 sub accounts {
@@ -547,7 +551,7 @@ sub _send_request {
     my $rt = $json ? decode_json($json) : ();
 
     # Return happy.
-    return wantarray ? ($rt, $res) : $rt;
+    return wantarray ? ($res->{status}, $rt, $res) : $rt;
 }
 
 # Coerce strings into DateTime objects
@@ -630,10 +634,14 @@ use in future calls to C<new( ... )>.
 =head2 C<logout( )>
 
     my $token = $rh->login($user, $password);
+    # ...do some stuff... buy... sell... idk... stuff... and then...
     $rh->logout( ); # Goodbye!
 
-Logs you out of Robinhood by invalidating the token returned by
-C<login( ... )> and passed to C<new(...)>.
+Logs you out of Robinhood by forcing the token returned by
+C<login( ... )> or passed to C<new(...)> to expire.
+
+I<Note>: This will log you out I<everywhere> because Robinhood generates a
+single authorization token per account at a time!
 
 =head2 C<accounts( ... )>
 

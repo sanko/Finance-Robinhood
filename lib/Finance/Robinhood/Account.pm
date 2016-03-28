@@ -22,7 +22,7 @@ has $_ => (is => 'bare', required => 1, accessor => "_get_$_", weak_ref => 1)
 
 sub positions {
     my ($self, $type) = @_;
-    my $result = $self->_get_rh()->_send_request(
+    my ($status, $result, $raw) = $self->_get_rh()->_send_request(
         'GET',
         sprintf(Finance::Robinhood::endpoint('accounts/positions'),
                 $self->account_number()
@@ -34,7 +34,7 @@ sub positions {
             return '?nonzero=' . ($opt->{nonzero} ? 'true' : 'false')
                 if defined $opt->{nonzero};
             return '';
-            }
+        }
             ->($type)
     );
     return
@@ -44,7 +44,7 @@ sub positions {
 
 sub portfolio {
     my ($self) = @_;
-    my ($result)
+    my ($status, $result, $raw)
         = $self->_get_rh()->_send_request('GET',
                            Finance::Robinhood::endpoint('accounts/portfolios')
                                . $self->account_number()

@@ -8,17 +8,17 @@ use namespace::clean;
 require Finance::Robinhood;
 #
 has $_ => (is => 'ro', required => 1) for (qw[divisor multiplier url]);
-has $_ => (
-    is       => 'ro',
-    required => 1,
-    coerce   => \&Finance::Robinhood::_2_datetime
+has $_ => (is       => 'ro',
+           required => 1,
+           coerce   => \&Finance::Robinhood::_2_datetime
 ) for (qw[execution_date]);
 has $_ => (is => 'bare', required => 1, reader => "_get_$_")
     for (qw[instrument]);
 
 sub instrument {
-    my $result
-        = Finance::Robinhood::_send_request(undef, 'GET', shift->_get_instrument());
+    my ($status, $result, $raw)
+        = Finance::Robinhood::_send_request(undef, 'GET',
+                                            shift->_get_instrument());
     return $result ?
         map { Finance::Robinhood::Instrument->new($_) } @{$result->{results}}
         : ();

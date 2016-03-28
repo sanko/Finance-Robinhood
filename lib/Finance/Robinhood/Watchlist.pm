@@ -29,7 +29,7 @@ sub instruments {
     return $self->_get_rh()->_paginate(
         {results => [
              map {
-                 my ($ins)
+                     my ($status, $ins, $raw)
                      = $self->_get_rh()
                      ->_send_request('GET', $_->{instrument});
                  $ins
@@ -53,7 +53,7 @@ sub bulk_add_symbols {
         );
     return $result ?
         map {
-        my ($instrument)
+            my ($status, $instrument, $raw)
             = $self->_get_rh()->_send_request('GET', $_->{instrument});
         Finance::Robinhood::Instrument->new($instrument)
         } @{$result}
@@ -62,14 +62,16 @@ sub bulk_add_symbols {
 
 sub add_instrument {
     my ($self, $instrument) = @_;
-    return $self->_get_rh()->_send_request('POST', Finance::Robinhood::endpoint('watchlists') . $self->name() . '/');
+    my $ret = $self->_get_rh()->_send_request('POST', Finance::Robinhood::endpoint('watchlists') . $self->name() . '/');
+    return $ret;
 }
 
 sub delete_instrument {
     my ($self, $instrument) = @_;
-    return
+    my $ret =
         $self->_get_rh()->_send_request('DELETE',
               Finance::Robinhood::endpoint('watchlists') . $self->name() . '/' . $instrument->id() . '/') ? 1 : !1;
+    return $ret;
 }
 1;
 

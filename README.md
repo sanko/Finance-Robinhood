@@ -49,10 +49,14 @@ use in future calls to `new( ... )`.
 ## `logout( )`
 
     my $token = $rh->login($user, $password);
+    # ...do some stuff... buy... sell... idk... stuff... and then...
     $rh->logout( ); # Goodbye!
 
-Logs you out of Robinhood by invalidating the token returned by
-`login( ... )` and passed to `new(...)`.
+Logs you out of Robinhood by forcing the token returned by
+`login( ... )` or passed to `new(...)` to expire.
+
+_Note_: This will log you out _everywhere_ because Robinhood generates a
+single authorization token per account at a time!
 
 ## `accounts( ... )`
 

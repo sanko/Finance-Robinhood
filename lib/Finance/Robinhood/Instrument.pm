@@ -36,20 +36,22 @@ sub sell {
 sub splits {
 
     # Upcoming stock splits
-    my $data = Finance::Robinhood::_send_request(undef, 'GET',
-                                                 shift->_get_splits());
-    return [$data
-                && $data->{results} ?
+    my ($status, $result, $raw)
+        = Finance::Robinhood::_send_request(undef, 'GET',
+                                            shift->_get_splits());
+    return [$result
+                && $result->{results} ?
                 map { Finance::Robinhood::Instrument::Split->new($_) }
-                @{$data->{results}}
+                @{$result->{results}}
             : ()
     ];
 }
 
 sub market {
-    my $data = Finance::Robinhood::_send_request(undef, 'GET',
-                                                 shift->_get_market());
-    return $data ? Finance::Robinhood::Market->new($data) : ();
+    my ($status, $result, $raw)
+        = Finance::Robinhood::_send_request(undef, 'GET',
+                                            shift->_get_market());
+    return $result ? Finance::Robinhood::Market->new($result) : ();
 }
 1;
 
