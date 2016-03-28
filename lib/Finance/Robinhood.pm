@@ -119,7 +119,7 @@ sub login {
 }
 
 sub logout {
-    my ($self, $username, $password) = @_;
+    my ($self) = @_;
 
     # Make API Call
     my ($status, $rt, $raw)
@@ -131,6 +131,16 @@ sub logout {
         $self->_set_token(())
         : ();
 }
+
+sub forgot_password {
+    my ($self, $email) = @_;
+
+    # Make API Call
+    my ($status, $rt, $raw)
+        = _send_request(undef, 'POST',
+                        Finance::Robinhood::endpoint('password_reset'),
+                        {email => $email});
+    return $status == 200;
 }
 
 sub accounts {
@@ -642,6 +652,12 @@ C<login( ... )> or passed to C<new(...)> to expire.
 
 I<Note>: This will log you out I<everywhere> because Robinhood generates a
 single authorization token per account at a time!
+
+=head2 C<password_reset( ... )>
+
+    Finance::Robinhood::password_reset('contact@example.com');
+
+This requests a password reset email to be sent from Robinhood.
 
 =head2 C<accounts( ... )>
 

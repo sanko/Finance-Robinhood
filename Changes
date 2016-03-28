@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+    - Pasword reset
+
 0.01 2016-03-26T23:35:04Z
 
     - First public release
