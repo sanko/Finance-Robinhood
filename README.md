@@ -72,6 +72,14 @@ Robinhood sends a link to the registered email address when the
 `password_reset( ... )` function is called. In the email there is a link with
 the username and a token. You must provide a new password.
 
+## `user_info( )`
+
+    my %info = $rh->user_info( );
+    say 'My name is ' . $info{first_name} . ' ' . $info{last_name};
+
+Returns very basic information (name, email address, etc.) about the currently
+logged in account as a hash.
+
 ## `accounts( ... )`
 
 Returns a paginated list of Finance::Robinhood::Account objects related to the

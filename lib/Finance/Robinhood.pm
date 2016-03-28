@@ -140,8 +140,8 @@ sub forgot_password {
     # Make API Call
     my ($status, $rt, $raw)
         = _send_request(undef, 'POST',
-                        Finance::Robinhood::endpoint('password_reset/request'),
-                        {email => $email});
+                       Finance::Robinhood::endpoint('password_reset/request'),
+                       {email => $email});
     return $status == 200;
 }
 
@@ -153,8 +153,21 @@ sub change_password {
     my ($status, $rt, $raw)
         = _send_request(undef, 'POST',
                         Finance::Robinhood::endpoint('password_reset'),
-                        {username => $user, password => $password, token => $token});
+                        {username => $user,
+                         password => $password,
+                         token    => $token
+                        }
+        );
     return $status == 200;
+}
+
+sub user_info {
+    my ($self) = @_;
+    my ($status, $data, $raw)
+        = $self->_send_request('GET', Finance::Robinhood::endpoint('user'));
+    return $status == 200 ?
+        map { $_ => $data->{$_} } qw[email id last_name first_name username]
+        : ();
 }
 
 sub accounts {
@@ -678,6 +691,14 @@ This requests a password reset email to be sent from Robinhood.
 Robinhood sends a link to the registered email address when the
 C<password_reset( ... )> function is called. In the email there is a link with
 the username and a token. You must provide a new password.
+
+=head2 C<user_info( )>
+
+    my %info = $rh->user_info( );
+    say 'My name is ' . $info{first_name} . ' ' . $info{last_name};
+
+Returns very basic information (name, email address, etc.) about the currently
+logged in account as a hash.
 
 =head2 C<accounts( ... )>
 
