@@ -545,14 +545,12 @@ sub _send_request {
     );
 
     # Make sure the API returned happy
-    #ddx $res;
-    if ($res->{status} != 200 && $res->{status} != 201) {
-        carp 'Robinhood did not return a status code of 200 or 201. ('
-            . $res->{status} . ')';
-        #ddx $res;
-        return wantarray ? ((), $res) : ();
-    }
-
+    #if ($res->{status} != 200 && $res->{status} != 201) {
+    #    carp 'Robinhood did not return a status code of 200 or 201. ('
+    #        . $res->{status} . ')';
+    #    #ddx $res;
+    #    return wantarray ? ((), $res) : ();
+    #}
     # Decode the response.
     my $json = $res->{content};
 
