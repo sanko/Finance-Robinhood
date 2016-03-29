@@ -103,6 +103,11 @@ including any affilations with publically traded securities.
 This method grabs information about the user's current employment status and
 (if applicable) current job.
 
+## `investment_profile( )`
+
+This method grabs answers about the user's investment experience gathered by
+the survey performed during registration.
+
 ## `accounts( ... )`
 
 Returns a paginated list of Finance::Robinhood::Account objects related to the

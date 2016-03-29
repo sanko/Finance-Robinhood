@@ -217,6 +217,17 @@ sub employment_info {
            map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
 }
 
+sub investment_profile {
+    my ($self) = @_;
+    my ($status, $data, $raw)
+        = $self->_send_request('GET',
+                             Finance::Robinhood::endpoint('user/investment_profile'));
+    return $status != 200 ?
+        ()
+        : ((map { $_ => _2_datetime(delete $data->{$_}) } qw[updated_at]),
+           map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
+}
+
 sub accounts {
     my ($self) = @_;
 
@@ -769,6 +780,11 @@ including any affilations with publically traded securities.
 
 This method grabs information about the user's current employment status and
 (if applicable) current job.
+
+=head2 C<investment_profile( )>
+
+This method grabs answers about the user's investment experience gathered by
+the survey performed during registration.
 
 =head2 C<accounts( ... )>
 
