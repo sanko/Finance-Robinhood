@@ -49,7 +49,7 @@
             "JSON::Tiny" : "0.54",
             "Moo" : "2.000002",
             "namespace::clean" : "0.26",
-            "perl" : "5.010",
+            "perl" : "5.012",
             "strictures" : "2"
          }
       },
