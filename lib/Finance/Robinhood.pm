@@ -537,11 +537,18 @@ sub _paginate {    # Paginates results
     my $prev = $1 // ();
     $res->{next} =~ m[\?cursor=(.+)$] if defined $res->{next};
     my $next = $1 // ();
-    return {results => [map { $class->new(%$_, ($self ? (rh => $self) : ())) }
-                            @{$res->{results}}
-            ],
-            previous => $prev,
-            next     => $next
+    return {
+        results => (
+            defined $class ?
+                [
+                map {
+                    $class->new(%$_, ($self ? (rh => $self) : ()))
+                } @{$res->{results}}
+                ]
+            : $res->{results}
+        ),
+        previous => $prev,
+        next     => $next
     };
 }
 
