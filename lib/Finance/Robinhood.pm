@@ -74,6 +74,7 @@ my %endpoints = (
                 'user/basic_info'         => 'user/basic_info/',
                 'user/employment'         => 'user/employment/',
                 'user/investment_profile' => 'user/investment_profile/',
+                'user/identity_mismatch'  => 'user/identity_mismatch',
                 'watchlists'              => 'watchlists/',
                 'watchlists/bulk_add'     => 'watchlists/%s/bulk_add/'
 );
@@ -226,6 +227,16 @@ sub investment_profile {
         ()
         : ((map { $_ => _2_datetime(delete $data->{$_}) } qw[updated_at]),
            map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
+}
+
+sub identity_mismatch {
+    my ($self) = @_;
+    my ($status, $data, $raw)
+        = $self->_send_request('GET',
+                               Finance::Robinhood::endpoint(
+                                                     'user/identity_mismatch')
+        );
+    return $status == 200 ? $self->_paginate($data) : ();
 }
 
 sub accounts {
@@ -761,6 +772,10 @@ This method grabs information about the user's current employment status and
 
 This method grabs answers about the user's investment experience gathered by
 the survey performed during registration.
+
+=head2 C<identity_mismatch( )>
+
+Returns a paginated list of identification information.
 
 =head2 C<accounts( ... )>
 

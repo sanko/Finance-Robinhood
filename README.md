@@ -108,6 +108,10 @@ This method grabs information about the user's current employment status and
 This method grabs answers about the user's investment experience gathered by
 the survey performed during registration.
 
+## `identity_mismatch( )`
+
+Returns a paginated list of identification information.
+
 ## `accounts( ... )`
 
 Returns a paginated list of Finance::Robinhood::Account objects related to the
