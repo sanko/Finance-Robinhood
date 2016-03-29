@@ -3,14 +3,15 @@ use 5.010;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.01";
-#use Data::Dump qw[ddx];
+our $VERSION = "0.01_001";
 use Moo;
 use HTTP::Tiny '0.056';
 use JSON::Tiny qw[decode_json];
 use strictures 2;
 use namespace::clean;
 use DateTime;
+our $DEBUG = !1;
+require Data::Dump if $DEBUG;
 #
 use lib '../../lib';
 use Finance::Robinhood::Account;
@@ -87,15 +88,12 @@ sub endpoint {
 #
 my ($client, $res);
 my %headers = (
-    'Accept' => '*/*',
-
-    #'Accept-Encoding' => 'gzip, deflate',
-    'Accept-Language' =>
-        'en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5',
-    'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
-    'X-Robinhood-API-Version' => '1.0.0',
-    'Connection'              => 'keep-alive',
-    'User-Agent' => 'Robinhood/823 (iPhone; iOS 7.1.2; Scale/2.00)'
+         'Accept' => '*/*',
+         'Accept-Language' =>
+             'en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5',
+         'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
+         'X-Robinhood-API-Version' => '1.69.3',
+         'User-Agent' => 'Robinhood/823 (iPhone; iOS 7.1.2; Scale/2.00)'
 );
 sub errors { shift; carp shift; }
 
@@ -221,7 +219,9 @@ sub investment_profile {
     my ($self) = @_;
     my ($status, $data, $raw)
         = $self->_send_request('GET',
-                             Finance::Robinhood::endpoint('user/investment_profile'));
+                               Finance::Robinhood::endpoint(
+                                                    'user/investment_profile')
+        );
     return $status != 200 ?
         ()
         : ((map { $_ => _2_datetime(delete $data->{$_}) } qw[updated_at]),
@@ -360,7 +360,7 @@ sub _place_order {
 #warn Finance::Robinhood::endpoint('orders');
 #warn Finance::Robinhood::endpoint('accounts') . $self->account()->account_number() . '/';
 # Make API Call
-    #ddx $instrument;
+#ddx $instrument;
     my $rt = $self->_send_request(
         'GET',
         Finance::Robinhood::endpoint('orders'),
@@ -387,6 +387,7 @@ sub _place_order {
          )
         }
     );
+
     #ddx $rt;
     return $rt ? Finance::Robinhood::Order->new($rt) : ();
 }
@@ -461,44 +462,6 @@ sub cancel_order {
     return $self->_send_request('GET', $order->_get_cancel(), {});
 }
 
-# TODO:
-#Pulls user info from API and stores it in Robinhood object
-
-#sub get_user_info {
-#    my $self = shift;
-#    my $response
-#        = $self->_send_request('GET', Finance::Robinhood::endpoint('user'));
-    #ddx $response;
-    #ddx $self->_send_request('GET', $response->{additional_info});
-    #ddx $self->_send_request('GET', $response->{basic_info});
-    #ddx $self->_send_request('GET', $response->{employment});
-    #ddx $self->_send_request('GET', $response->{id_info});
-    #ddx $self->_send_request('GET', $response->{international_info});
-    #ddx $self->_send_request('GET', $response->{investment_profile});
-
-    #res = self.session.get(self.endpoints['user'])
-    #if res.status_code == 200:
-    #    self.first_name = res.json()['first_name']
-    #    self.last_name = res.json()['last_name']
-    #else:
-    #    raise Exception("Could not get user info: " + res.text)
-    #res = self.session.get(self.endpoints['user/basic_info'])
-    #if res.status_code == 200:
-    #    res = res.json()
-    #    self.phone_number = res['phone_number']
-    #    self.city = res['city']
-    #    self.number_dependents = res['number_dependents']
-    #    self.citizenship = res['citizenship']
-    #    self.marital_status = res['marital_status']
-    #    self.zipcode = res['zipcode']
-    #    self.state_residence = res['state']
-    #    self.date_of_birth = res['date_of_birth']
-    #    self.address = res['address']
-    #    self.tax_id_ssn = res['tax_id_ssn']
-    #else:
-    #    raise Exception("Could not get basic user info: " + res.text)
-#}
-
 # Methods under construction
 sub cards {
     return shift->_send_request('GET', Finance::Robinhood::endpoint('cards'));
@@ -565,6 +528,9 @@ sub watchlists {
     return $self->_paginate($result, 'Finance::Robinhood::Watchlist');
 }
 
+# ---------------- Private Helper Functions --------------- //
+# Send request to API.
+#
 sub _paginate {    # Paginates results
     my ($self, $res, $class) = @_;
     $res->{previous} =~ m[\?cursor=(.+)$] if defined $res->{previous};
@@ -579,9 +545,6 @@ sub _paginate {    # Paginates results
     };
 }
 
-# ---------------- Private Helper Functions --------------- //
-# Send request to API.
-#
 sub _send_request {
 
     # TODO: Expose errors (400:{detail=>'Not enough shares to sell'}, etc.)
@@ -598,19 +561,23 @@ sub _send_request {
     $client = HTTP::Tiny->new() if !defined $client;
 
     # Make API call.
-    #warn $url;
-    #ddx($verb, $url,
-    #    {headers => {%headers,
-    #                 ($self && defined $self->token()
-    #                  ? (Authorization => 'Token ' . $self->token())
-    #                  : ()
-    #                 )
-    #     },
-    #     (defined $data ? (content => $client->www_form_urlencode($data))
-    #      : ()
-    #     )
-    #    }
-    #);
+    if ($DEBUG) {
+        warn $url;
+        Data::Dump::ddx($verb, $url,
+                        {headers => {%headers,
+                                     ($self && defined $self->token()
+                                      ? (Authorization => 'Token '
+                                          . $self->token())
+                                      : ()
+                                     )
+                         },
+                         (defined $data
+                          ? (content => $client->www_form_urlencode($data))
+                          : ()
+                         )
+                        }
+        );
+    }
 
     #warn $post;
     $res = $client->request($verb, $url,
@@ -630,6 +597,8 @@ sub _send_request {
     );
 
     # Make sure the API returned happy
+    Data::Dump::ddx $res if $DEBUG;
+
     #if ($res->{status} != 200 && $res->{status} != 201) {
     #    carp 'Robinhood did not return a status code of 200 or 201. ('
     #        . $res->{status} . ')';
