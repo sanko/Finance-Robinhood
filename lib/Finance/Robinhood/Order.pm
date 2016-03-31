@@ -26,24 +26,9 @@ has $_ => (
 ) for (qw[rh]);
 has $_ => (is => 'bare', required => 1, accessor => "_get_$_")
     for (qw[account instrument]);
-
-sub BUILD {
-    my ($self, $args) = @_;
-    warn 'BUILD';
-
-    #die "foo and bar cannot be used at the same time"
-    #  if exists $args->{foo} && exists $args->{bar};
-}
 around BUILDARGS => sub {
-    warn 'BUILDARGS';
     my ($orig, $class, @args) = @_;
 
-    #  return { attr1 => $args[0] }
-    #    if @args == 1 && !ref $args[0];
-    #
-    #use Data::Dump;
-    #ddx \@args;
-    #ddx {@args};
     # If this is a new order, create it with the API first
     if (!defined {@args}->{url}) {
         my ($status, $data, $raw)

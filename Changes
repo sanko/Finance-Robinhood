@@ -2,8 +2,7 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
-0.01_002 2016-03-31T15:47:18Z
-
+    - New demo script: eg/buy.pl
     - Buy and Sell orders are now made by directly calling Finance::Robinhood::Order->new(...)
     - Orders are cancelled with $order->cancel()
     - Support for initiating and completing a password reset request
@@ -11,7 +10,7 @@ Revision history for Perl extension Finance-Robinhood
     - Document Finance::Robinhod::Instrument
     - Gather stock's fundamentals with aptly named ::Instrument->fundamentals()
     - Require IO::Socket::SSL and perl 5.12+
-    - This is an alpha dist. The API will be subject to change!
+    - Note: I'm narrowing it down but the API will still be subject to change!
 
 0.01 2016-03-26T23:35:04Z
 
