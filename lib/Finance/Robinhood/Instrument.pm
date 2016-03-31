@@ -3,7 +3,7 @@ use 5.010;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.01_002";
+our $VERSION = "0.02";
 use Moo;
 use JSON::Tiny qw[decode_json];
 use strictures 2;
@@ -113,7 +113,7 @@ The unique ID Robinhood uses to refer to this particular security.
 
 Margin ratio.
 
-=head C<splits( )>
+=head2 C<splits( )>
 
 Returns a list of current share splits for this security.
 
