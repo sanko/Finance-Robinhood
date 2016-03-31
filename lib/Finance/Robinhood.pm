@@ -102,21 +102,22 @@ sub login {
     my ($self, $username, $password) = @_;
 
     # Make API Call
-    my $rt = _send_request(undef, 'POST',
-                           Finance::Robinhood::endpoint('login'),
-                           {username => $username,
-                            password => $password
-                           }
-    );
+    my ($status, $data, $raw)
+        = _send_request(undef, 'POST',
+                        Finance::Robinhood::endpoint('login'),
+                        {username => $username,
+                         password => $password
+                        }
+        );
 
     # Make sure we have a token.
-    if (!$rt || !defined($rt->{token})) {
-        $self->errors('auth(): Robinhood API did not return a valid token.');
+    if ($status != 200 || !defined($data->{token})) {
+        $self->errors(join ' ', @{$data->{non_field_errors}});
         return !1;
     }
 
     # Set the token we just received.
-    return $self->_set_token($rt->{token});
+    return $self->_set_token($data->{token});
 }
 
 sub logout {
