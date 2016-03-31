@@ -12,25 +12,16 @@ use Finance::Robinhood::Market;
 use Finance::Robinhood::Instrument::Split;
 #
 has $_ => (is => 'ro', required => 1)
-    for (qw[bloomberg_unique id list_date maintenance_ratio name state symbol
-         tradeable url]);
+    for (
+       qw[bloomberg_unique id maintenance_ratio name state symbol tradeable]);
+has $_ => (is     => 'ro',
+           coerce => \&Finance::Robinhood::_2_datetime
+) for (qw[list_date]);
 has $_ => (is => 'bare', required => 1, reader => "_get_$_")
-    for (qw[market splits]);
+    for (qw[market splits fundamentals url]);
 
-sub get_quote {
-    return Finance::Robinhood->quote(shift->symbol());
-}
-
-sub buy {
-    my ($self, $quantity, $order_type, $bid_price) = @_;
-
-    # TODO: type and price are optional
-}
-
-sub sell {
-    my ($self, $quantity, $order_type, $ask_price) = @_;
-
-    # TODO: type and price are optional
+sub quote {
+    return Finance::Robinhood::quote(shift->symbol());
 }
 
 sub splits {
@@ -52,6 +43,13 @@ sub market {
         = Finance::Robinhood::_send_request(undef, 'GET',
                                             shift->_get_market());
     return $result ? Finance::Robinhood::Market->new($result) : ();
+}
+
+sub fundamentals {
+    my ($status, $result, $raw)
+        = Finance::Robinhood::_send_request(undef, 'GET',
+                                            shift->_get_fundamentals());
+    return $status == 200 ? $result : ();
 }
 1;
 
@@ -77,12 +75,77 @@ C<Finance::Robinhood->instrument(...)>.
 
 This class has several getters and a few methods as follows...
 
+=head2 C<quote( )>
+
+Makes an API call and returns a Finance::Robinhood::Quote object with current
+data on this security.
+
 =head2 C<market( ... )>
 
 This makes an API call for information this particular instrument is traded on.
 
-=head2
+=head2 C<tradeable( )>
 
+Returns a boolean value indicating whether this security is tradeable on
+Robinhood.
+
+=head2 C<symbol( )>
+
+The ticker symbol for this particular security.
+
+=head2 C<name( )>
+
+The actual name of the security.
+
+For example, AAPL would be 'Apple Inc. - Common Stock'.
+
+=head2 C<bloomberg_unique( )>
+
+Returns the Bloomberg Global ID (BBGID) for this security.
+
+See http://bsym.bloomberg.com/sym/
+
+=head2 C<id( )>
+
+The unique ID Robinhood uses to refer to this particular security.
+
+=head2 C<maintenance_ratio( )>
+
+Margin ratio.
+
+=head C<splits( )>
+
+Returns a list of current share splits for this security.
+
+=head2 C<fundamentals( )>
+
+Makes and API call and returns a hash containing the following data:
+
+=over
+
+=item C<average_volume>
+
+=item C<description>
+
+=item C<dividend_yield>
+
+=item C<high>
+
+=item C<high_52_weeks>
+
+=item C<low>
+
+=item C<low_52_weeks>
+
+=item C<market_cap>
+
+=item C<open>
+
+=item C<pe_ratio>
+
+=item C<volume>
+
+=back
 
 =head1 LEGAL
 

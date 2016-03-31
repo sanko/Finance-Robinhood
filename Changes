@@ -8,6 +8,8 @@ Revision history for Perl extension Finance-Robinhood
     - Orders are cancelled with $order->cancel()
     - Support for initiating and completing a password reset request
     - Loads of user information methods
+    - Document Finance::Robinhod::Instrument
+    - Gather stock's fundamentals with aptly named ::Instrument->fundamentals()
     - Require IO::Socket::SSL and perl 5.12+
     - This is an alpha dist. The API will be subject to change!
 
