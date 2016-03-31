@@ -3,7 +3,7 @@ use 5.012;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.01_001";
+our $VERSION = "0.01_002";
 use Moo;
 use HTTP::Tiny '0.056';
 use JSON::Tiny qw[decode_json];
@@ -93,7 +93,7 @@ my %headers = (
          'Accept-Language' =>
              'en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5',
          'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
-         'X-Robinhood-API-Version' => '1.69.3',
+         'X-Robinhood-API-Version' => '1.70.0',
          'User-Agent' => 'Robinhood/823 (iPhone; iOS 7.1.2; Scale/2.00)'
 );
 sub errors { shift; carp shift; }
