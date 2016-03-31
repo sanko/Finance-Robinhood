@@ -2,3 +2,6 @@ name = "Finance-Robinhood"
 badges = ["travis"]
 module_maker="ModuleBuildTiny"
 license="artistic_2"
+
+[release]
+pause_config = "C:/Strawberry/pause.upload"

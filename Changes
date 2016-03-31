@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.01_002 2016-03-31T15:47:18Z
+
     - Buy and Sell orders are now made by directly calling Finance::Robinhood::Order->new(...)
     - Orders are cancelled with $order->cancel()
     - Support for initiating and completing a password reset request
