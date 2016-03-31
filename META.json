@@ -43,7 +43,7 @@
       "runtime" : {
          "requires" : {
             "Carp" : "1.36",
-            "DateTime" : "1.23",
+            "DateTime" : "1.26",
             "HTTP::Tiny" : "0.056",
             "IO::Socket::SSL" : "2.020",
             "JSON::Tiny" : "0.54",

@@ -16,11 +16,13 @@ has $_ => (is       => 'ro',
 ) for (qw[created_at last_transaction_at updated_at]);
 has $_ => (is => 'bare', required => 1, accessor => "_get_$_")
     for (qw[cancel executions position]);
-has $_ => (is       => 'bare',
-           accessor => "_get_$_",
-           weak_ref => 1,
-           lazy     => 1,
-           builder  => sub { shift->_get_account()->_get_rh() }
+has $_ => (
+    is       => 'bare',
+    accessor => "_get_$_",
+    weak_ref => 1,
+
+    #lazy     => 1,
+    #builder  => sub { shift->account()->_get_rh() }
 ) for (qw[rh]);
 has $_ => (is => 'bare', required => 1, accessor => "_get_$_")
     for (qw[account instrument]);
@@ -63,6 +65,7 @@ around BUILDARGS => sub {
         croak $data->{detail} // join '  ',
             map { $_ . ': ' . join ' ', @{$data->{$_}} } keys %$data
             if $status == 400;
+        $data->{rh} = {@args}->{account}->_get_rh();
         @args = $data;
     }
     return $class->$orig(@args);
@@ -105,11 +108,12 @@ sub position {
 }
 
 sub cancel {
-    my $self       = shift;
+    my ($self) = @_;
     my $can_cancel = $self->_get_cancel();
-    return $can_cancel ?
-        $self->_get_rh()->_send_request('GET', $can_cancel)
+    $can_cancel ?
+        $self->_get_rh()->_send_request('POST', $can_cancel)
         : !1;
+    return $_[0] = $self->_get_rh()->locate_order($self->id());
 }
 1;
 
