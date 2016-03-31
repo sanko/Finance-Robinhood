@@ -455,17 +455,7 @@ sub list_orders {
     );
     $result // return !1;
     return () if !$result;
-    $result->{previous} =~ m[\?cursor=(.+)$] if defined $result->{previous};
-    my $prev = $1 // ();
-    $result->{next} =~ m[\?cursor=(.+)$] if defined $result->{next};
-    my $next = $1 // ();
-    return {
-          results => [
-              map { Finance::Robinhood::Order->new($_) } @{$result->{results}}
-          ],
-          previous => $prev,
-          next     => $next
-    };
+    return $self->_paginate($result, 'Finance::Robinhood::Order');
 }
 
 sub cancel_order {
