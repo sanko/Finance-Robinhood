@@ -15,9 +15,58 @@ has $_ => (is       => 'ro',
            coerce   => \&Finance::Robinhood::_2_datetime
 ) for (qw[created_at last_transaction_at updated_at]);
 has $_ => (is => 'bare', required => 1, accessor => "_get_$_")
-    for (qw[account cancel executions instrument position]);
-has $_ => (is => 'bare', required => 1, accessor => "_get_$_", weak_ref => 1)
-    for (qw[rh]);
+    for (qw[cancel executions position]);
+has $_ => (is       => 'bare',
+           accessor => "_get_$_",
+           weak_ref => 1,
+           lazy     => 1,
+           builder  => sub { shift->_get_account()->_get_rh() }
+) for (qw[rh]);
+has $_ => (is => 'bare', required => 1, accessor => "_get_$_")
+    for (qw[account instrument]);
+
+sub BUILD {
+    my ($self, $args) = @_;
+    warn 'BUILD';
+
+    #die "foo and bar cannot be used at the same time"
+    #  if exists $args->{foo} && exists $args->{bar};
+}
+around BUILDARGS => sub {
+    warn 'BUILDARGS';
+    my ($orig, $class, @args) = @_;
+
+    #  return { attr1 => $args[0] }
+    #    if @args == 1 && !ref $args[0];
+    #
+    #use Data::Dump;
+    #ddx \@args;
+    #ddx {@args};
+    # If this is a new order, create it with the API first
+    if (!defined {@args}->{url}) {
+        my ($status, $data, $raw)
+            = {@args}->{account}->_get_rh()->_send_request(
+            'POST',
+            Finance::Robinhood::endpoint('orders'),
+            {account    => {@args}->{account}->url(),
+             instrument => {@args}->{instrument}->url(),
+             symbol     => {@args}->{instrument}->symbol(),
+             (map {
+                  {@args}
+                  ->{$_} ? ($_ => {@args}->{$_}) : ()
+              } qw[type price trigger time_in_force stop_price side quantity]
+             )
+            }
+            );
+        croak join '  ', @{$data->{non_field_errors}}
+            if $data->{non_field_errors};
+        croak $data->{detail} // join '  ',
+            map { $_ . ': ' . join ' ', @{$data->{$_}} } keys %$data
+            if $status == 400;
+        @args = $data;
+    }
+    return $class->$orig(@args);
+};
 
 sub account {
     my $self = shift;
@@ -68,26 +117,153 @@ sub cancel {
 
 =head1 NAME
 
-Finance::Robinhood::Order - Securities trade order
+Finance::Robinhood::Order - Order to buy or sell a security
 
 =head1 SYNOPSIS
 
     use Finance::Robinhood;
 
-    my $rh = Finance::Robinhood->new( token => ... );
-    my $bill = $rh->instrument('MSFT');
-    my $order = $MC->place_buy_order({type => 'market', quantity => 3000, instrument => $bill});
+    my $rh    = Finance::Robinhood->new( token => ... );
+    my $acct  = $rh->accounts()->[0];
+    my $bill  = $rh->instrument('MSFT');
+    my $order = Finance::Robinhood::Order->new(
+        account       => $acct,
+        instrument    => $bill,
+        side          => 'buy',
+        type          => 'market',
+        trigger       => 'immediate',
+        time_in_force => 'gfd',
+        quantity      => 300
+    );
     $order->cancel(); # Oh, wait!
 
 =head1 DESCRIPTION
 
-This class represents a single buy or sell order. Objects are usually
-created by Finance::Robinhood with either the C<place_buy_order( ... )>. or
-C<place_sell_order( )> methods.
+This class represents a single buy or sell order. These are returned by the
+C<locate_order( ... )> and C<list_order( ... )> methods of Finance::Robinhood.
+
+Of course, you may place new orders with the C<new( ... )> constructor of this
+class.
 
 =head1 METHODS
 
 This class has several getters and a few methods as follows...
+
+=head2 C<new( ... )>
+
+The main event!
+
+Odds are, this is what you installed Finance::Robinhood to do: buy ad sell.
+
+Please note that if the call to C<new( ... )> fails for any reason (not enough
+buying power, etc.) this will C<confess( ... )> so it's probably a good idea
+to wrap this in an eval or something.
+
+There are some keys that are required for all orders and then there are some
+that only apply for certain types of orders like stop loss and stop limit.
+
+These are the required keys for all orders:
+
+=over
+
+=item C<account>
+
+A Finance::Robinhood::Account.
+
+=item C<instrument>
+
+A Finance::Robinhood::Instrument
+
+=item C<type>
+
+String which may be one of the following:
+
+=over
+
+=item C<stop>
+
+=item C<market>
+
+=item C<limit>
+
+=back
+
+=item C<trigger>
+
+Which may be one of the following:
+
+=over
+
+=item C<immediate>
+
+=item C<stop>
+
+=item C<on_close>
+
+=back
+
+=item C<time_in_force>
+
+Which may be one of the following:
+
+=over
+
+=item C<gfd>
+
+Good For Day
+
+=item C<gtc>
+
+Good 'Till Cancelled
+
+=item C<fok>
+
+Fill or Kill
+
+=item C<ioc>
+
+Immediate or Cancel
+
+=item C<opg>
+
+Opening
+
+=back
+
+=item C<side>
+
+This indicates whether you would like to...
+
+=over
+
+=item C<buy>
+
+=item C<sell>
+
+=back
+
+=item C<quantity>
+
+Is the number of shares this order covers. How many you would like to buy or
+sell.
+
+=back
+
+=head3 Market Sell Order
+
+When placed, market sell orders get whatever the current asking price is when
+triggered.
+
+
+
+# NAME          TYPE      SIDE      REQUIREMENTS
+# market        market    buy       trigger=immediate, type=market
+# limit         limit     buy       trigger=immediate, type=limit
+# stop_limit    limit     buy       trigger=stop, stop_price=%d, type=market
+# stop_loss
+# stop_limit    limit     sell      price={minimum}, stop_price=%d, trigger=stop, type=limt
+
+
 
 =head2 C<account( )>
 

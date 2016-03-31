@@ -2,9 +2,11 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+    - Buy and Sell orders are now made by directly calling Finance::Robinhood::Order->new(...)
     - Support for initiating and completing a password reset request
     - Loads of user information methods
     - Require IO::Socket::SSL and perl 5.12+
+    - This is an alpha dist. The API will be subject to change!
 
 0.01 2016-03-26T23:35:04Z
 

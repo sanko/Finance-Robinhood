@@ -15,7 +15,7 @@ has $_ => (is => 'ro', required => 1, writer => "_set_$_")
      cash_held_for_orders deactivated deposit_halted margin_balances
      max_ach_early_access_amount only_position_closing_trades sma
      sma_held_for_orders sweep_enabled type uncleared_deposits unsettled_funds
-     updated_at withdrawal_halted]
+     updated_at withdrawal_halted url]
     );
 has $_ => (is => 'bare', required => 1, accessor => "_get_$_", weak_ref => 1)
     for (qw[rh]);

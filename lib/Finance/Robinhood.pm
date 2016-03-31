@@ -362,76 +362,6 @@ sub quote_price {
     return shift->quote(shift)->[0]{last_trade_price};
 }
 
-sub _place_order {
-    my ($self, $instrument, $quantity, $side, $order_type, $bid_price,
-        $time_in_force, $stop_price)
-        = @_;
-    $time_in_force //= 'gfd';    # Good For Day
-
-#warn Finance::Robinhood::endpoint('orders');
-#warn Finance::Robinhood::endpoint('accounts') . $self->account()->account_number() . '/';
-# Make API Call
-#ddx $instrument;
-    my $rt = $self->_send_request(
-        'GET',
-        Finance::Robinhood::endpoint('orders'),
-        {account => Finance::Robinhood::endpoint('accounts')
-             . $self->account()->account_number() . '/',
-         instrument    => $instrument->url(),
-         quantity      => $quantity,
-         side          => $side,
-         symbol        => $instrument->symbol(),
-         time_in_force => $time_in_force,
-         trigger       => 'immediate',
-         type          => $order_type,
-         ($order_type eq 'market' ?
-              (    #price => $instrument->bid_price()
-              )
-          : $order_type eq 'limit'     ? (price      => $bid_price)
-          : $order_type eq 'stop_loss' ? (stop_price => $stop_price)
-          : $order_type eq 'stop_limit'
-          ? (price => $bid_price, stop_price => $stop_price)
-          :
-
-            # TODO: stop_limit and stop_loss order types are works in progress
-              ()
-         )
-        }
-    );
-
-    #ddx $rt;
-    return $rt ? Finance::Robinhood::Order->new($rt) : ();
-}
-
-sub place_buy_order {    # TODO: Test and document
-    my ($self, $instrument, $quantity, $order_type, $bid_price) = @_;
-
-# TODO: Make this accept a hash with keys:
-# { bid_price  => $int,
-#   quantity   => $int,
-#   instrument => Finance::Robinhood::Instrument,
-#   # Optional w/ defaults
-#   trigger    => 'gfd' (Good For Day, other options are 'gtc' Good Till Cancelled, 'oco' Order Cancels Other)
-#   time       => 'immediate' (execute trade now or cancel, other option is 'day' where the trade is canceled if not executed by day's end)
-#   type       => 'market'
-# }
-#    def place_sell_order(self, symbol, quantity, order_type=None, bid_price=None):
-#
-    return
-        $self->_place_order($instrument, $quantity, 'buy',
-                            $order_type, $bid_price);
-}
-
-sub place_sell_order {    # TODO: Test and document
-    my ($self, $instrument, $quantity, $order_type, $bid_price) = @_;
-
-#    def place_sell_order(self, symbol, quantity, order_type=None, bid_price=None):
-#
-    return
-        $self->_place_order($instrument, $quantity, 'sell',
-                            $order_type, $bid_price);
-}
-
 sub locate_order {
     my ($self, $order_id) = @_;
     my $result = $self->_send_request('GET',
@@ -456,11 +386,6 @@ sub list_orders {
     $result // return !1;
     return () if !$result;
     return $self->_paginate($result, 'Finance::Robinhood::Order');
-}
-
-sub cancel_order {
-    my ($self, $order) = @_;
-    return $self->_send_request('GET', $order->_get_cancel(), {});
 }
 
 # Methods under construction
@@ -809,30 +734,10 @@ them, use the C<next> or C<previous> values.
 Returns a sample list of top securities as Finance::Robinhood::Instrument
 objects along with C<next> and C<previous> cursor values.
 
-=head2 C<place_buy_order( ... )>
-
-    $rh->place_buy_order($instrument, $number, $type);
-
-Puts in an order to buy a given C<$number> of shares of the given
-C<$instrument>. Currently, only C<'market'> type sales have been tested. A
-Finance::Robinhood::Order object is returned if the order was sucessful.
-
-=head2 C<place_sell_order( ... )>
 =head2 C<locate_order( ... )>
 
-    $rh->place_sell_order($instrument, $number, $type);
     my $order = $rh->locate_order( $order_id );
 
-Puts in an order to sell a given C<$number> of shares of the given
-C<$instrument>. Currently, only C<'market'> type sales have been tested. A
-Finance::Robinhood::Order object is returned if the order was sucessful.
-
-=head2 C<cancel_order( ... )>
-
-    my $order = $rh->place_sell_order($instrument, $number, $type);
-    $rh->cancel_order( $order ); # Whoops! Nevermind!
-
-Cancels a buy or sell order if called before the order is executed.
 Returns a blessed Finance::Robinhood::Order object related to the about the
 buy or sell order with the given id.
 
