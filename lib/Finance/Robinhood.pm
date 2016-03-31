@@ -432,7 +432,7 @@ sub place_sell_order {    # TODO: Test and document
                             $order_type, $bid_price);
 }
 
-sub order {
+sub locate_order {
     my ($self, $order_id) = @_;
     my $result = $self->_send_request('GET',
                     Finance::Robinhood::endpoint('orders') . $order_id . '/');
@@ -828,8 +828,10 @@ C<$instrument>. Currently, only C<'market'> type sales have been tested. A
 Finance::Robinhood::Order object is returned if the order was sucessful.
 
 =head2 C<place_sell_order( ... )>
+=head2 C<locate_order( ... )>
 
     $rh->place_sell_order($instrument, $number, $type);
+    my $order = $rh->locate_order( $order_id );
 
 Puts in an order to sell a given C<$number> of shares of the given
 C<$instrument>. Currently, only C<'market'> type sales have been tested. A
@@ -841,6 +843,8 @@ Finance::Robinhood::Order object is returned if the order was sucessful.
     $rh->cancel_order( $order ); # Whoops! Nevermind!
 
 Cancels a buy or sell order if called before the order is executed.
+Returns a blessed Finance::Robinhood::Order object related to the about the
+buy or sell order with the given id.
 
 =head2 C<list_orders( ... )>
 
@@ -855,13 +859,6 @@ objects. Cursor keys C<next> and C<previous> may also be present.
 You'll likely generate more than a hand full of buy and sell orders which
 would generate more than a single page of results. To gather them, use the
 C<next> or C<previous> values.
-
-=head2 C<order( ... )>
-
-    my $order = $rh->order( $order_id );
-
-Returns a Finance::Robinhood::Order object which contains information about an
-order and its status.
 
 =head2 C<quote( ... )>
 

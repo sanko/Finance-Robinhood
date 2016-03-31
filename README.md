@@ -154,28 +154,12 @@ them, use the `next` or `previous` values.
 Returns a sample list of top securities as Finance::Robinhood::Instrument
 objects along with `next` and `previous` cursor values.
 
-## `place_buy_order( ... )`
+## `locate_order( ... )`
 
-    $rh->place_buy_order($instrument, $number, $type);
+    my $order = $rh->locate_order( $order_id );
 
-Puts in an order to buy a given `$number` of shares of the given
-`$instrument`. Currently, only `'market'` type sales have been tested. A
-Finance::Robinhood::Order object is returned if the order was sucessful.
-
-## `place_sell_order( ... )`
-
-    $rh->place_sell_order($instrument, $number, $type);
-
-Puts in an order to sell a given `$number` of shares of the given
-`$instrument`. Currently, only `'market'` type sales have been tested. A
-Finance::Robinhood::Order object is returned if the order was sucessful.
-
-## `cancel_order( ... )`
-
-    my $order = $rh->place_sell_order($instrument, $number, $type);
-    $rh->cancel_order( $order ); # Whoops! Nevermind!
-
-Cancels a buy or sell order if called before the order is executed.
+Returns a blessed Finance::Robinhood::Order object related to the about the
+buy or sell order with the given id.
 
 ## `list_orders( ... )`
 
@@ -190,13 +174,6 @@ objects. Cursor keys `next` and `previous` may also be present.
 You'll likely generate more than a hand full of buy and sell orders which
 would generate more than a single page of results. To gather them, use the
 `next` or `previous` values.
-
-## `order( ... )`
-
-    my $order = $rh->order( $order_id );
-
-Returns a Finance::Robinhood::Order object which contains information about an
-order and its status.
 
 ## `quote( ... )`
 
