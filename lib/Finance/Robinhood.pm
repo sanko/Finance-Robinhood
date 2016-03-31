@@ -549,20 +549,11 @@ sub _send_request {
     return wantarray ? ($res->{status}, $rt, $res) : $rt;
 }
 
-# Coerce strings into DateTime objects
+# Coerce ISO 8601-ish strings into DateTime objects
 sub _2_datetime {
+    return if !$_[0];
     $_[0]
         =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
-
-    # "2016-03-11T17:59:48.026546Z",
-    #warn 'Y:' . $1;
-    #warn 'M:' . $2;
-    #warn 'D:' . $3;
-    #warn 'h:' . $4;
-    #warn 'm:' . $5;
-    #warn 's:' . $6;
-    #warn 'n:' . $7;
-    #warn 'z:' . $8;
     DateTime->new(year  => $1,
                   month => $2,
                   day   => $3,
