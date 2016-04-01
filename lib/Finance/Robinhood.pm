@@ -738,8 +738,8 @@ objects along with C<next> and C<previous> cursor values.
 
     my $order = $rh->locate_order( $order_id );
 
-Returns a blessed Finance::Robinhood::Order object related to the about the
-buy or sell order with the given id.
+Returns a blessed Finance::Robinhood::Order object related to the buy or sell
+order with the given id.
 
 =head2 C<list_orders( ... )>
 
@@ -774,7 +774,8 @@ form does not require an account and may be called without ever logging in.
 
     my $watchlist = $rh->create_watchlist( 'Energy' );
 
-You can create new Finance::Robinhood::Watchlist objects.
+You can create new Finance::Robinhood::Watchlist objects with this. Here, your
+code would create a new one named "Energy".
 
 =head2 C<delete_watchlist( ... )>
 
@@ -787,7 +788,8 @@ You may remove a watchlist with this method.
     my $watchlists = $rh->watchlists( );
 
 Returns all your current watchlists as a paginated list of
-Finance::Robinhood::Watchlists.
+Finance::Robinhood::Watchlists. Robinhood's apps uses a watchlist named
+'Default' so unless you're keen on wiping that out, best not to delete it.
 
     my $more = $rh->watchlists( { cursor => $watchlists->{next} } );
 
