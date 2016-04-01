@@ -28,10 +28,11 @@ head over to the [Finance::Robinhood::Order](https://metacpan.org/pod/Finance::R
 # METHODS
 
 Finance::Robinhood wraps a powerfullly capable API which has many options.
-I've attempted to organize everything according to how and when they are
-used... Let's start at the very beginning: Let's log in!
+There are parts of this package that are object oriented and others which are
+functional. I've attempted to organize everything according to how and when
+they are used... Let's start at the very beginning: Let's log in!
 
-## Logging In
+# Logging In
 
 Robinhood requires an authorization token for most API calls. To get this
 token, you must either pass it as an argument to `new( ... )` or log in with
@@ -63,8 +64,14 @@ anymore.
 Logging in allows you to buy and sell securities with your Robinhood account.
 You must do this if you do not have an authorization token.
 
-If login was sucessful, a valid token is returned which should be stored for
-use in future calls to `new( ... )`.
+If login was sucessful, a valid token is returned and may also be had by
+calling `token( )`. The token should be kept secret and stored for use in
+future calls to `new( ... )`.
+
+## `token( )`
+
+Now that you've logged in, you might want to securely store authorization info
+to pass to `new( ... )` next time. Get the authorization token here.
 
 ## `logout( )`
 
@@ -72,11 +79,12 @@ use in future calls to `new( ... )`.
     # ...do some stuff... buy... sell... idk... stuff... and then...
     $rh->logout( ); # Goodbye!
 
-Logs you out of Robinhood by forcing the token returned by
-`login( ... )` or passed to `new(...)` to expire.
+Logs you out of Robinhood by forcing the token returned by `login( ... )` or
+passed to `new(...)` to expire.
 
 _Note_: This will log you out _everywhere_ because Robinhood generates a
-single authorization token per account at a time!
+single authorization token per account at a time! This is good in rare case
+your token is stolen.
 
 ## `forgot_password( ... )`
 
