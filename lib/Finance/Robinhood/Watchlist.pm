@@ -3,7 +3,7 @@ use 5.010;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.02_001";
+our $VERSION = "0.03";
 use Moo;
 use JSON::Tiny qw[decode_json];
 use strictures 2;

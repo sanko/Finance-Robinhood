@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.03 2016-04-01T21:55:25Z
+
     - Major documentation update
     - Order type cheat sheet in Finance::Robinhood::Order
     - Gather historical data on a security with Finance::Robinhood::historicals(...) or with ::Instrument->historicals(...)

@@ -71,6 +71,6 @@
          "web" : "https://github.com/sanko/Finance-Robinhood"
       }
    },
-   "version" : "0.02_001",
+   "version" : "0.03",
    "x_serialization_backend" : "JSON::PP version 2.27300"
 }
