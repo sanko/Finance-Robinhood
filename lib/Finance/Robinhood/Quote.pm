@@ -27,7 +27,7 @@ sub refresh {
 
 =head1 NAME
 
-Finance::Robinhood::Quote - Securities quote data
+Finance::Robinhood::Quote - Securities Quote Data
 
 =head1 SYNOPSIS
 
@@ -53,29 +53,45 @@ actions that occurred at any time prior to the next day's open.
 
 =head2 C<ask_price( )>
 
+The best price per share being asked for by a market maker.
 
 =head2 C<ask_size( )>
 
+Amount of a security being offered to sell at the ask price.
 
 =head2 C<bid_price( )>
 
+The best price a buyer is willing to pay for a security.
 
 =head2 C<bid_size( )>
 
+The total number of shares in all orders to buy this particular security.
 
 =head2 C<last_extended_hours_trade_price( )>
 
+The last price at which this security was trading ended on the previous close
+date.
 
 =head2 C<last_trade_price( )>
 
+The price at which the most recent trade for this security was executed.
 
 =head2 C<previous_close( )>
 
+The price of the security per share at the close of the previous trading day.
+
 =head2 C<previous_close_date( )>
+
+The date of the last trading day for this security.
 
 =head2 C<trading_halted( )>
 
+If trading is halted on a security or its market, this will be a true value.
+
 =head2 C<updated_at( )>
+
+The timestamp of the data. This is very important in cases where prices are
+being tracked.
 
 =head2 C<refresh( )>
 

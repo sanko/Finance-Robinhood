@@ -58,8 +58,6 @@ This class has several getters and a few methods as follows...
 
 =head2 C<account( )>
 
-    my $acct = $order->account();
-
 Returns the Finance::Robinhood::Account object related to this order.
 
 =head2 C<average_buy_price( )>

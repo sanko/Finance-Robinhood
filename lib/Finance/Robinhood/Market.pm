@@ -24,21 +24,22 @@ sub todays_hours {
 
 =head1 NAME
 
-Finance::Robinhood::Market - Basic market information
+Finance::Robinhood::Market - Basic Market Information
 
 =head1 SYNOPSIS
 
     use Finance::Robinhood::Market;
 
-    my $MC = Finance::Robinhood::Instrument::search('APPL');
+    my $MC = Finance::Robinhood::instrument('APPL');
     my $market = $MC->market();
     print $market->acronym() . ' is based in ' . $market->city();
 
 =head1 DESCRIPTION
 
 This class represents a single financial market. Objects are usually
-created by Finance::Robinhood. If you intend to create your own, please use
-C<Finance::Robinhood->instrument(...)->market()>.
+created by Finance::Robinhood. If you're looking for information about the
+market where a particular security is traded, use
+C<<<Finance::Robinhood::instrument($symbol)->market()>>>.
 
 =head1 METHODS
 

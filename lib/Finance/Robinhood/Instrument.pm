@@ -80,7 +80,7 @@ This class has several getters and a few methods as follows...
 Makes an API call and returns a Finance::Robinhood::Quote object with current
 data on this security.
 
-=head2 C<market( ... )>
+=head2 C<market( )>
 
 This makes an API call for information this particular instrument is traded on.
 

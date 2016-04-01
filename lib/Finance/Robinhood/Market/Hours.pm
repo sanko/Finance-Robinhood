@@ -33,7 +33,7 @@ sub previous_open_hours {
 
 =head1 NAME
 
-Finance::Robinhood::Market::Hours - Trading hours for a particular market
+Finance::Robinhood::Market::Hours - Trading Hours for a Particular Market
 
 =head1 SYNOPSIS
 
@@ -54,7 +54,8 @@ This class has several getters and a few methods as follows...
 
 =head2 C<is_open( )>
 
-Boolean which may represents whethe or not the market is currently open.
+Boolean which may represents whethe or not the market is currently open. Note
+that this value is cached and may not be accurate.
 
 =head2 C<date( )>
 
