@@ -258,7 +258,44 @@ symbols, the objects are returned as a paginated list.
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.
 
-# Informational Card and Notifications
+## `historicals( ... )`
+
+    # Snapshots of basic quote data for every five minutes of the previous day
+    my $msft = $rh->historicals('MSFT', '5minute', 'day');
+
+You may retrive historical quote data with this method. The first argument is
+a symbol. The second is an interval time and must be either `5minute`,
+`10minute`, `day`, or `week`.
+
+The third argument is a span of time indicating how far into the past you
+would like to retrieve and may be one of the following: `day`, `week`,
+`year`, or `5year`.
+
+So, to get five years of weekly historical data for Apple, you would write...
+
+    my $iHist = $rh->historicals('AAPL', 'week', '5year');
+    my $gates = Finance::Robinhood::historicals('MSFT', 'week', '5year');
+
+This method returns a list of hashes which in turn contain the following keys:
+
+- `begins_at` - A DateTime object indicating the timestamp of this block
+of data.
+- `close_price` - The most recent close price during this interval.
+- `high_price` - The most recent high price during this interval.
+- `interpolated` - Indicates whether the data was a statistical estimate.
+This is a boolean value.
+- `low_price` - The most recent low price during this interval.
+- `open_price` - The most recent open price during this interval.
+- `volume` - The trading volume during this interval.
+
+Note that if you already have a Finance::Robinhood::Instrument object, you may
+want to just call the object's `historicals( $interval, $span )` method which
+wraps this.
+
+This function has both functional and object oriented forms. The functional
+form does not require an account and may be called without ever logging in.
+
+# Informational Cards and Notifications
 
 TODO
 

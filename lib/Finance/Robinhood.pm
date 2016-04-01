@@ -359,8 +359,20 @@ sub quote {
         : ();
 }
 
-sub quote_price {
-    return shift->quote(shift)->[0]{last_trade_price};
+sub historicals {
+    my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
+    my ($symbol, $interval, $span) = @_;
+    my ($status, $data, $raw)
+        = _send_request($self,
+                        'GET',
+                        Finance::Robinhood::endpoint('quotes/historicals')
+                            . "$symbol/?interval=$interval&$span"
+        );
+    return if $status != 200;
+    for (@{$data->{historicals}}) {
+        $_->{begins_at} = _2_datetime($_->{begins_at});
+    }
+    return $data->{historicals};
 }
 
 sub locate_order {
@@ -374,16 +386,17 @@ sub locate_order {
 
 sub list_orders {
     my ($self, $type) = @_;
-    my $result = $self->_send_request('GET',
-                                      Finance::Robinhood::endpoint('orders')
-                                          . (ref $type
-                                                 && ref $type eq 'HASH'
-                                                 && defined $type->{cursor}
-                                             ?
-                                                 '?cursor=' . $type->{cursor}
-                                             : ''
-                                          )
-    );
+    my $result =
+        $self->_send_request('GET',
+                             Finance::Robinhood::endpoint('orders')
+                                 . (ref $type
+                                        && ref $type eq 'HASH'
+                                        && defined $type->{cursor}
+                                    ?
+                                        '?cursor=' . $type->{cursor}
+                                    : ''
+                                 )
+        );
     $result // return !1;
     return () if !$result;
     return $self->_paginate($result, 'Finance::Robinhood::Order');
@@ -416,11 +429,10 @@ sub notifications_devices {
 
 sub create_watchlist {
     my ($self, $name) = @_;
-    my $result = $self->_send_request('POST',
-                                      Finance::Robinhood::endpoint(
-                                                                'watchlists'),
-                                      {name => $name}
-    );
+    my $result =
+        $self->_send_request('POST',
+                             Finance::Robinhood::endpoint('watchlists'),
+                             {name => $name});
     return $result ?
         Finance::Robinhood::Watchlist->new(rh => $self, %$result)
         : ();
@@ -438,18 +450,17 @@ sub delete_watchlist {
 
 sub watchlists {
     my ($self, $cursor) = @_;
-    my $result = $self->_send_request('GET',
-                                      Finance::Robinhood::endpoint(
-                                                                 'watchlists')
-                                          . (
-                                            ref $cursor
-                                                && ref $cursor eq 'HASH'
-                                                && defined $cursor->{cursor}
-                                            ?
-                                                '?cursor=' . $cursor->{cursor}
-                                            : ''
-                                          )
-    );
+    my $result =
+        $self->_send_request('GET',
+                             Finance::Robinhood::endpoint('watchlists')
+                                 . (ref $cursor
+                                        && ref $cursor eq 'HASH'
+                                        && defined $cursor->{cursor}
+                                    ?
+                                        '?cursor=' . $cursor->{cursor}
+                                    : ''
+                                 )
+        );
     $result // return !1;
     return () if !$result;
     return $self->_paginate($result, 'Finance::Robinhood::Watchlist');
@@ -834,7 +845,54 @@ symbols, the objects are returned as a paginated list.
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.
 
-=head1 Informational Card and Notifications
+=head2 C<historicals( ... )>
+
+    # Snapshots of basic quote data for every five minutes of the previous day
+    my $msft = $rh->historicals('MSFT', '5minute', 'day');
+
+You may retrive historical quote data with this method. The first argument is
+a symbol. The second is an interval time and must be either C<5minute>,
+C<10minute>, C<day>, or C<week>.
+
+The third argument is a span of time indicating how far into the past you
+would like to retrieve and may be one of the following: C<day>, C<week>,
+C<year>, or C<5year>.
+
+So, to get five years of weekly historical data for Apple, you would write...
+
+    my $iHist = $rh->historicals('AAPL', 'week', '5year');
+    my $gates = Finance::Robinhood::historicals('MSFT', 'week', '5year');
+
+This method returns a list of hashes which in turn contain the following keys:
+
+=over
+
+=item C<begins_at> - A DateTime object indicating the timestamp of this block
+of data.
+
+=item C<close_price> - The most recent close price during this interval.
+
+=item C<high_price> - The most recent high price during this interval.
+
+=item C<interpolated> - Indicates whether the data was a statistical estimate.
+This is a boolean value.
+
+=item C<low_price> - The most recent low price during this interval.
+
+=item C<open_price> - The most recent open price during this interval.
+
+=item C<volume> - The trading volume during this interval.
+
+=back
+
+Note that if you already have a Finance::Robinhood::Instrument object, you may
+want to just call the object's C<historicals( $interval, $span )> method which
+wraps this.
+
+This function has both functional and object oriented forms. The functional
+form does not require an account and may be called without ever logging in.
+
+=head1 Informational Cards and Notifications
 
 TODO
 

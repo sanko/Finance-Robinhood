@@ -24,6 +24,10 @@ sub quote {
     return Finance::Robinhood::quote(shift->symbol());
 }
 
+sub historicals {
+    return Finance::Robinhood::historicals(shift->symbol(), shift, shift);
+}
+
 sub splits {
 
     # Upcoming stock splits
@@ -79,6 +83,21 @@ This class has several getters and a few methods as follows...
 
 Makes an API call and returns a Finance::Robinhood::Quote object with current
 data on this security.
+
+=head2 C<historicals( ... )>
+
+    $instrument->historicals( 'week', 'year' );
+
+You may retrive historical quote data with this method which wraps the
+function found in Finance::Robinhood. Please see the documentation for that
+function for more info on what data is returned.
+
+The first argument is an interval time and must be either C<5minute>,
+C<10minute>, C<day>, or C<week>.
+
+The second argument is a span of time indicating how far into the past you
+would like to retrieve and may be one of the following: C<day>, C<week>,
+C<year>, or C<5year>.
 
 =head2 C<market( )>
 
