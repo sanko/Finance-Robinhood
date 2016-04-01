@@ -21,9 +21,13 @@ Finance::Robinhood - Trade stocks and ETFs with free brokerage Robinhood
 This modules allows you to buy, sell, and gather information related to stocks
 and ETFs traded in the U.S. Please see the [Legal](https://metacpan.org/pod/LEGAL) section below.
 
+By the way, if you're wondering how to buy and sell without lot of reading,
+head over to the [Finance::Robinhood::Order](https://metacpan.org/pod/Finance::Robinhood::Order) and pay special attention to the
+[order cheat sheet](https://metacpan.org/pod/Finance::Robinhood::Order#Order-Cheat-Sheet).
+
 # METHODS
 
-Finance::Robinhood is...
+Finance::Robinhood is object oriented. Here is the current list of methods:
 
 ## `new( ... )`
 

@@ -3,7 +3,7 @@ use 5.012;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.02";
+our $VERSION = "0.02_001";
 use Moo;
 use HTTP::Tiny '0.056';
 use JSON::Tiny qw[decode_json];
@@ -597,9 +597,13 @@ Finance::Robinhood - Trade stocks and ETFs with free brokerage Robinhood
 This modules allows you to buy, sell, and gather information related to stocks
 and ETFs traded in the U.S. Please see the L<Legal|LEGAL> section below.
 
+By the way, if you're wondering how to buy and sell without lot of reading,
+head over to the L<Finance::Robinhood::Order> and pay special attention to the
+L<order cheat sheet|Finance::Robinhood::Order/"Order Cheat Sheet">.
+
 =head1 METHODS
 
-Finance::Robinhood is...
+Finance::Robinhood is object oriented. Here is the current list of methods:
 
 =head2 C<new( ... )>
 

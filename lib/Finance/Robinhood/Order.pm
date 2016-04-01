@@ -150,6 +150,7 @@ to wrap this in an eval or something.
 
 There are some keys that are required for all orders and then there are some
 that only apply for certain types of orders like stop loss and stop limit.
+Please see the L<order cheat sheet|/"Order Cheat Sheet"> below.
 
 These are the required keys for all orders:
 
@@ -238,21 +239,23 @@ sell.
 
 =back
 
-=head3 Market Sell Order
+In addition to the above, there are some situational values you may need to
+pass. These include:
 
-When placed, market sell orders get whatever the current asking price is when
-triggered.
+=over
 
+=item C<price>
 
+This is used in limit, stop limit, and stop loss orders where the order will
+only execute when the going rate hits the given price.
 
-# NAME          TYPE      SIDE      REQUIREMENTS
-# market        market    buy       trigger=immediate, type=market
-# limit         limit     buy       trigger=immediate, type=limit
-# stop_limit    limit     buy       trigger=stop, stop_price=%d, type=market
-# stop_loss
-# stop_limit    limit     sell      price={minimum}, stop_price=%d, trigger=stop, type=limt
+=item C<stop_price>
 
+This is used in stop limit and stop loss orders where the trigger is C<stop>
+and the order is automatically converted when the price hits the given
+C<stop_price>.
 
+=back
 
 =head2 C<account( )>
 
@@ -304,7 +307,7 @@ Total current value of the order.
 
 Total number of shares ordered or put up for sale.
 
-=head2 C<cumulative_quantity>
+=head2 C<cumulative_quantity( )>
 
 Total number of shares which have executed so far.
 
@@ -319,16 +322,9 @@ Indicates which side of the deal you were on: C<buy> or C<sell>.
 =head2 C<state( )>
 
 The current state of the order. For example, completly executed orders have a
-C<filled> state. The current state may be any of the following:
-
-    queued
-    unconfirmed
-    confirmed
-    partially_filled
-    filled
-    rejected
-    cancelled
-    failed
+C<filled> state. The current state may be any of the following: C<queued>,
+C<unconfirmed>, C<confirmed>, C<partially_filled>, C<filled>, C<rejected>,
+C<cancelled>, C<failed>.
 
 =head2 C<stop_price( )>
 
@@ -346,23 +342,14 @@ This may be one of the following:
 
 =head2 C<trigger( )>
 
-May be one of the following:
-
-    immediate
-    on_close
-    stop
+May be one of the following: C<immediate>, C<on_close>, C<stop>
 
 I<Note>: Support for C<opg> orders may indicate support for C<loo> and C<moo>
 triggers but I have yet to test it.
 
 =head2 C<type( )>
 
-May be one of the following:
-
-    market
-    limit
-    stop_limit
-    stop_loss
+May be one of the following: C<market> or C<limit>.
 
 =head2 C<created_at( )>
 
@@ -375,6 +362,118 @@ The timestamp of the most recent execution.
 =head2 C<upated_at( )>
 
 Timestamp of the last change made to this order.
+
+=head1 Order Cheat Sheet
+
+This is a little cheat sheet for creating certain types of orders:
+
+=head2 Market Sell
+
+A market sell gets you whatever the current ask price is at the exact moment
+of execution.
+
+    my $order = Finance::Robinhood::Order->new(
+        type    => 'market',
+        trigger => 'immediate',
+        side    => 'sell',
+        ...
+    );
+
+=head2 Limit Sell
+
+Limit sells allow you specify the minimum amount you're willing to receive per
+share.
+
+    my $order = Finance::Robinhood::Order->new(
+        type    => 'limit',
+        trigger => 'immediate',
+        price   => 200.45,
+        side    => 'sell',
+        ...
+    );
+
+=head2 Stop Loss Sell
+
+When the bid price drops below the stop price, the order is converted to a
+market order.
+
+    my $order = Finance::Robinhood::Order->new(
+        type       => 'market',
+        trigger    => 'stop',
+        stop_price => 200.45,
+        side       => 'sell',
+        ...
+    );
+
+=head2 Stop Limit Sell
+
+When the bid price drops below the stop price, the order is converted to a
+limit order at the given price. In the following example, when the price
+reaches $200.45, the order is converted into a limit order at $199.5 a share.
+
+    my $order = Finance::Robinhood::Order->new(
+        type       => 'limit',
+        trigger    => 'stop',
+        stop_price => 200.45,
+        price      => 199.5
+        side       => 'sell',
+        ...
+    );
+
+=head2 Market Buy
+
+When triggered, this attempts to execute at the best current price. This may
+be above both the current bid and ask price.
+
+    my $order = Finance::Robinhood::Order->new(
+        type       => 'market',
+        trigger    => 'immediate',
+        side       => 'buy',
+        ...
+    );
+
+=head2 Limit Buy
+
+You may set the maximum amount you're willing to pay per share with a limit
+buy.
+
+    my $order = Finance::Robinhood::Order->new(
+        type       => 'limit',
+        trigger    => 'immediate',
+        price      => 2.65,
+        side       => 'buy',
+        ...
+    );
+
+=head2 Stop Loss Buy
+
+This order type allows you to set a price at which your order converts to a
+simple market order. In the following example, when the price rises above
+$2.30/share, the order is converted to a market order and executed at the best
+available price.
+
+    my $order = Finance::Robinhood::Order->new(
+        type       => 'market',
+        trigger    => 'stop',
+        stop_price => 2.30,
+        side       => 'buy',
+        ...
+    );
+
+=head2 Stop Limit Buy
+
+This order type allows you to set a price that converts your order to a limit
+order. In this example, when the price hits $6/share, the order turns into
+a limit buy with a C<stop_price> of $6.15/share.
+
+    my $order = Finance::Robinhood::Order->new(
+        type       => 'limit',
+        trigger    => 'stop',
+        price      => 6.15,
+        stop_price => 6,
+        side       => 'buy',
+        ...
+    );
 
 =head1 LEGAL
 
