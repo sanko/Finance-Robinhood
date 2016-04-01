@@ -22,20 +22,6 @@ use Finance::Robinhood::Quote;
 use Finance::Robinhood::Watchlist;
 #
 has token => (is => 'ro', writer => '_set_token');
-has account => (
-    is  => 'ro',
-    isa => sub {
-        die "$_[0] is not an ::Account!"
-            unless ref $_[0] eq 'Finance::Robinhood::Account';
-    },
-    builder => 1,
-    lazy    => 1
-);
-
-sub _build_account {
-    my $acct = shift->_accounts();
-    return $acct ? $acct->[0] : ();
-}
 #
 my $base = 'https://api.robinhood.com/';
 
