@@ -140,17 +140,18 @@ This class has several getters and a few methods as follows...
 
 =head2 C<new( ... )>
 
-The main event!
-
-Odds are, this is what you installed Finance::Robinhood to do: buy ad sell.
+The main event! Odds are, this is what you installed Finance::Robinhood to do:
+buy and sell securities without commisions.
 
 Please note that if the call to C<new( ... )> fails for any reason (not enough
 buying power, etc.) this will C<confess( ... )> so it's probably a good idea
-to wrap this in an eval or something.
+to wrap it in an eval or something.
 
 There are some keys that are required for all orders and then there are some
-that only apply for certain types of orders like stop loss and stop limit.
-Please see the L<order cheat sheet|/"Order Cheat Sheet"> below.
+that only apply for certain types of orders. Different C<type> and C<trigger>
+combinations can make trading a lot less risky so please check out the
+L<order cheat sheet|/"Order Cheat Sheet"> below for easy stop loss and stop
+limit orders.
 
 These are the required keys for all orders:
 
@@ -158,19 +159,19 @@ These are the required keys for all orders:
 
 =item C<account>
 
-A Finance::Robinhood::Account.
+A Finance::Robinhood::Account object. You can get a list of these with the
+C<accounts( )> method found in Finance::Robinhood.
 
 =item C<instrument>
 
-A Finance::Robinhood::Instrument
+A Finance::Robinhood::Instrument. The easiest way to get these is to use the
+C<instrument( )> method found in Finance::Robinhood.
 
 =item C<type>
 
-String which may be one of the following:
+This is a string which may be one of the following:
 
 =over
-
-=item C<stop>
 
 =item C<market>
 
@@ -186,9 +187,21 @@ Which may be one of the following:
 
 =item C<immediate>
 
+The order is executed immediatly.
+
 =item C<stop>
 
+The order depends on a defined C<stop_price> and then automatically converts
+into whatever C<type> you provided.
+
 =item C<on_close>
+
+The order executes as close to the end of the day as possible.
+
+Please note that there are certain timing rules placed on Market On Close
+(MOC) and Limit On Close (LOC) orders. All (MOC) orders must be submitted by
+3:45pm on the NYSE and by 3:50pm EST on the Nasdaq. Neither exchange allows
+for the modification or cancellation of MOC orders after those times.
 
 =back
 
@@ -200,23 +213,31 @@ Which may be one of the following:
 
 =item C<gfd>
 
-Good For Day
+Good For Day - The order is automatically cancelled at the end of the trading
+day. This can lead to partial executions.
 
 =item C<gtc>
 
-Good 'Till Cancelled
+Good 'Till Cancelled - The order will never cancel automatically. You must do
+so manually.
 
 =item C<fok>
 
-Fill or Kill
+Fill or Kill - When triggered, the entire order must execute in full
+immediatly or the entire order is cancelled.
+
+Note that FOK orders are no longer used on the NYSE.
 
 =item C<ioc>
 
-Immediate or Cancel
+Immediate or Cancel - When triggered, the order must execute or the order is
+cancelled. IOC orders allow for partial executions unlike FOK.
 
 =item C<opg>
 
-Opening
+Opening - The order is executed at or as close to when the market opens.
+
+Note that OPG orders are not used on Nasdaq.
 
 =back
 
