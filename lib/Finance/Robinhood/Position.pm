@@ -86,11 +86,11 @@ Current number of shares of this security owned by you.
 
 =head2 C<shares_held_for_buys( )>
 
-Number of shares in outstanding (unexecuted) buy orders.
+Number of shares in buy orders which have not fully executed.
 
 =head2 C<shares_held_for_sells( )>
 
-Number of shares held in outstanding (unexecuted) sell orders.
+Number of shares held in sell orders which have not fully executed.
 
 =head2 C<upated_at( )>
 
@@ -100,7 +100,7 @@ Timestamp of the last change made to this order.
 
 This is a simple wrapper around the API used in the official apps. The author
 provides no investment, legal, or tax advice and is not responsible for any
-damages incured while using this software. Neither this software nor its
+damages incurred while using this software. Neither this software nor its
 author are affiliated with Robinhood Financial LLC in any way.
 
 For Robinhood's terms and disclosures, please see their website at http://robinhood.com/

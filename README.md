@@ -27,7 +27,7 @@ head over to the [Finance::Robinhood::Order](https://metacpan.org/pod/Finance::R
 
 # METHODS
 
-Finance::Robinhood wraps a powerfullly capable API which has many options.
+Finance::Robinhood wraps a powerfully capable API which has many options.
 There are parts of this package that are object oriented and others which are
 functional. I've attempted to organize everything according to how and when
 they are used... Let's start at the very beginning: Let's log in!
@@ -64,7 +64,7 @@ anymore.
 Logging in allows you to buy and sell securities with your Robinhood account.
 You must do this if you do not have an authorization token.
 
-If login was sucessful, a valid token is returned and may also be had by
+If login was successful, a valid token is returned and may also be had by
 calling `token( )`. The token should be kept secret and stored for use in
 future calls to `new( ... )`.
 
@@ -131,7 +131,7 @@ security number.
 ## `additional_info( )`
 
 This method grabs information about the user that the SEC would like to know
-including any affilations with publically traded securities.
+including any affiliations with publicly traded securities.
 
 ## `employment_info( )`
 
@@ -168,7 +168,7 @@ in the future a single user will have access to multiple accounts?
 ## Financial Instruments
 
 Financial Instrument is a fancy term for any equity, asset, debt, loan, etc.
-but we'll strictly be refering to securities (stocks and ETFs) as financial
+but we'll strictly be referring to securities (stocks and ETFs) as financial
 instruments.
 
 We use blessed Finance::Robinhood::Instrument objects to represent securities
@@ -236,7 +236,7 @@ order with the given id if it exits.
     my $orders = $rh->list_orders( );
 
 Requests a list of all orders ordered from newest to oldest. Executed and even
-cancelled orders are returned in a `results` key as Finance::Robinhood::Order
+canceled orders are returned in a `results` key as Finance::Robinhood::Order
 objects. Cursor keys `next` and `previous` may also be present.
 
     my $more_orders = $rh->list_orders({ cursor => $orders->{next} });
@@ -271,7 +271,7 @@ form does not require an account and may be called without ever logging in.
     # Snapshots of basic quote data for every five minutes of the previous day
     my $msft = $rh->historicals('MSFT', '5minute', 'day');
 
-You may retrive historical quote data with this method. The first argument is
+You may retrieve historical quote data with this method. The first argument is
 a symbol. The second is an interval time and must be either `5minute`,
 `10minute`, `day`, or `week`.
 
@@ -360,8 +360,9 @@ Gathers a paginated list of dividends due (or recently paid) for your account.
 
 You can keep track of a list of securities by adding them to a watchlist. The
 watchlist used by the official Robinhood apps and preloaded with popular
-securities is named 'Default'. You may create new watchlists for orgaizational
-reasons but the official apps currently only display the 'Default' watchlist.
+securities is named 'Default'. You may create new watchlists for
+organizational reasons but the official apps currently only display the
+'Default' watchlist.
 
 Each watchlist is represented by a Finance::Robinhood::Watchlist object.
 Please read the docs for that package to find out how to add and remove
@@ -399,7 +400,7 @@ In case where you have more than one page of watchlists, use the `next` and
 
 This is a simple wrapper around the API used in the official apps. The author
 provides no investment, legal, or tax advice and is not responsible for any
-damages incured while using this software. Neither this software nor its
+damages incurred while using this software. Neither this software nor its
 author are affiliated with Robinhood Financial LLC in any way.
 
 For Robinhood's terms and disclosures, please see their website at http://robinhood.com/

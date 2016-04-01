@@ -141,7 +141,7 @@ This class has several getters and a few methods as follows...
 =head2 C<new( ... )>
 
 The main event! Odds are, this is what you installed Finance::Robinhood to do:
-buy and sell securities without commisions.
+buy and sell securities without commissions.
 
 Please note that if the call to C<new( ... )> fails for any reason (not enough
 buying power, etc.) this will C<confess( ... )> so it's probably a good idea
@@ -187,7 +187,7 @@ Which may be one of the following:
 
 =item C<immediate>
 
-The order is executed immediatly.
+The order is executed immediately.
 
 =item C<stop>
 
@@ -213,25 +213,25 @@ Which may be one of the following:
 
 =item C<gfd>
 
-Good For Day - The order is automatically cancelled at the end of the trading
+Good For Day - The order is automatically canceled at the end of the trading
 day. This can lead to partial executions.
 
 =item C<gtc>
 
-Good 'Till Cancelled - The order will never cancel automatically. You must do
+Good 'Till Canceled - The order will never cancel automatically. You must do
 so manually.
 
 =item C<fok>
 
 Fill or Kill - When triggered, the entire order must execute in full
-immediatly or the entire order is cancelled.
+immediately or the entire order is canceled.
 
 Note that FOK orders are no longer used on the NYSE.
 
 =item C<ioc>
 
 Immediate or Cancel - When triggered, the order must execute or the order is
-cancelled. IOC orders allow for partial executions unlike FOK.
+canceled. IOC orders allow for partial executions unlike FOK.
 
 =item C<opg>
 
@@ -297,8 +297,8 @@ Returns order executions as a list of hashes which contain the following keys:
 
     $order->cancel( ); # Nm! I want to keep these!
 
-I<If> the order can be cancelled (has not be executed in completion, etc.),
-you may cancel it with this.
+I<If> the order can be canceled (has not be executed in completion, etc.), you
+may cancel it with this.
 
 =head2 C<position( )>
 
@@ -342,10 +342,10 @@ Indicates which side of the deal you were on: C<buy> or C<sell>.
 
 =head2 C<state( )>
 
-The current state of the order. For example, completly executed orders have a
+The current state of the order. For example, completely executed orders have a
 C<filled> state. The current state may be any of the following: C<queued>,
 C<unconfirmed>, C<confirmed>, C<partially_filled>, C<filled>, C<rejected>,
-C<cancelled>, C<failed>.
+C<canceled>, C<failed>.
 
 =head2 C<stop_price( )>
 
@@ -356,7 +356,7 @@ Stop limit and stop loss orders will have a defined stop price.
 This may be one of the following:
 
     gfd     Good For Day
-    gtc     Good Til Cancelled
+    gtc     Good Til Canceled
     fok     Fill or Kill
     ioc     Immediate or Cancel
     opg
@@ -500,7 +500,7 @@ a limit buy with a C<stop_price> of $6.15/share.
 
 This is a simple wrapper around the API used in the official apps. The author
 provides no investment, legal, or tax advice and is not responsible for any
-damages incured while using this software. Neither this software nor its
+damages incurred while using this software. Neither this software nor its
 author are affiliated with Robinhood Financial LLC in any way.
 
 For Robinhood's terms and disclosures, please see their website at http://robinhood.com/

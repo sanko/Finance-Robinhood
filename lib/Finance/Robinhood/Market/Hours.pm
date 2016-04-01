@@ -54,7 +54,7 @@ This class has several getters and a few methods as follows...
 
 =head2 C<is_open( )>
 
-Boolean which may represents whethe or not the market is currently open. Note
+Boolean which may represents whether or not the market is currently open. Note
 that this value is cached and may not be accurate.
 
 =head2 C<date( )>
@@ -86,7 +86,7 @@ recent date the market was open.
 
 This is a simple wrapper around the API used in the official apps. The author
 provides no investment, legal, or tax advice and is not responsible for any
-damages incured while using this software. Neither this software nor its
+damages incurred while using this software. Neither this software nor its
 author are affiliated with Robinhood Financial LLC in any way.
 
 For Robinhood's terms and disclosures, please see their website at http://robinhood.com/

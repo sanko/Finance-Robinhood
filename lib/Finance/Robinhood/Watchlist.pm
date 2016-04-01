@@ -80,7 +80,7 @@ sub delete_instrument {
 
 =head1 NAME
 
-Finance::Robinhood::Watchlist - Persistant List of Financial Instruments
+Finance::Robinhood::Watchlist - Persistent List of Financial Instruments
 
 =head1 SYNOPSIS
 
@@ -94,17 +94,17 @@ Finance::Robinhood::Watchlist - Persistant List of Financial Instruments
 
 =head1 DESCRIPTION
 
-Robinhood allows persistant, categorized lists of financial instruments in
+Robinhood allows persistent, categorized lists of financial instruments in
 'watchlists'. Watchlists are tied to a user rather than a single
 L<account|Finance::Robinhood::Account>.
 
-If you intend to create your own wishlists, please use
-C<<Finance::Robinhood->create_watchlist( ... )>>.
+If you intend to create your own watchlists, please use the
+C<create_watchlist( ... )> method of Finance::Robinhood.
 
 =head1 METHODS
 
 Watchlists are rather simple in themselves but can be very powerful for
-orgaization. Let's say you have a really short list of stocks you'd really
+organization. Let's say you have a really short list of stocks you'd really
 like to keep an eye on, you could add just those securities to a watchlist. Or
 You could add a watchlist for securities in a certain field.
 
@@ -144,7 +144,7 @@ C<add_instrument( ... )> for each individual security, right?
 
 This is a simple wrapper around the API used in the official apps. The author
 provides no investment, legal, or tax advice and is not responsible for any
-damages incured while using this software. Neither this software nor its
+damages incurred while using this software. Neither this software nor its
 author are affiliated with Robinhood Financial LLC in any way.
 
 For Robinhood's terms and disclosures, please see their website at http://robinhood.com/
