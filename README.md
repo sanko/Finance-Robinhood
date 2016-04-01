@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/sanko/Finance-Robinhood.svg?branch=master)](https://travis-ci.org/sanko/Finance-Robinhood)
 # NAME
 
-Finance::Robinhood - Trade stocks and ETFs with free brokerage Robinhood
+Finance::Robinhood - Trade Stocks and ETFs with Free Brokerage Robinhood
 
 # SYNOPSIS
 
@@ -27,17 +27,33 @@ head over to the [Finance::Robinhood::Order](https://metacpan.org/pod/Finance::R
 
 # METHODS
 
-Finance::Robinhood is object oriented. Here is the current list of methods:
+Finance::Robinhood wraps a powerfullly capable API which has many options.
+I've attempted to organize everything according to how and when they are
+used... Let's start at the very beginning: Let's log in!
+
+## Logging In
+
+Robinhood requires an authorization token for most API calls. To get this
+token, you must either pass it as an argument to `new( ... )` or log in with
+your username and password.
 
 ## `new( ... )`
 
-    my $rh = Finance::Robinhood->new( ); # Reqires ->login(...) call
+    # Passing the token is the prefered way of handling authorization
     my $rh = Finance::Robinhood->new( token => ... );
 
-With no arguments, this creates a new Finance::Quote object without account
-information. Before you can buy or sell, you must [login( ... )](https://metacpan.org/pod/log&#x20;in) which
-will will return an authorization token which may be used for future logins
-without your username and password.
+This would create a new Finance::Robinhood object ready to go.
+
+    # Reqires ->login(...) call :(
+    my $rh = Finance::Robinhood->new( );
+
+With no arguments, this creates a new Finance::Robinhood object without
+account information. Before you can buy or sell or do almost anything else,
+you must log in manually.
+
+On the bright side, for future logins, you can store the authorization token
+and use it rather than having to pass your username and password around
+anymore.
 
 ## `login( ... )`
 
@@ -66,15 +82,29 @@ single authorization token per account at a time!
 
     Finance::Robinhood::forgot_password('contact@example.com');
 
-This requests a password reset email to be sent from Robinhood.
+It happens. This requests a password reset email to be sent from Robinhood.
 
 ## `change_password( ... )`
 
     Finance::Robinhood::change_password( $username, $password, $token );
 
-Robinhood sends a link to the registered email address when the
-`password_reset( ... )` function is called. In the email there is a link with
-the username and a token. You must provide a new password.
+When you've forgotten your password, the email Robinhood send contains a link
+to an online form where you may change your password. That link has a token
+you may use here to change the password as well.
+
+# User Information
+
+Brokerage firms must collect a lot of information about their customers due to
+IRS and SEC regulations. They also keep data to identify you internally.
+Here's how to access all of the data you entered when during registration and
+beyond.
+
+## `user_id( )`
+
+    my $user_id = $rh->user_id( );
+
+Returns the ID Robinhood uses to identify this particular account. You could
+also gather this information with the `user_info( )` method.
 
 ## `user_info( )`
 
@@ -84,18 +114,11 @@ the username and a token. You must provide a new password.
 Returns very basic information (name, email address, etc.) about the currently
 logged in account as a hash.
 
-## `user_id( )`
-
-    my $user_id = $rh->user_id( );
-
-Returns the ID Robinhood uses to identify this particular account. You could
-also gather this information with the `user_info( )` method.
-
 ## `basic_info( )`
 
-This method grabs more private information about the user including their date
-of birth, marital status, and the last four digits of their social security
-number.
+This method grabs basic but more private information about the user including
+their date of birth, marital status, and the last four digits of their social
+security number.
 
 ## `additional_info( )`
 
@@ -116,13 +139,34 @@ the survey performed during registration.
 
 Returns a paginated list of identification information.
 
+# Accounts
+
+A user may have access to more than a single Robinhood account. Each account
+is represented by a Finance::Robinhood::Account object internally. Orders to
+buy and sell securities require an account object. The object also contains
+information about your financial standing.
+
+For more on how to use these objects, please see the
+Finance::Robinhood::Account docs.
+
 ## `accounts( ... )`
 
-Returns a paginated list of Finance::Robinhood::Account objects related to the
-currently logged in user.
+This method returns a paginated list of Finance::Robinhood::Account objects
+related to the currently logged in user.
 
 _Note_: Not sure why the API returns a paginated list of accounts. Perhaps
 in the future a single user will have access to multiple accounts?
+
+## Financial Instruments
+
+Financial Instrument is a fancy term for any equity, asset, debt, loan, etc.
+but we'll strictly be refering to securities (stocks and ETFs) as financial
+instruments.
+
+We use blessed Finance::Robinhood::Instrument objects to represent securities
+in order transactions, watchlists, etc. It's how we'll refer to a security so
+looking over the documentation found in Finance::Robinhood::Instrument would
+be a wise thing to do.
 
 ## `instrument( ... )`
 
@@ -136,7 +180,8 @@ returned as a Finance::Robinhood::Instrument object.
     my $msft = Finance::Robinhood::instrument({id => '50810c35-d215-4866-9758-0ada4ac79ffa'});
 
 If a hash reference is passed with an `id` key, the single result is returned
-as a Finance::Robinhood::Instrument object.
+as a Finance::Robinhood::Instrument object. The unique ID is how Robinhood
+identifies securities internally.
 
     my $results = $rh->instrument({query => 'solar'});
     my $results = Finance::Robinhood::instrument({query => 'solar'});
@@ -158,12 +203,25 @@ them, use the `next` or `previous` values.
 Returns a sample list of top securities as Finance::Robinhood::Instrument
 objects along with `next` and `previous` cursor values.
 
+# Orders
+
+Now that you've [logged in](#logging-in) and
+[found the particular stock](#financial-instruments) you're interested in,
+you probably want to buy or sell something. You do this by placing orders.
+
+Orders are created by using the constructor found in Finance::Robinhood::Order
+directly so have a look at the documentation there (especially the small cheat
+sheet).
+
+Once you've place the order, you'll want to keep track of them somehow. To do
+this, you may use either of the following methods.
+
 ## `locate_order( ... )`
 
     my $order = $rh->locate_order( $order_id );
 
 Returns a blessed Finance::Robinhood::Order object related to the buy or sell
-order with the given id.
+order with the given id if it exits.
 
 ## `list_orders( ... )`
 
@@ -178,6 +236,12 @@ objects. Cursor keys `next` and `previous` may also be present.
 You'll likely generate more than a hand full of buy and sell orders which
 would generate more than a single page of results. To gather them, use the
 `next` or `previous` values.
+
+# Quotes and Historical Data
+
+If you're doing anything beyond randomly choosing stocks with a symbol
+generator, you'll want to know a little more. Robinhood provides access to
+both current and historical data on securities.
 
 ## `quote( ... )`
 
@@ -194,31 +258,9 @@ symbols, the objects are returned as a paginated list.
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.
 
-## `create_watchlist( ... )`
+# Informational Card and Notifications
 
-    my $watchlist = $rh->create_watchlist( 'Energy' );
-
-You can create new Finance::Robinhood::Watchlist objects with this. Here, your
-code would create a new one named "Energy".
-
-## `delete_watchlist( ... )`
-
-    $rh->delete_watchlist( $watchlist );
-
-You may remove a watchlist with this method.
-
-## `watchlists( ... )`
-
-    my $watchlists = $rh->watchlists( );
-
-Returns all your current watchlists as a paginated list of
-Finance::Robinhood::Watchlists. Robinhood's apps uses a watchlist named
-'Default' so unless you're keen on wiping that out, best not to delete it.
-
-    my $more = $rh->watchlists( { cursor => $watchlists->{next} } );
-
-In case where you have more than one page of watchlists, use the `next` and
-`previous` cursor strings.
+TODO
 
 ## `cards( )`
 
@@ -246,6 +288,10 @@ which look like this:
 it should be
 `<"https://api.robinhood.com/**midlands/**notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/"`>.
 
+# Dividends
+
+TODO
+
 ## `dividends( )`
 
 Gathers a paginated list of dividends due (or recently paid) for your account.
@@ -264,6 +310,45 @@ Gathers a paginated list of dividends due (or recently paid) for your account.
       url => "https://api.robinhood.com/dividends/28a46be1-db41-4f75-bf89-76c803a151ef/",
       withholding => "0.00",
     }
+
+# Watchlists
+
+You can keep track of a list of securities by adding them to a watchlist. The
+watchlist used by the official Robinhood apps and preloaded with popular
+securities is named 'Default'. You may create new watchlists for orgaizational
+reasons but the official apps currently only display the 'Default' watchlist.
+
+Each watchlist is represented by a Finance::Robinhood::Watchlist object.
+Please read the docs for that package to find out how to add and remove
+individual securities.
+
+## `create_watchlist( ... )`
+
+    my $watchlist = $rh->create_watchlist( 'Energy' );
+
+You can create new Finance::Robinhood::Watchlist objects with this. Here, your
+code would create a new one named "Energy".
+
+## `delete_watchlist( ... )`
+
+    $rh->delete_watchlist( $watchlist );
+
+You may remove a watchlist with this method.
+
+If you clobber the watchlist named 'Default', it will be recreated with
+popular securities the next time you open any of the official apps.
+
+## `watchlists( ... )`
+
+    my $watchlists = $rh->watchlists( );
+
+Returns all your current watchlists as a paginated list of
+Finance::Robinhood::Watchlists.
+
+    my $more = $rh->watchlists( { cursor => $watchlists->{next} } );
+
+In case where you have more than one page of watchlists, use the `next` and
+`previous` cursor strings.
 
 # LEGAL
 

@@ -603,17 +603,33 @@ L<order cheat sheet|Finance::Robinhood::Order/"Order Cheat Sheet">.
 
 =head1 METHODS
 
-Finance::Robinhood is object oriented. Here is the current list of methods:
+Finance::Robinhood wraps a powerfullly capable API which has many options.
+I've attempted to organize everything according to how and when they are
+used... Let's start at the very beginning: Let's log in!
+
+=head2 Logging In
+
+Robinhood requires an authorization token for most API calls. To get this
+token, you must either pass it as an argument to C<new( ... )> or log in with
+your username and password.
 
 =head2 C<new( ... )>
 
-    my $rh = Finance::Robinhood->new( ); # Reqires ->login(...) call
+    # Passing the token is the prefered way of handling authorization
     my $rh = Finance::Robinhood->new( token => ... );
 
-With no arguments, this creates a new Finance::Quote object without account
-information. Before you can buy or sell, you must L<login( ... )|log in> which
-will will return an authorization token which may be used for future logins
-without your username and password.
+This would create a new Finance::Robinhood object ready to go.
+
+    # Reqires ->login(...) call :(
+    my $rh = Finance::Robinhood->new( );
+
+With no arguments, this creates a new Finance::Robinhood object without
+account information. Before you can buy or sell or do almost anything else,
+you must log in manually.
+
+On the bright side, for future logins, you can store the authorization token
+and use it rather than having to pass your username and password around
+anymore.
 
 =head2 C<login( ... )>
 
@@ -642,15 +658,29 @@ single authorization token per account at a time!
 
     Finance::Robinhood::forgot_password('contact@example.com');
 
-This requests a password reset email to be sent from Robinhood.
+It happens. This requests a password reset email to be sent from Robinhood.
 
 =head2 C<change_password( ... )>
 
     Finance::Robinhood::change_password( $username, $password, $token );
 
-Robinhood sends a link to the registered email address when the
-C<password_reset( ... )> function is called. In the email there is a link with
-the username and a token. You must provide a new password.
+When you've forgotten your password, the email Robinhood send contains a link
+to an online form where you may change your password. That link has a token
+you may use here to change the password as well.
+
+=head1 User Information
+
+Brokerage firms must collect a lot of information about their customers due to
+IRS and SEC regulations. They also keep data to identify you internally.
+Here's how to access all of the data you entered when during registration and
+beyond.
+
+=head2 C<user_id( )>
+
+    my $user_id = $rh->user_id( );
+
+Returns the ID Robinhood uses to identify this particular account. You could
+also gather this information with the C<user_info( )> method.
 
 =head2 C<user_info( )>
 
@@ -660,18 +690,11 @@ the username and a token. You must provide a new password.
 Returns very basic information (name, email address, etc.) about the currently
 logged in account as a hash.
 
-=head2 C<user_id( )>
-
-    my $user_id = $rh->user_id( );
-
-Returns the ID Robinhood uses to identify this particular account. You could
-also gather this information with the C<user_info( )> method.
-
 =head2 C<basic_info( )>
 
-This method grabs more private information about the user including their date
-of birth, marital status, and the last four digits of their social security
-number.
+This method grabs basic but more private information about the user including
+their date of birth, marital status, and the last four digits of their social
+security number.
 
 =head2 C<additional_info( )>
 
@@ -692,13 +715,34 @@ the survey performed during registration.
 
 Returns a paginated list of identification information.
 
+=head1 Accounts
+
+A user may have access to more than a single Robinhood account. Each account
+is represented by a Finance::Robinhood::Account object internally. Orders to
+buy and sell securities require an account object. The object also contains
+information about your financial standing.
+
+For more on how to use these objects, please see the
+Finance::Robinhood::Account docs.
+
 =head2 C<accounts( ... )>
 
-Returns a paginated list of Finance::Robinhood::Account objects related to the
-currently logged in user.
+This method returns a paginated list of Finance::Robinhood::Account objects
+related to the currently logged in user.
 
 I<Note>: Not sure why the API returns a paginated list of accounts. Perhaps
 in the future a single user will have access to multiple accounts?
+
+=head2 Financial Instruments
+
+Financial Instrument is a fancy term for any equity, asset, debt, loan, etc.
+but we'll strictly be refering to securities (stocks and ETFs) as financial
+instruments.
+
+We use blessed Finance::Robinhood::Instrument objects to represent securities
+in order transactions, watchlists, etc. It's how we'll refer to a security so
+looking over the documentation found in Finance::Robinhood::Instrument would
+be a wise thing to do.
 
 =head2 C<instrument( ... )>
 
@@ -712,7 +756,8 @@ returned as a Finance::Robinhood::Instrument object.
     my $msft = Finance::Robinhood::instrument({id => '50810c35-d215-4866-9758-0ada4ac79ffa'});
 
 If a hash reference is passed with an C<id> key, the single result is returned
-as a Finance::Robinhood::Instrument object.
+as a Finance::Robinhood::Instrument object. The unique ID is how Robinhood
+identifies securities internally.
 
     my $results = $rh->instrument({query => 'solar'});
     my $results = Finance::Robinhood::instrument({query => 'solar'});
@@ -734,12 +779,25 @@ them, use the C<next> or C<previous> values.
 Returns a sample list of top securities as Finance::Robinhood::Instrument
 objects along with C<next> and C<previous> cursor values.
 
+=head1 Orders
+
+Now that you've L<logged in|/"Logging In"> and
+L<found the particular stock|/"Financial Instruments"> you're interested in,
+you probably want to buy or sell something. You do this by placing orders.
+
+Orders are created by using the constructor found in Finance::Robinhood::Order
+directly so have a look at the documentation there (especially the small cheat
+sheet).
+
+Once you've place the order, you'll want to keep track of them somehow. To do
+this, you may use either of the following methods.
+
 =head2 C<locate_order( ... )>
 
     my $order = $rh->locate_order( $order_id );
 
 Returns a blessed Finance::Robinhood::Order object related to the buy or sell
-order with the given id.
+order with the given id if it exits.
 
 =head2 C<list_orders( ... )>
 
@@ -754,6 +812,12 @@ objects. Cursor keys C<next> and C<previous> may also be present.
 You'll likely generate more than a hand full of buy and sell orders which
 would generate more than a single page of results. To gather them, use the
 C<next> or C<previous> values.
+
+=head1 Quotes and Historical Data
+
+If you're doing anything beyond randomly choosing stocks with a symbol
+generator, you'll want to know a little more. Robinhood provides access to
+both current and historical data on securities.
 
 =head2 C<quote( ... )>
 
@@ -770,6 +834,9 @@ symbols, the objects are returned as a paginated list.
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.
 
+=head1 Informational Card and Notifications
+
+TODO
 
 =head2 C<cards( )>
 
@@ -796,6 +863,10 @@ which look like this:
 C<"https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/">,
 it should be
 C<<"https://api.robinhood.com/B<midlands/>notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/">>.
+
+=head1 Dividends
+
+TODO
 
 =head2 C<dividends( )>
 

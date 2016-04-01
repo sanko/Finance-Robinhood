@@ -2,6 +2,7 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+    - Major documentation update
     - Order type cheat sheet in Finance::Robinhood::Order
 
 0.02 2016-03-31T19:26:04Z
