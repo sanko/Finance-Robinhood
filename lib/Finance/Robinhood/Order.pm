@@ -106,7 +106,7 @@ sub cancel {
 
 =head1 NAME
 
-Finance::Robinhood::Order - Order to buy or sell a security
+Finance::Robinhood::Order - Order to Buy or Sell a Security
 
 =head1 SYNOPSIS
 
@@ -120,7 +120,7 @@ Finance::Robinhood::Order - Order to buy or sell a security
         instrument    => $bill,
         side          => 'buy',
         type          => 'market',
-        trigger       => 'immediate',
+        trigger       => 'on_close',
         time_in_force => 'gfd',
         quantity      => 300
     );

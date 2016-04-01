@@ -60,7 +60,7 @@ sub portfolio {
 
 =head1 NAME
 
-Finance::Robinhood::Account - Single securities trade account
+Finance::Robinhood::Account - Single Robinhood Trade Acount
 
 =head1 SYNOPSIS
 

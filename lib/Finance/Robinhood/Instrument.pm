@@ -57,7 +57,7 @@ sub fundamentals {
 
 =head1 NAME
 
-Finance::Robinhood - Trade stocks and ETFs with free brokerage Robinhood
+Finance::Robinhood::Instrument - Single Financial Instrument
 
 =head1 SYNOPSIS
 
@@ -68,7 +68,7 @@ Finance::Robinhood - Trade stocks and ETFs with free brokerage Robinhood
 =head1 DESCRIPTION
 
 This class represents a single financial instrument. Objects are usually
-created by Finance::Robinhood. If you intend to create your own, please use
+created by Finance::Robinhood so please use
 C<Finance::Robinhood->instrument(...)>.
 
 =head1 METHODS

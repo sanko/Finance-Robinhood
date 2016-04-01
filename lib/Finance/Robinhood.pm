@@ -577,7 +577,7 @@ sub _2_datetime {
 
 =head1 NAME
 
-Finance::Robinhood - Trade stocks and ETFs with free brokerage Robinhood
+Finance::Robinhood - Trade Stocks and ETFs with Free Brokerage Robinhood
 
 =head1 SYNOPSIS
 
@@ -770,31 +770,6 @@ symbols, the objects are returned as a paginated list.
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.
 
-=head2 C<create_watchlist( ... )>
-
-    my $watchlist = $rh->create_watchlist( 'Energy' );
-
-You can create new Finance::Robinhood::Watchlist objects with this. Here, your
-code would create a new one named "Energy".
-
-=head2 C<delete_watchlist( ... )>
-
-    $rh->delete_watchlist( $watchlist );
-
-You may remove a watchlist with this method.
-
-=head2 C<watchlists( ... )>
-
-    my $watchlists = $rh->watchlists( );
-
-Returns all your current watchlists as a paginated list of
-Finance::Robinhood::Watchlists. Robinhood's apps uses a watchlist named
-'Default' so unless you're keen on wiping that out, best not to delete it.
-
-    my $more = $rh->watchlists( { cursor => $watchlists->{next} } );
-
-In case where you have more than one page of watchlists, use the C<next> and
-C<previous> cursor strings.
 
 =head2 C<cards( )>
 
@@ -840,6 +815,45 @@ C<results> currently contains a list of hashes which look a lot like this:
       url => "https://api.robinhood.com/dividends/28a46be1-db41-4f75-bf89-76c803a151ef/",
       withholding => "0.00",
     }
+
+=head1 Watchlists
+
+You can keep track of a list of securities by adding them to a watchlist. The
+watchlist used by the official Robinhood apps and preloaded with popular
+securities is named 'Default'. You may create new watchlists for orgaizational
+reasons but the official apps currently only display the 'Default' watchlist.
+
+Each watchlist is represented by a Finance::Robinhood::Watchlist object.
+Please read the docs for that package to find out how to add and remove
+individual securities.
+
+=head2 C<create_watchlist( ... )>
+
+    my $watchlist = $rh->create_watchlist( 'Energy' );
+
+You can create new Finance::Robinhood::Watchlist objects with this. Here, your
+code would create a new one named "Energy".
+
+=head2 C<delete_watchlist( ... )>
+
+    $rh->delete_watchlist( $watchlist );
+
+You may remove a watchlist with this method.
+
+If you clobber the watchlist named 'Default', it will be recreated with
+popular securities the next time you open any of the official apps.
+
+=head2 C<watchlists( ... )>
+
+    my $watchlists = $rh->watchlists( );
+
+Returns all your current watchlists as a paginated list of
+Finance::Robinhood::Watchlists.
+
+    my $more = $rh->watchlists( { cursor => $watchlists->{next} } );
+
+In case where you have more than one page of watchlists, use the C<next> and
+C<previous> cursor strings.
 
 =head1 LEGAL
 

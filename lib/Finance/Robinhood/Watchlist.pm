@@ -73,6 +73,7 @@ sub delete_instrument {
               Finance::Robinhood::endpoint('watchlists') . $self->name() . '/' . $instrument->id() . '/');
     return $status == 204;
 }
+
 1;
 
 =encoding utf-8
@@ -94,15 +95,28 @@ Finance::Robinhood::Watchlist - Persistant List of Financial Instruments
 =head1 DESCRIPTION
 
 Robinhood allows persistant, categorized lists of financial instruments in
-'watchlists'. The 'Default' watchlist is created by the official Robinhood
-apps and are preloaded with popular securities.
+'watchlists'. Watchlists are tied to a user rather than a single
+L<account|Finance::Robinhood::Account>.
 
-If you intend to create your own, please use
-C<Finance::Robinhood->create_watchlist( ... )>.
+If you intend to create your own wishlists, please use
+C<<Finance::Robinhood->create_watchlist( ... )>>.
 
 =head1 METHODS
 
-Watchlists are rather simple in themselves.
+Watchlists are rather simple in themselves but can be very powerful for
+orgaization. Let's say you have a really short list of stocks you'd really
+like to keep an eye on, you could add just those securities to a watchlist. Or
+You could add a watchlist for securities in a certain field.
+
+=head2 C<name( )>
+
+Returns the name given to this watchlist. The official apps use a watchlist
+named 'Default'.
+
+=head2 C<instruments( )>
+
+Returns a paginated list of Finance::Robinhood::Instrument objects being kept
+track of in this watchlist.
 
 =head2 C<delete_instrument( ... )>
 
@@ -123,7 +137,8 @@ second time will fail.
 
 Add multiple instruments in a single API call and by their symbols with this.
 
-...easier than looping through the symbols yourself, right?
+...easier than gathering ::Instrument objects and calling
+C<add_instrument( ... )> for each individual security, right?
 
 =head1 LEGAL
 
