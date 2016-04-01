@@ -38,7 +38,7 @@ sub positions {
             return '?nonzero=' . ($opt->{nonzero} ? 'true' : 'false')
                 if defined $opt->{nonzero};
             return '';
-            }
+        }
             ->($type)
     );
     return
@@ -50,9 +50,24 @@ sub portfolio {
     my ($self) = @_;
     my ($status, $result, $raw)
         = $self->_get_rh()->_send_request('GET',
-                           Finance::Robinhood::endpoint('accounts/portfolios')
-                               . $self->account_number()
-                               . '/');
+                                    Finance::Robinhood::endpoint('portfolios')
+                                        . $self->account_number()
+                                        . '/');
+    return $result;
+}
+
+sub historicals {
+    my ($self, $interval, $span) = @_;
+    my ($status, $result, $raw)
+        = $self->_get_rh()->_send_request('GET',
+                        Finance::Robinhood::endpoint('portfolios/historicals')
+                            . $self->account_number()
+                            . "/?interval=$interval&span=$span");
+    return () if $status != 200;
+    for (@{$result->{equity_historicals}}) {
+        $_->{begins_at} = Finance::Robinhood::_2_datetime($_->{begins_at});
+    }
+    return $result;
 }
 1;
 
@@ -60,15 +75,14 @@ sub portfolio {
 
 =head1 NAME
 
-Finance::Robinhood::Account - Single Robinhood Trade Acount
+Finance::Robinhood::Account - Single Robinhood Trade Account
 
 =head1 SYNOPSIS
 
     use Finance::Robinhood;
 
     my $rh = Finance::Robinhood->new( token => ... );
-    my @accounts = $rh->accounts()->{results};
-    my $account = $accounts[0];
+    my $account = $rh->accounts()->{results}[0];
 
 =head1 DESCRIPTION
 
@@ -93,6 +107,47 @@ as a hash with the following keys:
     last_core_equity                    Total balance
     last_core_market_value              Market value of securities
     market_value                        Marekt value of securities
+
+=head2 C<historicals( ... )>
+
+    $account->historicals( '5minute', 'day' );
+
+Returns historical data about your portfolio. The first argument is an interval
+time and must be either C<5minute>, C<10minute>, C<day>, or C<week>.
+
+The second argument is a span of time indicating how far into the past you
+would like to retrieve and may be one of the following: C<day>, C<week>,
+C<year>, or C<5year>.
+
+Results are returned as a hash with the following keys:
+
+=over
+
+=item C<equity_historicals> - List of hashes which contain the following keys:
+
+=over
+
+=item C<adjusted_close_equity>
+
+=item C<adjusted_open_equity>
+
+=item C<begins_at>
+
+=item C<close_equity>
+
+=item C<close_market_value>
+
+=item C<net_return>
+
+=item C<open_equity>
+
+=item C<open_market_value>
+
+=back
+
+=item C<total_return> - The total ratio of returns for the span
+
+=back
 
 =head2 C<positions( ... )>
 
@@ -129,11 +184,11 @@ Total amount of money on hand. This includes unsettled funds and cash on hand.
 
 =head2 C<cash_available_for_withdrawal( )>
 
-Amount of money on hand you may withdrawl to an associated bank account.
+Amount of money on hand you may withdrawal to an associated bank account.
 
 =head2 C<cash_held_for_orders( )>
 
-Amount of money currently marked for unexecuted buy orders.
+Amount of money currently marked for active buy orders.
 
 =head2 C<deactivated( )>
 
@@ -179,7 +234,7 @@ I<Note>: ...I would imagine, not having Instant yet.
 
 =head2 C<uncleared_deposits( )>
 
-When a deposit is initited but has not be completed, the amount is added here.
+When a deposit is initiated but has not be completed, the amount is added here.
 
 =head2 C<unsettled_funds( )>
 
@@ -197,7 +252,7 @@ Boolean value.
 
 This is a simple wrapper around the API used in the official apps. The author
 provides no investment, legal, or tax advice and is not responsible for any
-damages incured while using this software. Neither this software nor its
+damages incurred while using this software. Neither this software nor its
 author are affiliated with Robinhood Financial LLC in any way.
 
 For Robinhood's terms and disclosures, please see their website at http://robinhood.com/
