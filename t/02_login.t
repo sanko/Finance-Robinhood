@@ -5,7 +5,8 @@ use_ok $_ for qw(
     Finance::Robinhood
 );
 subtest 'skippy' => sub {
-    plan skip_all => 'Missing token!' if !defined $ENV{RHUSER} || ! defined $ENV{RHPASSWORD};
+    plan skip_all => 'Missing username/password!'
+        if !defined $ENV{RHUSER} || !defined $ENV{RHPASSWORD};
     my $rh = Finance::Robinhood->new();
     ok $rh->login($ENV{RHUSER}, $ENV{RHPASSWORD}), '->login(...)';
     my $msft = $rh->quote('MSFT');

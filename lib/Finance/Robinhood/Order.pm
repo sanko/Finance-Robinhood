@@ -36,7 +36,7 @@ around BUILDARGS => sub {
             'POST',
             Finance::Robinhood::endpoint('orders'),
             {account    => {@args}->{account}->url(),
-             instrument => {@args}->{instrument}->url(),
+             instrument => {@args}->{instrument}->_get_url(),
              symbol     => {@args}->{instrument}->symbol(),
              (map {
                   {@args}
@@ -390,8 +390,8 @@ This is a little cheat sheet for creating certain types of orders:
 
 =head2 Market Sell
 
-A market sell gets you whatever the current ask price is at the exact moment
-of execution.
+A best case market sell gets you whatever the current ask price is at the
+exact moment of execution.
 
     my $order = Finance::Robinhood::Order->new(
         type    => 'market',
@@ -443,8 +443,8 @@ reaches $200.45, the order is converted into a limit order at $199.5 a share.
 
 =head2 Market Buy
 
-When triggered, this attempts to execute at the best current price. This may
-be above both the current bid and ask price.
+When triggered, this attempts to execute at the best current price. This may,
+in fact, be above both the current bid and ask price.
 
     my $order = Finance::Robinhood::Order->new(
         type       => 'market',

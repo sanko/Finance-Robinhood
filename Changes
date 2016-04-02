@@ -2,6 +2,9 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+    - Test making a buy order in t/05_buy.t
+    - Fix bug randomly preventing ::Order re-creation
+
 0.03 2016-04-01T21:55:25Z
 
     - Major documentation update
