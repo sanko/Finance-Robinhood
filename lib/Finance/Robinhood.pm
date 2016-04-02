@@ -739,7 +739,7 @@ related to the currently logged in user.
 I<Note>: Not sure why the API returns a paginated list of accounts. Perhaps
 in the future a single user will have access to multiple accounts?
 
-=head2 Financial Instruments
+=head1 Financial Instruments
 
 Financial Instrument is a fancy term for any equity, asset, debt, loan, etc.
 but we'll strictly be referring to securities (stocks and ETFs) as financial
