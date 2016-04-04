@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.05 2016-04-04T01:53:58Z
+
     - Get watchlist by name with ::Robinhood->watchlist(...)
     - ::Robinhood->delete_watchlist(...) can now delete watchlist by name or with object
     - Fix: API to bulk add symbols to watchlist supports 32 max per call

@@ -1,7 +1,7 @@
 package Finance::Robinhood::Order;
 use 5.010;
 use Carp;
-our $VERSION = "0.04";
+our $VERSION = "0.05";
 use Moo;
 use strictures 2;
 use namespace::clean;
