@@ -35,7 +35,7 @@ around BUILDARGS => sub {
             = {@args}->{account}->_get_rh()->_send_request(
             'POST',
             Finance::Robinhood::endpoint('orders'),
-            {account    => {@args}->{account}->url(),
+            {account    => {@args}->{account}->_get_url(),
              instrument => {@args}->{instrument}->_get_url(),
              symbol     => {@args}->{instrument}->symbol(),
              (map {

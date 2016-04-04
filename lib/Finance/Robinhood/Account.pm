@@ -15,8 +15,11 @@ has $_ => (is => 'ro', required => 1, writer => "_set_$_")
      cash_held_for_orders deactivated deposit_halted margin_balances
      max_ach_early_access_amount only_position_closing_trades sma
      sma_held_for_orders sweep_enabled type uncleared_deposits unsettled_funds
-     withdrawal_halted url]
+     withdrawal_halted]
     );
+has $_ =>
+    (is => 'bare', required => 1, writer => "_set_$_", reader => "_get_$_")
+    for (qw[url]);
 has $_ => (is       => 'ro',
            required => 1,
            coerce   => \&Finance::Robinhood::_2_datetime
