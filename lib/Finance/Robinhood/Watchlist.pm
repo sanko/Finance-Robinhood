@@ -29,7 +29,7 @@ sub instruments {
     return $self->_get_rh()->_paginate(
         {results => [
              map {
-                     my ($status, $ins, $raw)
+                 my ($status, $ins, $raw)
                      = $self->_get_rh()
                      ->_send_request('GET', $_->{instrument});
                  $ins
@@ -42,38 +42,49 @@ sub instruments {
 }
 
 sub bulk_add_symbols {
-    my ($self, @symbols) = @_;
-    my $result =
-        $self->_get_rh()->_send_request(
+    my $self = shift;
+    my (@symbols, $retval);
+
+    # Divide list of symbols into groups of 32 max
+    @{$symbols[$_]} = grep defined, @_[$_ * 32 .. ($_ + 1) * 32 - 1]
+        for 0 .. $#_ / 32;
+    for my $group (@symbols) {
+        my ($status, $result)
+            = $self->_get_rh()->_send_request(
                   'POST',
                   sprintf(Finance::Robinhood::endpoint('watchlists/bulk_add'),
                           $self->name
                   ),
-                  {symbols => join ',', @symbols}
-        );
-    return $result ?
+                  {symbols => join ',', @$group}
+            );
+        push @$retval, @$result if $status == 201;
+    }
+    return $retval ?
         map {
-            my ($status, $instrument, $raw)
+        my ($status, $instrument, $raw)
             = $self->_get_rh()->_send_request('GET', $_->{instrument});
         Finance::Robinhood::Instrument->new($instrument)
-        } @{$result}
+        } @{$retval}
         : ();
 }
 
 sub add_instrument {
     my ($self, $instrument) = @_;
-    my $ret = $self->_get_rh()->_send_request('POST', Finance::Robinhood::endpoint('watchlists') . $self->name() . '/');
+    my $ret = $self->_get_rh()->_send_request('POST',
+            Finance::Robinhood::endpoint('watchlists') . $self->name() . '/');
     return $ret;
 }
 
 sub delete_instrument {
     my ($self, $instrument) = @_;
-    my ($status, $ret) =
-        $self->_get_rh()->_send_request('DELETE',
-              Finance::Robinhood::endpoint('watchlists') . $self->name() . '/' . $instrument->id() . '/');
+    my ($status, $ret)
+        = $self->_get_rh()->_send_request('DELETE',
+                                    Finance::Robinhood::endpoint('watchlists')
+                                        . $self->name() . '/'
+                                        . $instrument->id()
+                                        . '/');
     return $status == 204;
 }
-
 1;
 
 =encoding utf-8
@@ -136,8 +147,9 @@ second time will fail.
     $watchlist->bulk_add_symbols(qw[MSFT FB GOOGL]);
 
 Add multiple instruments in a single API call and by their symbols with this.
+The return value is a list of new Finance::Robinhood::Instrument objects.
 
-...easier than gathering ::Instrument objects and calling
+...this is easier than gathering ::Instrument objects and calling
 C<add_instrument( ... )> for each individual security, right?
 
 =head1 LEGAL
