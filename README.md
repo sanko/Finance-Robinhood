@@ -368,6 +368,13 @@ Each watchlist is represented by a Finance::Robinhood::Watchlist object.
 Please read the docs for that package to find out how to add and remove
 individual securities.
 
+## `watchlist( ... )`
+
+    my $hotlist = $rh->watchlist( 'Blue Chips' );
+
+Returns a blessed Finance::Robinhood::Watchlist if the watchlist with the
+given name exists.
+
 ## `create_watchlist( ... )`
 
     my $watchlist = $rh->create_watchlist( 'Energy' );
@@ -375,11 +382,19 @@ individual securities.
 You can create new Finance::Robinhood::Watchlist objects with this. Here, your
 code would create a new one named "Energy".
 
+Note that only alphanumeric characters and understore are allowed in watchlist
+names. No whitespace, etc.
+
 ## `delete_watchlist( ... )`
 
+    my $watchlist = $rh->create_watchlist( 'Energy' );
     $rh->delete_watchlist( $watchlist );
 
-You may remove a watchlist with this method.
+    $rh->create_watchlist( 'Energy' );
+    $rh->delete_watchlist( 'Energy' );
+
+You may remove a watchlist with this method. The argument may either be a
+Finance::Robinhood::Watchlist object or the name of the watchlist as a string.
 
 If you clobber the watchlist named 'Default', it will be recreated with
 popular securities the next time you open any of the official apps.

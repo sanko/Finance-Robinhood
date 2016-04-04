@@ -2,6 +2,9 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+    - Get watchlist by name with ::Robinhood->watchlist(...)
+    - ::Robinhood->delete_watchlist(...) can now delete watchlist by name or with object
+
 0.04 2016-04-02T16:21:13Z
 
     - Test making a buy order in t/05_buy.t

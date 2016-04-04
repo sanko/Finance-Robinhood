@@ -430,7 +430,7 @@ sub delete_watchlist {
     my ($status, $result, $response)
         = $self->_send_request('DELETE',
                                Finance::Robinhood::endpoint('watchlists')
-                                   . $watchlist->name() . '/'
+                                   . (ref $watchlist ? $watchlist->name() : $watchlist) . '/'
         );
     return $status == 204;
 }
@@ -451,6 +451,19 @@ sub watchlists {
     $result // return !1;
     return () if !$result;
     return $self->_paginate($result, 'Finance::Robinhood::Watchlist');
+}
+
+sub watchlist {
+    my ($self, $name) = @_;
+    my ($status, $result)
+        = $self->_send_request('GET',
+                       Finance::Robinhood::endpoint('watchlists') . "$name/");
+    return $status == 200 ?
+        Finance::Robinhood::Watchlist->new(name => $name,
+                                           rh   => $self,
+                                           %$result
+        )
+        : ();
 }
 
 # ---------------- Private Helper Functions --------------- //
@@ -952,6 +965,13 @@ Each watchlist is represented by a Finance::Robinhood::Watchlist object.
 Please read the docs for that package to find out how to add and remove
 individual securities.
 
+=head2 C<watchlist( ... )>
+
+    my $hotlist = $rh->watchlist( 'Blue Chips' );
+
+Returns a blessed Finance::Robinhood::Watchlist if the watchlist with the
+given name exists.
+
 =head2 C<create_watchlist( ... )>
 
     my $watchlist = $rh->create_watchlist( 'Energy' );
@@ -959,11 +979,19 @@ individual securities.
 You can create new Finance::Robinhood::Watchlist objects with this. Here, your
 code would create a new one named "Energy".
 
+Note that only alphanumeric characters and understore are allowed in watchlist
+names. No whitespace, etc.
+
 =head2 C<delete_watchlist( ... )>
 
+    my $watchlist = $rh->create_watchlist( 'Energy' );
     $rh->delete_watchlist( $watchlist );
 
-You may remove a watchlist with this method.
+    $rh->create_watchlist( 'Energy' );
+    $rh->delete_watchlist( 'Energy' );
+
+You may remove a watchlist with this method. The argument may either be a
+Finance::Robinhood::Watchlist object or the name of the watchlist as a string.
 
 If you clobber the watchlist named 'Default', it will be recreated with
 popular securities the next time you open any of the official apps.
