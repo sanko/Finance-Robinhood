@@ -28,15 +28,15 @@ subtest 'skippy' => sub {
         # TODO: Make sure we have enough cash on hand to make this order
         my $order =
             Finance::Robinhood::Order->new(
-                                        account    => $account,
-                                        instrument => $instrument,
-                                        type       => 'limit',
-                                        stop_price => $quote->bid_price() / 2,
-                                        trigger    => 'stop',
-                                        time_in_force => 'opg',
-                                        side          => 'buy',
-                                        quantity      => 1,
-                                        price => $quote->bid_price() / 2
+                       account    => $account,
+                       instrument => $instrument,
+                       type       => 'limit',
+                       stop_price => sprintf('%.4f', $quote->bid_price() / 2),
+                       trigger    => 'stop',
+                       time_in_force => 'opg',
+                       side          => 'buy',
+                       quantity      => 1,
+                       price => sprintf('%.4f', $quote->bid_price() / 2)
             );
         isa_ok $order, 'Finance::Robinhood::Order', 'Limit buy order';
         ok $order->cancel(), 'Cancel that order quick';

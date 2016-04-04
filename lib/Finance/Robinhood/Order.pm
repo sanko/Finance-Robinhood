@@ -270,11 +270,17 @@ pass. These include:
 This is used in limit, stop limit, and stop loss orders where the order will
 only execute when the going rate hits the given price.
 
+Please note that the API wants prices to be I<at most> 4 decimal places. It is
+your responsibility to make sure of that.
+
 =item C<stop_price>
 
 This is used in stop limit and stop loss orders where the trigger is C<stop>
 and the order is automatically converted when the price hits the given
-C<stop_price>.
+C<stop_price>. I obviously would not modify your orders to comply!
+
+Please note that the API wants prices including C<stop_price> to be I<at most>
+4 decimal places. It is your responsibility to make sure of that.
 
 =back
 
