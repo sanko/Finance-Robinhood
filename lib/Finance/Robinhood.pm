@@ -416,11 +416,11 @@ sub notifications_devices {
 
 sub create_watchlist {
     my ($self, $name) = @_;
-    my $result =
+    my ($status, $result) =
         $self->_send_request('POST',
                              Finance::Robinhood::endpoint('watchlists'),
                              {name => $name});
-    return $result ?
+    return $status == 201 ?
         Finance::Robinhood::Watchlist->new(rh => $self, %$result)
         : ();
 }
