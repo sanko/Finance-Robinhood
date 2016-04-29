@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.06 2016-04-29T22:05:28Z
+
     - ::Order->executions() was dropping all but timestamp and settlement_date
     - Next and previous cursor information was leaking in paginated data
     - New demo script: eg/export_orders.pl
