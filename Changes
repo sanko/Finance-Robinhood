@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+    - Next and previous cursor information was leaking in paginated data
+
 0.05 2016-04-04T01:53:58Z
 
     - Get watchlist by name with ::Robinhood->watchlist(...)

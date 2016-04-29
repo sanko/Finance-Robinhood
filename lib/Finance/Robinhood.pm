@@ -471,10 +471,12 @@ sub watchlist {
 #
 sub _paginate {    # Paginates results
     my ($self, $res, $class) = @_;
-    $res->{previous} =~ m[\?cursor=(.+)$] if defined $res->{previous};
-    my $prev = $1 // ();
-    $res->{next} =~ m[\?cursor=(.+)$] if defined $res->{next};
-    my $next = $1 // ();
+    my ($prev)
+        = defined $res->{previous} ?
+        ($res->{previous} =~ m[\?cursor=(.+)$])
+        : ();
+    my ($next)
+        = defined $res->{next} ? ($res->{next} =~ m[\?cursor=(.+)$]) : ();
     return {
         results => (
             defined $class ?
