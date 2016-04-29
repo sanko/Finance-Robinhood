@@ -64,15 +64,14 @@ sub account {
 }
 
 sub executions {
-    my $self = shift;
-
-    # TODO: Convert settlement_date and timestamp to DateTime objects
-    [map {
-         $_->{settlement_date}
-             = Finance::Robinhood::_2_datetime($_->{settlement_date});
-         $_->{timestamp} = Finance::Robinhood::_2_datetime($_->{timestamp})
-     } @{$self->_get_executions()}
-    ];
+    my $self   = shift;
+    my $return = $self->_get_executions();
+    map {
+        $_->{settlement_date}
+            = Finance::Robinhood::_2_datetime($_->{settlement_date});
+        $_->{timestamp} = Finance::Robinhood::_2_datetime($_->{timestamp})
+    } @$return;
+    return $return;
 }
 
 sub instrument {
