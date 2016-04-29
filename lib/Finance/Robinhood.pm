@@ -416,11 +416,12 @@ sub notifications_devices {
 
 sub create_watchlist {
     my ($self, $name) = @_;
-    my ($status, $result) =
-        $self->_send_request('POST',
-                             Finance::Robinhood::endpoint('watchlists'),
-                             {name => $name});
-    return $status == 201 ?
+    my ($status, $result)
+        = $self->_send_request('POST',
+                               Finance::Robinhood::endpoint('watchlists'),
+                               {name => $name});
+    return $status == 201
+        ?
         Finance::Robinhood::Watchlist->new(rh => $self, %$result)
         : ();
 }
@@ -430,7 +431,11 @@ sub delete_watchlist {
     my ($status, $result, $response)
         = $self->_send_request('DELETE',
                                Finance::Robinhood::endpoint('watchlists')
-                                   . (ref $watchlist ? $watchlist->name() : $watchlist) . '/'
+                                   . (ref $watchlist ?
+                                          $watchlist->name()
+                                      : $watchlist
+                                   )
+                                   . '/'
         );
     return $status == 204;
 }
@@ -590,7 +595,7 @@ sub _2_datetime {
 
 =head1 NAME
 
-Finance::Robinhood - Trade Stocks and ETFs with Free Brokerage Robinhood
+Finance::Robinhood - Trade Stocks and ETFs with Commission Free Brokerage Robinhood
 
 =head1 SYNOPSIS
 
@@ -607,8 +612,31 @@ Finance::Robinhood - Trade Stocks and ETFs with Free Brokerage Robinhood
 
 =head1 DESCRIPTION
 
-This modules allows you to buy, sell, and gather information related to stocks
-and ETFs traded in the U.S. Please see the L<Legal|LEGAL> section below.
+Finance::Robinhood allows you to buy, sell, and gather information related to
+stocks and ETFs traded in the U.S. Before we get into how, please read the
+L<Legal|LEGAL> section below. It's really important.
+
+Okay. This package is organized into very easy to understand parts:
+
+=over
+
+=item * Orders to buy and sell are created in L<Finance::Robinhood::Order>. If
+you're looking to make this as simple as possible, go check out the
+L<cheat sheet|Finance::Robinhood::Order/"Order Cheat Sheet">. You'll find
+recipes for market, limit, as well as stop loss and stop limit order types.
+
+=item * Quote information can be access in L<Finance::Robinhood::Quote>.
+
+=item * Account information is handled by L<Finance::Robinhood::Account>. If
+you'd like to view or edit any of the information Robinhood has, start there.
+
+=item * Individual securities are represented by Finance::Robinhood::Instrument
+objects. Gathering quote and fundamental information is only the beginning.
+
+=item * L<Finance::Robinhood::Watchlist> objects represent persistant lists of
+securities you'd like to keep track of.
+
+=back
 
 By the way, if you're wondering how to buy and sell without lot of reading,
 head over to the L<Finance::Robinhood::Order> and pay special attention to the
@@ -629,12 +657,12 @@ your username and password.
 
 =head2 C<new( ... )>
 
-    # Passing the token is the prefered way of handling authorization
+    # Passing the token is the preferred way of handling authorization
     my $rh = Finance::Robinhood->new( token => ... );
 
 This would create a new Finance::Robinhood object ready to go.
 
-    # Reqires ->login(...) call :(
+    # Requires ->login(...) call :(
     my $rh = Finance::Robinhood->new( );
 
 With no arguments, this creates a new Finance::Robinhood object without
