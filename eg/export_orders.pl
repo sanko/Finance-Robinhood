@@ -68,7 +68,6 @@ while (1) {
             } keys %$order
             )
         {
-            #warn $key;
             push @{$output{$key}}, $order->$key;
         }
         push @{$output{symbol}}, $instrument->symbol;
