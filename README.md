@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/sanko/Finance-Robinhood.svg?branch=master)](https://travis-ci.org/sanko/Finance-Robinhood)
 # NAME
 
-Finance::Robinhood - Trade Stocks and ETFs with Free Brokerage Robinhood
+Finance::Robinhood - Trade Stocks and ETFs with Commission Free Brokerage Robinhood
 
 # SYNOPSIS
 
@@ -18,8 +18,23 @@ Finance::Robinhood - Trade Stocks and ETFs with Free Brokerage Robinhood
 
 # DESCRIPTION
 
-This modules allows you to buy, sell, and gather information related to stocks
-and ETFs traded in the U.S. Please see the [Legal](https://metacpan.org/pod/LEGAL) section below.
+Finance::Robinhood allows you to buy, sell, and gather information related to
+stocks and ETFs traded in the U.S. Before we get into how, please read the
+[Legal](https://metacpan.org/pod/LEGAL) section below. It's really important.
+
+Okay. This package is organized into very easy to understand parts:
+
+- Orders to buy and sell are created in [Finance::Robinhood::Order](https://metacpan.org/pod/Finance::Robinhood::Order). If
+you're looking to make this as simple as possible, go check out the
+[cheat sheet](https://metacpan.org/pod/Finance::Robinhood::Order#Order-Cheat-Sheet). You'll find
+recipes for market, limit, as well as stop loss and stop limit order types.
+- Quote information can be access in [Finance::Robinhood::Quote](https://metacpan.org/pod/Finance::Robinhood::Quote).
+- Account information is handled by [Finance::Robinhood::Account](https://metacpan.org/pod/Finance::Robinhood::Account). If
+you'd like to view or edit any of the information Robinhood has, start there.
+- Individual securities are represented by Finance::Robinhood::Instrument
+objects. Gathering quote and fundamental information is only the beginning.
+- [Finance::Robinhood::Watchlist](https://metacpan.org/pod/Finance::Robinhood::Watchlist) objects represent persistant lists of
+securities you'd like to keep track of.
 
 By the way, if you're wondering how to buy and sell without lot of reading,
 head over to the [Finance::Robinhood::Order](https://metacpan.org/pod/Finance::Robinhood::Order) and pay special attention to the
@@ -40,12 +55,12 @@ your username and password.
 
 ## `new( ... )`
 
-    # Passing the token is the prefered way of handling authorization
+    # Passing the token is the preferred way of handling authorization
     my $rh = Finance::Robinhood->new( token => ... );
 
 This would create a new Finance::Robinhood object ready to go.
 
-    # Reqires ->login(...) call :(
+    # Requires ->login(...) call :(
     my $rh = Finance::Robinhood->new( );
 
 With no arguments, this creates a new Finance::Robinhood object without
