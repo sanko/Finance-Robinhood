@@ -495,7 +495,8 @@ curl -v https://api.robinhood.com/user/employment/ \
 | user 				| URL 	   | Link back to the `/user/` endpoint |
 | years_employed	| Integer  | How long have you had your current job? |
 
-** Response sample**
+**Response sample**
+
 ```
 {
     "employer_zipcode": 12401"",
@@ -551,7 +552,8 @@ curl -v https://api.robinhood.com/user/investment_profile/ \
 | updated_at    		| ISO 8601 | When was any of this information last modified |
 | user 					| URL 	   | Link back to the `/user/` endpoint |
 
-** Response sample**
+**Response sample**
+
 ```
 {
     "annual_income": "40000_49999",
@@ -601,7 +603,8 @@ This returns a [paginated list](#pagination) of data with the following results:
 | field | String | The key (name) of the valid information |
 | url   | URL    | URL you may use to gather the valid information |
 
-** Response sample**
+**Response sample**
+
 ```
 {
     "field": "tax_id_ssn",
@@ -639,7 +642,7 @@ _Unsure. I get..._
 { detail => "Not found." }
 ```
 
-** Response sample**
+**Response sample**
 
 _Untested_
 
@@ -665,7 +668,7 @@ _Untested_
 
 _Untested_
 
-** Response sample**
+**Response sample**
 
 _Untested_
 
@@ -709,7 +712,7 @@ curl -v https://api.robinhood.com/user/ \
 
 _Untested_
 
-** Response sample**
+**Response sample**
 
 _Untested_
 
@@ -812,7 +815,7 @@ This is a hash with the following keys... A lot of these are copies of data foun
 
 _I assume this is a hash much like `cash_balances` but I do not have an Instant account yet so it's simply `null`_
 
-** Response sample**
+**Response sample**
 
 ```
 {
@@ -1013,7 +1016,8 @@ Fields are returned as well as the following:
 | position          | URL | Link to positions for this account with this instrument |
 | average_price     | Float | Average price of all shares executed so far |
 
-** Response sample**
+**Response sample**
+
 ```
 {
     "updated_at": "2016-04-01T21:24:13.698563Z",
@@ -1068,7 +1072,7 @@ curl -v https://api.robinhood.com/user/employment/ \
 
 See the response to [placing an order](#place-an-order).
 
-** Response sample**
+**Response sample**
 
 See the response sample to [placing an order](#place-an-order).
 
@@ -1106,7 +1110,7 @@ curl -v https://api.robinhood.com/orders/ \
 
 TODO
 
-** Response sample**
+**Response sample**
 
 TODO
 
@@ -1137,7 +1141,7 @@ curl -v https://api.robinhood.com/orders/15390ade-face-caca-0987-9fdac5824701/ca
 
 See the response to [placing an order](#place-an-order).
 
-** Response sample**
+**Response sample**
 
 See the response sample to [placing an order](#place-an-order).
 
@@ -1190,7 +1194,8 @@ Fields are returned as a list of hashes which contain the following for each add
 | created_at | ISO 8601 | Timestamp when the instrument was added to the watchlist |
 | url        | URL      | Link to this instrument as a member of this watchlist    |
 
-** Response sample**
+**Response sample**
+
 ```
 [{
     "watchlist": "https://api.robinhood.com/watchlists/Default/",
@@ -1250,7 +1255,8 @@ Fields are returned as a hash with the following keys:
 | user | String | Link back to the user page |
 | name | String | The name you used above    |
 
-** Response sample**
+**Response sample**
+
 ```
 {
 	"url": "https://api.robinhood.com/watchlists/Technology/",
