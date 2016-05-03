@@ -613,8 +613,8 @@ Finance::Robinhood - Trade Stocks and ETFs with Commission Free Brokerage Robinh
 =head1 DESCRIPTION
 
 Finance::Robinhood allows you to buy, sell, and gather information related to
-stocks and ETFs traded in the U.S. Before we get into how, please read the
-L<Legal|LEGAL> section below. It's really important.
+stocks and ETFs traded in the U.S commission free. Before we get into how,
+please read the L<Legal|LEGAL> section below. It's really important.
 
 Okay. This package is organized into very easy to understand parts:
 
@@ -625,29 +625,34 @@ you're looking to make this as simple as possible, go check out the
 L<cheat sheet|Finance::Robinhood::Order/"Order Cheat Sheet">. You'll find
 recipes for market, limit, as well as stop loss and stop limit order types.
 
-=item * Quote information can be access in L<Finance::Robinhood::Quote>.
+=item * Quote information can be accessed with L<Finance::Robinhood::Quote>.
 
 =item * Account information is handled by L<Finance::Robinhood::Account>. If
-you'd like to view or edit any of the information Robinhood has, start there.
+you'd like to view or edit any of the information Robinhood has on you, start
+there.
 
-=item * Individual securities are represented by Finance::Robinhood::Instrument
-objects. Gathering quote and fundamental information is only the beginning.
+=item * Individual securities are represented by
+L<Finance::Robinhood::Instrument> objects. Gathering quote and fundamental
+information is only the beginning.
 
 =item * L<Finance::Robinhood::Watchlist> objects represent persistant lists of
-securities you'd like to keep track of.
+securities you'd like to keep track of. Organize your watchlists by type!
 
 =back
 
-By the way, if you're wondering how to buy and sell without lot of reading,
-head over to the L<Finance::Robinhood::Order> and pay special attention to the
-L<order cheat sheet|Finance::Robinhood::Order/"Order Cheat Sheet">.
+If you're looking to just buy and sell without lot of reading, head over to
+the L<Finance::Robinhood::Order> and pay special attention to the
+L<order cheat sheet|Finance::Robinhood::Order/"Order Cheat Sheet"> and apply
+what you learn to the C<eg/buy.pl> example script.
 
 =head1 METHODS
 
 Finance::Robinhood wraps a powerfully capable API which has many options.
-There are parts of this package that are object oriented and others which are
-functional. I've attempted to organize everything according to how and when
-they are used... Let's start at the very beginning: Let's log in!
+There are parts of this package that are object oriented (because they require
+persistant login information) and others which may also be used functionally
+(because they do not require login information). I've attempted to organize
+everything according to how and when they are used... Let's start at the very
+beginning: let's log in!
 
 =head1 Logging In
 
@@ -665,9 +670,9 @@ This would create a new Finance::Robinhood object ready to go.
     # Requires ->login(...) call :(
     my $rh = Finance::Robinhood->new( );
 
-With no arguments, this creates a new Finance::Robinhood object without
-account information. Before you can buy or sell or do almost anything else,
-you must log in manually.
+Without arguments, a new Finance::Robinhood object is created without account
+information. Before you can buy or sell or do almost anything else, you must
+L<log in manually|/"login( ... )">.
 
 On the bright side, for future logins, you can store the authorization token
 and use it rather than having to pass your username and password around
@@ -687,8 +692,9 @@ future calls to C<new( ... )>.
 
 =head2 C<token( )>
 
-Now that you've logged in, you might want to securely store authorization info
-to pass to C<new( ... )> next time. Get the authorization token here.
+If you logged in with a username/password combo but later decided you might
+want to securely store authorization info to pass to C<new( ... )> next time.
+Get the authorization token here.
 
 =head2 C<logout( )>
 
@@ -696,12 +702,13 @@ to pass to C<new( ... )> next time. Get the authorization token here.
     # ...do some stuff... buy... sell... idk... stuff... and then...
     $rh->logout( ); # Goodbye!
 
-Logs you out of Robinhood by forcing the token returned by C<login( ... )> or
+Logs you out of Robinhood by forcing the token returned by C<login(...)> or
 passed to C<new(...)> to expire.
 
 I<Note>: This will log you out I<everywhere> because Robinhood generates a
-single authorization token per account at a time! This is good in rare case
-your token is stolen.
+single authorization token per account at a time! All logged in clients will
+be logged out. This is good in rare case your device or the token itself is
+stolen.
 
 =head2 C<forgot_password( ... )>
 

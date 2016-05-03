@@ -19,8 +19,8 @@ Finance::Robinhood - Trade Stocks and ETFs with Commission Free Brokerage Robinh
 # DESCRIPTION
 
 Finance::Robinhood allows you to buy, sell, and gather information related to
-stocks and ETFs traded in the U.S. Before we get into how, please read the
-[Legal](https://metacpan.org/pod/LEGAL) section below. It's really important.
+stocks and ETFs traded in the U.S commission free. Before we get into how,
+please read the [Legal](https://metacpan.org/pod/LEGAL) section below. It's really important.
 
 Okay. This package is organized into very easy to understand parts:
 
@@ -28,24 +28,29 @@ Okay. This package is organized into very easy to understand parts:
 you're looking to make this as simple as possible, go check out the
 [cheat sheet](https://metacpan.org/pod/Finance::Robinhood::Order#Order-Cheat-Sheet). You'll find
 recipes for market, limit, as well as stop loss and stop limit order types.
-- Quote information can be access in [Finance::Robinhood::Quote](https://metacpan.org/pod/Finance::Robinhood::Quote).
+- Quote information can be accessed with [Finance::Robinhood::Quote](https://metacpan.org/pod/Finance::Robinhood::Quote).
 - Account information is handled by [Finance::Robinhood::Account](https://metacpan.org/pod/Finance::Robinhood::Account). If
-you'd like to view or edit any of the information Robinhood has, start there.
-- Individual securities are represented by Finance::Robinhood::Instrument
-objects. Gathering quote and fundamental information is only the beginning.
+you'd like to view or edit any of the information Robinhood has on you, start
+there.
+- Individual securities are represented by
+[Finance::Robinhood::Instrument](https://metacpan.org/pod/Finance::Robinhood::Instrument) objects. Gathering quote and fundamental
+information is only the beginning.
 - [Finance::Robinhood::Watchlist](https://metacpan.org/pod/Finance::Robinhood::Watchlist) objects represent persistant lists of
-securities you'd like to keep track of.
+securities you'd like to keep track of. Organize your watchlists by type!
 
-By the way, if you're wondering how to buy and sell without lot of reading,
-head over to the [Finance::Robinhood::Order](https://metacpan.org/pod/Finance::Robinhood::Order) and pay special attention to the
-[order cheat sheet](https://metacpan.org/pod/Finance::Robinhood::Order#Order-Cheat-Sheet).
+If you're looking to just buy and sell without lot of reading, head over to
+the [Finance::Robinhood::Order](https://metacpan.org/pod/Finance::Robinhood::Order) and pay special attention to the
+[order cheat sheet](https://metacpan.org/pod/Finance::Robinhood::Order#Order-Cheat-Sheet) and apply
+what you learn to the `eg/buy.pl` example script.
 
 # METHODS
 
 Finance::Robinhood wraps a powerfully capable API which has many options.
-There are parts of this package that are object oriented and others which are
-functional. I've attempted to organize everything according to how and when
-they are used... Let's start at the very beginning: Let's log in!
+There are parts of this package that are object oriented (because they require
+persistant login information) and others which may also be used functionally
+(because they do not require login information). I've attempted to organize
+everything according to how and when they are used... Let's start at the very
+beginning: let's log in!
 
 # Logging In
 
@@ -63,9 +68,9 @@ This would create a new Finance::Robinhood object ready to go.
     # Requires ->login(...) call :(
     my $rh = Finance::Robinhood->new( );
 
-With no arguments, this creates a new Finance::Robinhood object without
-account information. Before you can buy or sell or do almost anything else,
-you must log in manually.
+Without arguments, a new Finance::Robinhood object is created without account
+information. Before you can buy or sell or do almost anything else, you must
+[log in manually](#login).
 
 On the bright side, for future logins, you can store the authorization token
 and use it rather than having to pass your username and password around
@@ -85,8 +90,9 @@ future calls to `new( ... )`.
 
 ## `token( )`
 
-Now that you've logged in, you might want to securely store authorization info
-to pass to `new( ... )` next time. Get the authorization token here.
+If you logged in with a username/password combo but later decided you might
+want to securely store authorization info to pass to `new( ... )` next time.
+Get the authorization token here.
 
 ## `logout( )`
 
@@ -94,12 +100,13 @@ to pass to `new( ... )` next time. Get the authorization token here.
     # ...do some stuff... buy... sell... idk... stuff... and then...
     $rh->logout( ); # Goodbye!
 
-Logs you out of Robinhood by forcing the token returned by `login( ... )` or
+Logs you out of Robinhood by forcing the token returned by `login(...)` or
 passed to `new(...)` to expire.
 
 _Note_: This will log you out _everywhere_ because Robinhood generates a
-single authorization token per account at a time! This is good in rare case
-your token is stolen.
+single authorization token per account at a time! All logged in clients will
+be logged out. This is good in rare case your device or the token itself is
+stolen.
 
 ## `forgot_password( ... )`
 
