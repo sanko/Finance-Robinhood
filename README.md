@@ -16,6 +16,36 @@ Finance::Robinhood - Trade Stocks and ETFs with Commission Free Brokerage Robinh
     # ????
     # Profit
 
+# Examples
+
+Some people have really only be reading this to get an automated stock trading
+bot up and running. If that's you, the quickest way to get in without a load
+of looking through documentation would be to move over to any of the example
+scripts that I've included with this distributio:
+
+- `eg/buy.pl`
+
+    Buy stocks from the command line
+
+        buy.pl -username=getMoney -password=*** -symbol=MSFT -quantity=2000
+
+    Currently only market orders are supported but adding all the different limit
+    order types is really rather simple. I might update it myself if I find a
+    round tuit somewhere this summer. Might even add a sell script...
+
+- `eg/export_orders.pl`
+
+    Export your entire Robinhood order history to a CSV file from the command line
+
+        buy -username=getMoney -password=*** -output=Robinhood.csv
+
+    You can dump the CSV to STDOUT by leaving `-output` undefined.
+
+Both scripts provide help when called without arguments. In addition to those
+examples, you should check out the unofficial documentation of Robinhood
+trade's API. Find it on github:
+[https://github.com/sanko/Finance-Robinhood/blob/master/API.md](https://github.com/sanko/Finance-Robinhood/blob/master/API.md)
+
 # DESCRIPTION
 
 Finance::Robinhood allows you to buy, sell, and gather information related to
