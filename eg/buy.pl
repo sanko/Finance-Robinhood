@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use lib '..\lib';
+#use lib '..\lib';
 use Getopt::Long qw(GetOptions);
 use Pod::Usage qw(pod2usage);
 use Finance::Robinhood;
