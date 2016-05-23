@@ -12,7 +12,8 @@ my ($help, $man,    # Pod::Usage
     $verbose,       # Debugging
     $username, $password,    # New login
     $token,                  # Stored access token
-    $filename                # Where to write CSV
+    $filename,               # Where to write CSV
+    $all                     # Include cancelled orders
 );
 ## Parse options and print usage if there is a syntax error,
 ## or if usage was explicitly requested.
@@ -22,7 +23,8 @@ GetOptions('help|?'     => \$help,
            'username:s' => \$username,
            'password:s' => \$password,
            'token:s'    => \$token,
-           'output=s'   => \$filename
+           'output=s'   => \$filename,
+           'all+'       => \$all
 ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
@@ -60,6 +62,7 @@ while (1) {
     print "okay\n" if defined $filename;
     my %output;
     for my $order (@{$orders->{results}}) {
+        next if $order->state ne 'filled' && !$all;
         my $executions = $order->executions;
         my $instrument = $order->instrument;
         for my $key (
@@ -67,8 +70,7 @@ while (1) {
                 !m[(account|rh|instrument|executions|cancel|position|url)]
             } keys %$order
             )
-        {
-            push @{$output{$key}}, $order->$key;
+        {   push @{$output{$key}}, $order->$key;
         }
         push @{$output{symbol}}, $instrument->symbol;
         my $value = 0;
@@ -105,6 +107,7 @@ export_orders [options]
    -password        your Robinhood password
    -token           your Robinhood access token
    -output          filename to store the csv data in
+   -all             include cancelled orders
 
    -help            brief help message
    -man             full documentation
@@ -147,6 +150,10 @@ STDOUT
 Dumps a lot of random debugging stuff to the terminal including private keys.
 
 B<Be very careful where you use this!>
+
+=item B<-all>
+
+Include cancelled orders with the filled. This is probably not very usefull.
 
 =item B<-help>
 
