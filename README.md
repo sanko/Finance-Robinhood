@@ -422,7 +422,7 @@ individual securities.
 
 ## `watchlist( ... )`
 
-    my $hotlist = $rh->watchlist( 'Blue Chips' );
+    my $hotlist = $rh->watchlist( 'Blue_Chips' );
 
 Returns a blessed Finance::Robinhood::Watchlist if the watchlist with the
 given name exists.
