@@ -353,7 +353,7 @@ sub historicals {
         = _send_request($self,
                         'GET',
                         Finance::Robinhood::endpoint('quotes/historicals')
-                            . "$symbol/?interval=$interval&$span"
+                            . "$symbol/?interval=$interval&span=$span"
         );
     return if $status != 200;
     for (@{$data->{historicals}}) {
