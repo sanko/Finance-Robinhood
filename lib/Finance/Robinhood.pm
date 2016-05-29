@@ -3,7 +3,7 @@ use 5.012;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.06";
+our $VERSION = "0.07";
 use Moo;
 use HTTP::Tiny '0.056';
 use JSON::Tiny qw[decode_json];

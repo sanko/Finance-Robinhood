@@ -2,6 +2,12 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.07 2016-05-29T20:46:30Z
+
+	- Historical quotes correctly request a defined span
+	- Example script found at eg/export_orders.pl only exports executed orders by default
+	    - Override this with --all
+
 0.06 2016-04-29T22:05:28Z
 
     - ::Order->executions() was dropping all but timestamp and settlement_date
