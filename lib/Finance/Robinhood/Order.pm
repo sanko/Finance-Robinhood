@@ -1,7 +1,7 @@
 package Finance::Robinhood::Order;
 use 5.010;
 use Carp;
-our $VERSION = "0.07";
+our $VERSION = "0.08";
 use Moo;
 use strictures 2;
 use namespace::clean;
@@ -41,7 +41,16 @@ around BUILDARGS => sub {
              (map {
                   {@args}
                   ->{$_} ? ($_ => {@args}->{$_}) : ()
-              } qw[type price trigger time_in_force stop_price side quantity]
+              } qw[type trigger time_in_force stop_price side quantity]
+             ),
+             (map {
+                  ($_ => (defined {@args}->{$_} ? {@args}->{$_}
+                          : {@args}->{type} eq 'market'
+                          ? {@args}->{instrument}->quote->bid_price()
+                          : ()
+                   )
+                      )
+              } qw[price]
              )
             }
             );
@@ -112,7 +121,7 @@ Finance::Robinhood::Order - Order to Buy or Sell a Security
     use Finance::Robinhood;
 
     my $rh    = Finance::Robinhood->new( token => ... );
-    my $acct  = $rh->accounts()->[0];
+    my $acct  = $rh->accounts()->{results}[0]; # Account list is paginated
     my $bill  = $rh->instrument('MSFT');
     my $order = Finance::Robinhood::Order->new(
         account       => $acct,
@@ -270,7 +279,7 @@ This is used in limit, stop limit, and stop loss orders where the order will
 only execute when the going rate hits the given price.
 
 Please note that the API wants prices to be I<at most> 4 decimal places. It is
-your responsibility to make sure of that.
+your responsibility to make sure of that. Google Rule 612.
 
 =item C<stop_price>
 

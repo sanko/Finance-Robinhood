@@ -1,7 +1,7 @@
 package Finance::Robinhood::Market;
 use 5.010;
 use Carp;
-our $VERSION = "0.07";
+our $VERSION = "0.08";
 use Moo;
 use strictures 2;
 use namespace::clean;
@@ -30,7 +30,7 @@ Finance::Robinhood::Market - Basic Market Information
 
     use Finance::Robinhood::Market;
 
-    my $MC = Finance::Robinhood::instrument('APPL');
+    my $MC = Finance::Robinhood::instrument('AAPL');
     my $market = $MC->market();
     print $market->acronym() . ' is based in ' . $market->city();
 

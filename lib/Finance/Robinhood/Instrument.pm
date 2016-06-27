@@ -3,7 +3,7 @@ use 5.010;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.07";
+our $VERSION = "0.08";
 use Moo;
 use JSON::Tiny qw[decode_json];
 use strictures 2;
@@ -67,13 +67,13 @@ Finance::Robinhood::Instrument - Single Financial Instrument
 
     use Finance::Robinhood::Instrument;
 
-    my $MC = Finance::Robinhood::Instrument::search('APPL');
+    my $MC = Finance::Robinhood::instrument('AAPL');
 
 =head1 DESCRIPTION
 
 This class represents a single financial instrument. Objects are usually
 created by Finance::Robinhood so please use
-C<Finance::Robinhood->instrument(...)>.
+C<<Finance::Robinhood->instrument(...)>>.
 
 =head1 METHODS
 

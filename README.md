@@ -12,7 +12,7 @@ Finance::Robinhood - Trade Stocks and ETFs with Commission Free Brokerage Robinh
     my $token = $rh->login($user, $password); # Store it for later
 
     $rh->quote('MSFT');
-    Finance::Robinhood::quote('APPL');
+    Finance::Robinhood::quote('AAPL');
     # ????
     # Profit
 
@@ -308,7 +308,7 @@ both current and historical data on securities.
     my %msft = $rh->quote('MSFT');
     my $swa  = Finance::Robinhood::quote('LUV');
 
-    my $quotes = $rh->quote('APPL', 'GOOG', 'MA');
+    my $quotes = $rh->quote('AAPL', 'GOOG', 'MA');
     my $quotes = Finance::Robinhood::quote('LUV', 'JBLU', 'DAL');
 
 Requests current information about a security which is returned as a
@@ -484,4 +484,4 @@ this module. Please refer to the [LEGAL](https://metacpan.org/pod/LEGAL) section
 
 # AUTHOR
 
-Sanko Robinson &lt;sanko@cpan.org>
+Sanko Robinson <sanko@cpan.org>

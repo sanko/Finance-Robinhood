@@ -3,7 +3,7 @@ use 5.010;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.07";
+our $VERSION = "0.08";
 use Moo;
 use JSON::Tiny qw[decode_json];
 use strictures 2;
@@ -101,7 +101,7 @@ Finance::Robinhood::Watchlist - Persistent List of Financial Instruments
 
     my $watchlist = $rh->create_watchlist( 'Tech' );
 
-    $watchlist->add_instrument( $rh->instrument('APPL') );
+    $watchlist->add_instrument( $rh->instrument('AAPL') );
 
 =head1 DESCRIPTION
 

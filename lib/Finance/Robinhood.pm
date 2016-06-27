@@ -3,7 +3,7 @@ use 5.012;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.07";
+our $VERSION = "0.08";
 use Moo;
 use HTTP::Tiny '0.056';
 use JSON::Tiny qw[decode_json];
@@ -606,7 +606,7 @@ Finance::Robinhood - Trade Stocks and ETFs with Commission Free Brokerage Robinh
     my $token = $rh->login($user, $password); # Store it for later
 
     $rh->quote('MSFT');
-    Finance::Robinhood::quote('APPL');
+    Finance::Robinhood::quote('AAPL');
     # ????
     # Profit
 
@@ -914,7 +914,7 @@ both current and historical data on securities.
     my %msft = $rh->quote('MSFT');
     my $swa  = Finance::Robinhood::quote('LUV');
 
-    my $quotes = $rh->quote('APPL', 'GOOG', 'MA');
+    my $quotes = $rh->quote('AAPL', 'GOOG', 'MA');
     my $quotes = Finance::Robinhood::quote('LUV', 'JBLU', 'DAL');
 
 Requests current information about a security which is returned as a

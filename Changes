@@ -2,6 +2,13 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.08 2016-06-27T19:49:09Z
+
+    - Updating several examples due to API changes and (mostly) lazy bugs
+    - Though meaningless for market orders, the 'price' value is now required by the API
+        If it's missing in your call to ::Order->new(...), quote data is requested for
+        the instrument and the current bid price is used.
+
 0.07 2016-05-29T20:46:30Z
 
 	- Historical quotes correctly request a defined span

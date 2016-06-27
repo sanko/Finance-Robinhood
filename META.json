@@ -4,7 +4,7 @@
       "Sanko Robinson <sanko@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v3.0.1, CPAN::Meta::Converter version 2.150005",
+   "generated_by" : "Minilla/v3.0.2, CPAN::Meta::Converter version 2.150005",
    "license" : [
       "artistic_2"
    ],
@@ -71,6 +71,6 @@
          "web" : "https://github.com/sanko/Finance-Robinhood"
       }
    },
-   "version" : "0.07",
-   "x_serialization_backend" : "JSON::PP version 2.27300"
+   "version" : "0.08",
+   "x_serialization_backend" : "JSON::PP version 2.27400"
 }
