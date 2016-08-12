@@ -2,6 +2,10 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.09 2016-08-12T01:24:57Z
+
+    - Breaking change: Finance::Robinhood::quote(...) always returns paginated list
+
 0.08 2016-06-27T19:49:09Z
 
     - Updating several examples due to API changes and (mostly) lazy bugs

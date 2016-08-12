@@ -10,8 +10,11 @@ subtest 'skippy' => sub {
     my $rh = Finance::Robinhood->new();
     ok $rh->login($ENV{RHUSER}, $ENV{RHPASSWORD}), '->login(...)';
     my $msft = $rh->quote('MSFT');
-    isa_ok $msft, 'Finance::Robinhood::Quote', 'Gathered quote data for MSFT';
-    isa_ok $msft->refresh(), 'Finance::Robinhood::Quote', 'Refreshed data';
+    isa_ok $msft->{results}[0], 'Finance::Robinhood::Quote',
+        'Gathered quote data...';
+    is $msft->{results}[0]->symbol(), 'MSFT', '...for Microsoft';
+    isa_ok $msft->{results}[0]->refresh(), 'Finance::Robinhood::Quote',
+        'Refreshed data';
     my $results = $rh->quote('LUV', 'JBLU', 'DAL');
     is $results->{results}[0]->symbol(), 'LUV',  'Southwest Airlines';
     is $results->{results}[1]->symbol(), 'JBLU', 'JetBlue Airways';

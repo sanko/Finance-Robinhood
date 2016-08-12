@@ -3,7 +3,7 @@ use 5.012;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.08";
+our $VERSION = "0.09";
 use Moo;
 use HTTP::Tiny '0.056';
 use JSON::Tiny qw[decode_json];
@@ -331,19 +331,19 @@ sub instrument {
 
 sub quote {
     my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
-    if (scalar @_ > 1) {
+    #if (scalar @_ > 1 or wantarray) {
         my $return =
             _send_request($self, 'GET',
               Finance::Robinhood::endpoint('quotes') . '?symbols=' . join ',',
               @_);
         return _paginate($self, $return, 'Finance::Robinhood::Quote');
-    }
-    my $quote =
-        _send_request($self, 'GET',
-                      Finance::Robinhood::endpoint('quotes') . shift . '/');
-    return $quote ?
-        Finance::Robinhood::Quote->new($quote)
-        : ();
+    #}
+    #my $quote =
+    #    _send_request($self, 'GET',
+    #                  Finance::Robinhood::endpoint('quotes') . shift . '/');
+    #return $quote ?
+    #    Finance::Robinhood::Quote->new($quote)
+    #    : ();
 }
 
 sub historicals {

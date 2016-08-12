@@ -1,7 +1,7 @@
 package Finance::Robinhood::Quote;
 use 5.010;
 use Carp;
-our $VERSION = "0.08";
+our $VERSION = "0.09";
 use Moo;
 use strictures 2;
 use namespace::clean;
@@ -19,7 +19,7 @@ has $_ => (
 ) for (qw[updated_at previous_close_date]);
 
 sub refresh {
-    return $_[0] = Finance::Robinhood::quote($_[0]->symbol());
+    return $_[0] = Finance::Robinhood::quote($_[0]->symbol())->{results}[0];
 }
 1;
 

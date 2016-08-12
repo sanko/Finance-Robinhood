@@ -19,10 +19,11 @@ subtest 'skippy' => sub {
         'EGLE symbol search result';
     can_ok $instrument, 'quote';
     my $quote = $instrument->quote();
-    isa_ok $quote, 'Finance::Robinhood::Quote', 'Quote result for EGLE';
+    isa_ok $quote->{results}[0], 'Finance::Robinhood::Quote',
+        'Quote result for EGLE';
     subtest 'Have enough buying power' => sub {
         plan skip_all => 'Not enough buying power'
-            if $account->buying_power() < $quote->bid_price();
+            if $account->buying_power() < $quote->{results}[0]->bid_price();
         subtest 'Order 1 share and cancel that order' => sub {
             plan skip_all => 'EGLE is not tradeable!?!'
                 if !$instrument->tradeable();
@@ -31,19 +32,21 @@ subtest 'skippy' => sub {
             # TODO: Make sure we have enough cash on hand to make this order
             my $order =
                 Finance::Robinhood::Order->new(
-                       account    => $account,
-                       instrument => $instrument,
-                       type       => 'limit',
-                       stop_price => sprintf('%.4f', $quote->bid_price() / 2),
-                       trigger    => 'stop',
-                       time_in_force => 'opg',
-                       side          => 'buy',
-                       quantity      => 1,
-                       price => sprintf('%.4f', $quote->bid_price() / 2)
+                   account    => $account,
+                   instrument => $instrument,
+                   type       => 'limit',
+                   stop_price =>
+                       sprintf('%.4f', $quote->{results}[0]->bid_price() / 2),
+                   trigger       => 'stop',
+                   time_in_force => 'opg',
+                   side          => 'buy',
+                   quantity      => 1,
+                   price =>
+                       sprintf('%.4f', $quote->{results}[0]->bid_price() / 2)
                 );
             isa_ok $order, 'Finance::Robinhood::Order', 'Limit buy order';
-            ok $order->cancel(), 'Cancel that order quick';
-            is $order->state(),  'cancelled',
+            ok $order->cancel(),  'Cancel that order quick';
+            like $order->state(), qr[(queued|cancelled)],
                 'Verify that the order has been canceled';
         };
     };
