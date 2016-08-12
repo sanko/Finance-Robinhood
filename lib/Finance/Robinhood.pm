@@ -488,7 +488,7 @@ sub _paginate {    # Paginates results
                 [
                 map {
                     $class->new(%$_, ($self ? (rh => $self) : ()))
-                } @{$res->{results}}
+                } grep {defined} @{$res->{results}}
                 ]
             : $res->{results}
         ),
