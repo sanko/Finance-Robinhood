@@ -30,23 +30,24 @@ subtest 'skippy' => sub {
             diag q"Okay, let's buy something!'";
 
             # TODO: Make sure we have enough cash on hand to make this order
+            my $price = $quote->{results}[0]->bid_price() / 2;
+            $price = sprintf(($price > 1 ? '%.2f' : '%.4f'), $price);
             my $order =
                 Finance::Robinhood::Order->new(
-                   account    => $account,
-                   instrument => $instrument,
-                   type       => 'limit',
-                   stop_price =>
-                       sprintf('%.4f', $quote->{results}[0]->bid_price() / 2),
-                   trigger       => 'stop',
-                   time_in_force => 'opg',
-                   side          => 'buy',
-                   quantity      => 1,
-                   price =>
-                       sprintf('%.4f', $quote->{results}[0]->bid_price() / 2)
+                                        account    => $account,
+                                        instrument => $instrument,
+                                        type       => 'limit',
+                                        stop_price => sprintf('%.4f', $price),
+                                        trigger    => 'stop',
+                                        time_in_force => 'opg',
+                                        side          => 'buy',
+                                        quantity      => 1,
+                                        price => sprintf('%.4f', $price)
                 );
             isa_ok $order, 'Finance::Robinhood::Order', 'Limit buy order';
-            ok $order->cancel(),  'Cancel that order quick';
-            like $order->state(), qr[(queued|cancelled)],
+            ok $order->cancel(), 'Cancel that order quick';
+            sleep 1;    # Their API server is slow these days
+            like $order->state(), qr[(confirmed|queued|cancelled)],
                 'Verify that the order has been canceled';
         };
     };
