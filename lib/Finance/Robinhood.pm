@@ -580,11 +580,11 @@ sub _2_datetime {
     DateTime->new(year  => $1,
                   month => $2,
                   day   => $3,
-                  (defined $7 ? (hour       => $4) : ()),
-                  (defined $7 ? (minute     => $5) : ()),
-                  (defined $7 ? (second     => $6) : ()),
+                  (defined $4 ? (hour       => $4) : ()),
+                  (defined $5 ? (minute     => $5) : ()),
+                  (defined $6 ? (second     => $6) : ()),
                   (defined $7 ? (nanosecond => $7) : ()),
-                  (defined $7 ? (time_zone  => $8) : ())
+                  (defined $8 ? (time_zone  => $8) : ())
     );
 }
 1;
