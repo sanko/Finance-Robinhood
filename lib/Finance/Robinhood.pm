@@ -7,6 +7,7 @@ our $VERSION = "0.09";
 use Moo;
 use HTTP::Tiny '0.056';
 use JSON::Tiny qw[decode_json];
+use Try::Tiny;
 use strictures 2;
 use namespace::clean;
 use DateTime;
@@ -331,12 +332,13 @@ sub instrument {
 
 sub quote {
     my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
-    #if (scalar @_ > 1 or wantarray) {
-        my $return =
-            _send_request($self, 'GET',
+                                          #if (scalar @_ > 1 or wantarray) {
+    my $return =
+        _send_request($self, 'GET',
               Finance::Robinhood::endpoint('quotes') . '?symbols=' . join ',',
               @_);
-        return _paginate($self, $return, 'Finance::Robinhood::Quote');
+    return _paginate($self, $return, 'Finance::Robinhood::Quote');
+
     #}
     #my $quote =
     #    _send_request($self, 'GET',
@@ -566,7 +568,15 @@ sub _send_request {
 
     #ddx $res;
     #warn $res->{content};
-    my $rt = $json ? decode_json($json) : ();
+    my $rt = $json ?
+        try {
+        decode_json($json)
+    }
+    catch {
+        warn "caught error: $_";
+        ()
+    }
+    : ();
 
     # Return happy.
     return wantarray ? ($res->{status}, $rt, $res) : $rt;

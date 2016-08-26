@@ -2,7 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
-    - Dates are now parsed correctly (was dropping h:m:s.n)
+    - Coerced dates are now parsed correctly
+    - decode_json is wrapped by Try::Tiny
 
 0.09 2016-08-12T01:24:57Z
 
