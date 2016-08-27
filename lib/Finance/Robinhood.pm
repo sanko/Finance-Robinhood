@@ -21,6 +21,7 @@ use Finance::Robinhood::Order;
 use Finance::Robinhood::Position;
 use Finance::Robinhood::Quote;
 use Finance::Robinhood::Watchlist;
+use Finance::Robinhood::Portfolio;
 #
 has token => (is => 'ro', writer => '_set_token');
 #
@@ -240,10 +241,16 @@ sub accounts {
 #
 # Returns the porfillo summery of an account by url.
 #
-#sub get_portfolio {
-#    my ($self, $url) = @_;
-#    return $self->_send_request('GET', $url);
-#}
+sub portfolios {
+    my ($self) = @_;
+
+    # TODO: Deal with next and previous results? Multiple portfolios?
+    my $return = $self->_send_request('GET',
+                                      Finance::Robinhood::endpoint('portfolios')
+    );
+    return $self->_paginate($return, 'Finance::Robinhood::Portfolio');
+
+}
 #
 # Return the positions for an account.
 # This is sort of a heavy call as it makes many API calls to populate all the data.
@@ -492,6 +499,7 @@ sub _paginate {    # Paginates results
         : ();
     my ($next)
         = defined $res->{next} ? ($res->{next} =~ m[\?cursor=(.+)$]) : ();
+
     return {
         results => (
             defined $class ?
