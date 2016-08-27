@@ -246,10 +246,10 @@ sub portfolios {
 
     # TODO: Deal with next and previous results? Multiple portfolios?
     my $return = $self->_send_request('GET',
-                                      Finance::Robinhood::endpoint('portfolios')
+                                      Finance::Robinhood::endpoint(
+                                                                 'portfolios')
     );
     return $self->_paginate($return, 'Finance::Robinhood::Portfolio');
-
 }
 #
 # Return the positions for an account.
@@ -483,7 +483,7 @@ sub watchlist {
 sub markets {
     my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
     my ($symbol, $interval, $span) = @_;
-    my $result = _send_request($self, 'GET',
+    my $result = _send_request(undef, 'GET',
                                Finance::Robinhood::endpoint('markets'));
     return _paginate($self, $result, 'Finance::Robinhood::Market');
 }
@@ -499,7 +499,6 @@ sub _paginate {    # Paginates results
         : ();
     my ($next)
         = defined $res->{next} ? ($res->{next} =~ m[\?cursor=(.+)$]) : ();
-
     return {
         results => (
             defined $class ?
@@ -528,7 +527,8 @@ sub _send_request {
     }
 
     # Setup request client.
-    $client = HTTP::Tiny->new() if !defined $client;
+    $client = HTTP::Tiny->new(agent => 'Finance::Robinhood/' . $VERSION . ' ')
+        if !defined $client;
 
     # Make API call.
     if ($DEBUG) {
