@@ -6,6 +6,7 @@ use Moo;
 use strictures 2;
 use namespace::clean;
 use Finance::Robinhood::Market::Hours;
+use DateTime;
 #
 sub BUILDARGS {
     my $class = shift;
@@ -24,7 +25,7 @@ has $_ => (is => 'bare', required => 1, accessor => "_get_$_")
 
 sub todays_hours {
     my $data = Finance::Robinhood::_send_request(undef, 'GET',
-                                                 shift->_get_todays_hours());
+                                                 shift->url() . 'hours/' . DateTime->now->ymd);
     return $data ? Finance::Robinhood::Market::Hours->new($data) : ();
 }
 1;
