@@ -31,6 +31,10 @@ subtest 'skippy' => sub {
 
         #warn $#{$order->executions};
     }
+    #
+    ok $orders->{results}[0]->refresh(), '->refresh()';
+    #
+    isa_ok $orders->{results}[0], 'Finance::Robinhood::Order';
 
     #$order->executions
 };

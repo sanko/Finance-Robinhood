@@ -20,6 +20,7 @@ has $_ => (
     is       => 'bare',
     accessor => "_get_$_",
     weak_ref => 1,
+    required => 1,
 
     #lazy     => 1,
     #builder  => sub { shift->account()->_get_rh() }
@@ -69,7 +70,10 @@ sub account {
     my $self = shift;
     my $result
         = $self->_get_rh()->_send_request('GET', $self->_get_account());
-    return $result ? Finance::Robinhood::Account->new($result) : ();
+    return $result
+        ?
+        Finance::Robinhood::Account->new(rh => $self->_get_rh, %$result)
+        : ();
 }
 
 sub executions {
@@ -107,6 +111,10 @@ sub cancel {
         $self->_get_rh()->_send_request('POST', $can_cancel)
         : !1;
     return $_[0] = $self->_get_rh()->locate_order($self->id());
+}
+
+sub refresh {
+    return $_[0] = $_[0]->_get_rh()->locate_order($_[0]->id());
 }
 1;
 
@@ -313,6 +321,13 @@ Returns order executions as a list of hashes which contain the following keys:
 
 I<If> the order can be canceled (has not be executed in completion, etc.), you
 may cancel it with this.
+
+=head2 C<refresh( )>
+
+    $order->refresh( ); # Check for changes
+
+As time passes, an order may change (be executed, etc.). To stay up to date,
+you could periodically refresh the data.
 
 =head2 C<position( )>
 
