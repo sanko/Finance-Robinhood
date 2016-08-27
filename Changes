@@ -3,6 +3,7 @@ Revision history for Perl extension Finance-Robinhood
 {{$NEXT}}
 
     - RH's API server stopped updating the /markets/ endpoint on July 30th.
+    - ::Market::Hours now exposes extended trading hours
 
 0.10 2016-08-27T16:37:13Z
 

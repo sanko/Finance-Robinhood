@@ -25,7 +25,7 @@ has $_ => (is => 'bare', required => 1, accessor => "_get_$_")
 
 sub todays_hours {
     my $data = Finance::Robinhood::_send_request(undef, 'GET',
-                                                 shift->url() . 'hours/' . DateTime->now->ymd);
+                          shift->url() . 'hours/' . DateTime->now->ymd . '/');
     return $data ? Finance::Robinhood::Market::Hours->new($data) : ();
 }
 1;
