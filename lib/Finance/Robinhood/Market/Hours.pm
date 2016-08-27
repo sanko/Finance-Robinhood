@@ -33,15 +33,14 @@ sub previous_open_hours {
 
 =head1 NAME
 
-Finance::Robinhood::Market::Hours - Trading Hours for a Particular Market
+Finance::Robinhood::Market::Hours - Trading Hours for a Particular Exchange
 
 =head1 SYNOPSIS
 
     use Finance::Robinhood::Market::Hours;
 
-    # ... $rh creation, login, etc...
-    $rh->instrument('MSFT');
-    warn 'Market opens at ' .  $msft->market()->todays_hours()->opens_at();
+    my $NASDAQ = Finance::Robinhood::Market->new('XNAS');
+    warn 'Market opens at ' .  $NASDAQ->todays_hours()->opens_at();
 
 =head1 DESCRIPTION
 

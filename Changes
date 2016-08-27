@@ -4,6 +4,10 @@ Revision history for Perl extension Finance-Robinhood
 
     - Coerced dates are now parsed correctly
     - decode_json is wrapped by Try::Tiny
+    - New ::Robinhood->markets() method to get a paginated list of supported
+        markets as Finance::Robinhood::Market objects
+    - New ::Robinhood::Market->new(...) constructor to get an object representing a
+        specific exchange. Use the ISO 10383 MIC. ...see the docs for more.
 
 0.09 2016-08-12T01:24:57Z
 

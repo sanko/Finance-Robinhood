@@ -7,6 +7,15 @@ use strictures 2;
 use namespace::clean;
 use Finance::Robinhood::Market::Hours;
 #
+sub BUILDARGS {
+    my $class = shift;
+    return @_ > 1 ?
+        {@_}
+        : +Finance::Robinhood::_send_request(undef, 'GET',
+                       Finance::Robinhood::endpoint('markets') . shift . '/');
+
+    # if the scrape failed (bad mic, etc.) let Moo error out :)
+}
 has $_ => (is => 'ro', required => 1)
     for (
         qw[acronym city country mic name operating_mic timezone url website]);
@@ -24,11 +33,13 @@ sub todays_hours {
 
 =head1 NAME
 
-Finance::Robinhood::Market - Basic Market Information
+Finance::Robinhood::Market - Information Related to a Specific Exchange
 
 =head1 SYNOPSIS
 
     use Finance::Robinhood::Market;
+
+    my $NYSE = Finance::Robinhood::Market->new('XNYS');
 
     my $MC = Finance::Robinhood::instrument('AAPL');
     my $market = $MC->market();
@@ -39,11 +50,29 @@ Finance::Robinhood::Market - Basic Market Information
 This class represents a single financial market. Objects are usually
 created by Finance::Robinhood. If you're looking for information about the
 market where a particular security is traded, use
-C<<<Finance::Robinhood::instrument($symbol)->market()>>>.
+C<Finance::Robinhood::instrument($symbol)-E<gt>market()>. To gather a list
+of all supported markets, use C<Finance::Robinhood-E<gt>markets()>.
 
 =head1 METHODS
 
 This class has several getters and a few methods as follows...
+
+=head2 C<new( ... )>
+
+Create a new object for the given market. Use the ISO 10383 Market Identifier
+Code. For example...
+
+    my $NASDAQ = Finance::Robinhood::Market->new('XNAS');
+
+...would scrape the API and return an object related to the NASDAQ. Currently
+supported MICs are:
+
+    OTCM    Otc Markets
+    XASE    NYSE Mkt Llc
+    ARCX    NYSE Arca
+    XNYS    New York Stock Exchange, Inc.
+    XNAS    NASDAQ - All Markets
+    BATS    BATS Exchange
 
 =head2 C<acronym( )>
 
@@ -81,7 +110,7 @@ Returns the URL for this market's website.
 
 =head2 C<todays_hours( )>
 
-Generates a Finace::Robinhood::Market::Hours object for the current day's
+Generates a L<Finance::Robinhood::Market::Hours> object for the current day's
 operating hours for this particular market.
 
 =head1 LEGAL

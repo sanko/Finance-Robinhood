@@ -473,6 +473,14 @@ sub watchlist {
         : ();
 }
 
+sub markets {
+    my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
+    my ($symbol, $interval, $span) = @_;
+    my $result = _send_request($self, 'GET',
+                               Finance::Robinhood::endpoint('markets'));
+    return _paginate($self, $result, 'Finance::Robinhood::Market');
+}
+
 # ---------------- Private Helper Functions --------------- //
 # Send request to API.
 #
