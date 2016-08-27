@@ -2,7 +2,10 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.10 2016-08-27T16:37:13Z
+
     - New Finance::Robinhood::Portfolio class for current and historical info
+    - New ::Robinhood->portfolios() method to get paginated list of portfolios
     - New ::Robinhood->markets() method to get a paginated list of supported
         markets as Finance::Robinhood::Market objects
     - New ::Robinhood::Market->new(...) constructor to get an object representing a
