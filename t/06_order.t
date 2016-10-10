@@ -25,7 +25,7 @@ subtest 'skippy' => sub {
     for my $order (@{$orders->{results}}) {
         next if $order->state ne 'filled';
         is_deeply [sort keys %{$order->executions->[0]}],
-            [qw[price quantity settlement_date timestamp]],
+            [qw[id price quantity settlement_date timestamp]],
             'executions have price, quantity and timestamps';
         last;
 
