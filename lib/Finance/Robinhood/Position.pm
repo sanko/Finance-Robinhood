@@ -1,7 +1,7 @@
 package Finance::Robinhood::Position;
 use 5.010;
 use Carp;
-our $VERSION = "0.10";
+our $VERSION = "0.11";
 use Moo;
 use strictures 2;
 use namespace::clean;
