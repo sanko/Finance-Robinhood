@@ -46,14 +46,15 @@ if ($username && $password && !$token) {
 my $account = $rh->accounts()->{results}[0];   # Accounts are a paginated list
 my $instrument = $rh->instrument($symbol);     # Find the instrument we want
 my $order =
-    Finance::Robinhood::Order->new(account    => $account,
-                                   instrument => $instrument,
-                                   type       => 'market',
-                                   price => $instrument->quote()->bid_price(),
-                                   trigger       => 'immediate',
-                                   time_in_force => 'gfd',
-                                   side          => 'buy',
-                                   quantity      => $quantity
+    Finance::Robinhood::Order->new(
+                     account    => $account,
+                     instrument => $instrument,
+                     type       => 'market',
+                     price => $instrument->quote()->{results}[0]->bid_price(),
+                     trigger       => 'immediate',
+                     time_in_force => 'gfd',
+                     side          => 'buy',
+                     quantity      => $quantity
     );
 $order
     && printf

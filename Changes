@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+    - Update eg/buy.pl for minor API change
+
 0.11 2016-10-10T16:41:23Z
 
     - RH's API server stopped updating the /markets/ endpoint on July 30th.
