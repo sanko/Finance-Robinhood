@@ -13,6 +13,7 @@ use namespace::clean;
 use DateTime;
 our $DEBUG = !1;
 require Data::Dump if $DEBUG;
+our $DEV = !1;
 #
 use lib '../../lib';
 use Finance::Robinhood::Account;
@@ -70,7 +71,11 @@ my %endpoints = (
 
 sub endpoint {
     $endpoints{$_[0]} ?
-        'https://api.robinhood.com/' . $endpoints{+shift}
+        ($DEV ?
+             'http://brokeback.dev.robinhood.com/'
+         : 'https://api.robinhood.com/'
+        )
+        . $endpoints{+shift}
         : ();
 }
 #
