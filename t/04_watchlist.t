@@ -26,6 +26,8 @@ subtest 'skippy' => sub {
             = qw[AAPL TWTR TSLA NFLX FB MSFT DIS GPRO SBUX F BABA BAC FIT YHOO GE];
         my @instruments = $watchlist->bulk_add_symbols(@symbols);
         is $#instruments, $#symbols, 'added symbols match our bulk add';
+        ok $watchlist->add_instrument($rh->instrument('MDY')),
+            'add to watchlist by instrument url';
         my ($instruments_persistant) = $watchlist->instruments()->{results};
         is_deeply \@instruments, $instruments_persistant,
             'verify persistant state';

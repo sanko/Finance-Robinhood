@@ -70,8 +70,12 @@ sub bulk_add_symbols {
 
 sub add_instrument {
     my ($self, $instrument) = @_;
-    my $ret = $self->_get_rh()->_send_request('POST',
-            Finance::Robinhood::endpoint('watchlists') . $self->name() . '/');
+    my $ret =
+        $self->_get_rh()->_send_request(
+             'POST',
+             Finance::Robinhood::endpoint('watchlists') . $self->name() . '/',
+             {instrument => $instrument->_get_url()}
+        );
     return $ret;
 }
 
