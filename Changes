@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.13 2016-12-25T19:41:16Z
+
 	- Fix adding single instrument to watchlist
 
 0.12 2016-12-02T21:42:01Z
