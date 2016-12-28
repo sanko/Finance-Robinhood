@@ -43,8 +43,6 @@ sub _build_raw {
     }
     my ($status, $result, $raw)
         = Finance::Robinhood::_send_request(undef, 'GET', $url);
-    use Data::Dump;
-    ddx($result);
     return $result;
 }
 

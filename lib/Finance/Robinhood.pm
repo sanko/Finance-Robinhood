@@ -70,7 +70,7 @@ my %endpoints = (
 
 sub endpoint {
     $endpoints{$_[0]} ?
-        ($DEV ?
+        ($DEV > 10 ?
              'http://brokeback.dev.robinhood.com/'
          : 'https://api.robinhood.com/'
         )
