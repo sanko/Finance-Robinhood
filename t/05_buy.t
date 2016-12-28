@@ -19,18 +19,18 @@ subtest 'skippy' => sub {
         'EGLE symbol search result';
     can_ok $instrument, 'quote';
     my $quote = $instrument->quote();
-    isa_ok $quote->{results}[0], 'Finance::Robinhood::Quote',
+    isa_ok $quote, 'Finance::Robinhood::Quote',
         'Quote result for EGLE';
     subtest 'Have enough buying power' => sub {
         plan skip_all => 'Not enough buying power'
-            if $account->buying_power() < $quote->{results}[0]->bid_price();
+            if $account->buying_power() < $quote->bid_price();
         subtest 'Order 1 share and cancel that order' => sub {
             plan skip_all => 'EGLE is not tradeable!?!'
                 if !$instrument->tradeable();
             diag q"Okay, let's buy something!'";
 
             # TODO: Make sure we have enough cash on hand to make this order
-            my $price = $quote->{results}[0]->bid_price() / 2;
+            my $price = $quote->bid_price() / 2;
             $price = sprintf(($price > 1 ? '%.2f' : '%.4f'), $price);
             my $order =
                 Finance::Robinhood::Order->new(

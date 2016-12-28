@@ -9,30 +9,56 @@ use Finance::Robinhood::Market::Hours;
 #
 sub BUILDARGS {
     my $class = shift;
-    return @_ > 1 ?
-        {@_}
-        : +Finance::Robinhood::_send_request(undef, 'GET',
-                       Finance::Robinhood::endpoint('markets') . shift . '/');
-
-    # if the scrape failed (bad mic, etc.) let Moo error out :)
+    return
+          @_ > 1              ? {@_}
+        : ref $_[0] eq 'HASH' ? %{+shift}
+        :                       {mic => shift};
 }
-has $_ => (is => 'ro', required => 1)
+has $_ => (
+    is => 'lazy',
+    ,
+    predicate => 1,
+    builder   => sub {
+        (caller(1))[3] =~ m[.+::(.+)$];
+        shift->_get_raw->{$1};
+    }
+    )
     for (
-        qw[acronym city country mic name operating_mic timezone url website]);
-has $_ => (is => 'bare', required => 1, accessor => "_get_$_")
+        qw[mic url acronym city country name operating_mic timezone website]);
+has $_ => (is => 'bare', lazy => 1, accessor => "_get_$_")
     for (qw[todays_hours]);
+has $_ => (is => 'lazy', reader => "_get_$_") for (qw[raw]);
+
+sub _build_raw {
+    my $s = shift;
+    my $url;
+    if ($s->has_url) {
+        $url = $_[0]->_get_url;
+    }
+    elsif ($s->has_mic) {
+        $url = Finance::Robinhood::endpoint('markets') . $s->mic . '/';
+    }
+    else {
+        return {}    # We done messed up!
+    }
+    my ($status, $result, $raw)
+        = Finance::Robinhood::_send_request(undef, 'GET', $url);
+    use Data::Dump;
+    ddx($result);
+    return $result;
+}
 
 sub todays_hours {
     my $now;
-    if ($Time::Piece::VERSION) { # Cleaner
+    if ($Time::Piece::VERSION) {    # Cleaner
         $now = scalar localtime;
     }
     else {
-        require DateTime; # Core
+        require DateTime;           # Core
         $now = DateTime->now;
     }
     my $data = Finance::Robinhood::_send_request(undef, 'GET',
-                          shift->url() . 'hours/' . $now->ymd . '/');
+                                   shift->url() . 'hours/' . $now->ymd . '/');
     return $data ? Finance::Robinhood::Market::Hours->new($data) : ();
 }
 1;

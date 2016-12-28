@@ -11,17 +11,44 @@ use namespace::clean;
 use Finance::Robinhood::Market;
 use Finance::Robinhood::Instrument::Split;
 #
-has $_ => (is => 'ro', required => 1)
+has $_ => (
+    is        => 'lazy',
+    predicate => 1,
+    builder   => sub {
+        (caller(1))[3] =~ m[.+::(.+)$];
+        shift->_get_raw->{$1};
+    }
+    )
     for (
-       qw[bloomberg_unique id maintenance_ratio name state symbol tradeable]);
+        qw[bloomberg_unique day_trade_ratio min_tick_size margin_initial_ratio
+        id maintenance_ratio name state symbol tradeable country]);
+#
 has $_ => (is     => 'ro',
            coerce => \&Finance::Robinhood::_2_datetime
 ) for (qw[list_date]);
-has $_ => (is => 'bare', required => 1, reader => "_get_$_")
+has $_ => (is => 'ro', lazy => 1, predicate => 1, reader => "_get_$_")
     for (qw[market splits fundamentals url]);
+has $_ => (is => 'lazy', reader => "_get_$_") for (qw[raw]);
+
+sub _build_raw {
+    my $s = shift;
+    my $url;
+    if ($s->has_url) {
+        $url = $_[0]->_get_url;
+    }
+    elsif ($s->has_id) {
+        $url = Finance::Robinhood::endpoint('instruments') . $s->id . '/';
+    }
+    else {
+        return {}    # We done messed up!
+    }
+    my ($status, $result, $raw)
+        = Finance::Robinhood::_send_request(undef, 'GET', $url);
+    return $result;
+}
 
 sub quote {
-    return Finance::Robinhood::quote(shift->symbol());
+    return Finance::Robinhood::quote(shift->symbol())->{results}[0];
 }
 
 sub historicals {
@@ -43,10 +70,7 @@ sub splits {
 }
 
 sub market {
-    my ($status, $result, $raw)
-        = Finance::Robinhood::_send_request(undef, 'GET',
-                                            shift->_get_market());
-    return $result ? Finance::Robinhood::Market->new($result) : ();
+    Finance::Robinhood::Market->new(url => shift->_get_market);
 }
 
 sub fundamentals {
@@ -67,13 +91,14 @@ Finance::Robinhood::Instrument - Single Financial Instrument
 
     use Finance::Robinhood::Instrument;
 
-    my $MC = Finance::Robinhood::instrument('AAPL');
+    my $apple = Finance::Robinhood::instrument('AAPL');
+    my $msft  = Finance::Robinhood::Instrument->new(id => '50810c35-d215-4866-9758-0ada4ac79ffa');
 
 =head1 DESCRIPTION
 
 This class represents a single financial instrument. Objects are usually
 created by Finance::Robinhood so please use
-C<<Finance::Robinhood->instrument(...)>>.
+Finance::Robinhood->instrument(...) unless you know the instrument ID.
 
 =head1 METHODS
 
@@ -118,6 +143,10 @@ The actual name of the security.
 
 For example, AAPL would be 'Apple Inc. - Common Stock'.
 
+=head2 C<country( )>
+
+The home location of the security.
+
 =head2 C<bloomberg_unique( )>
 
 Returns the Bloomberg Global ID (BBGID) for this security.
@@ -131,6 +160,17 @@ The unique ID Robinhood uses to refer to this particular security.
 =head2 C<maintenance_ratio( )>
 
 Margin ratio.
+
+=head2 C<day_trade_ratio( )>
+
+
+=head2 C<min_tick_size( )>
+
+See http://www.finra.org/industry/tick-size-pilot-program
+
+=head2 C<margin_initial_ratio( )>
+
+As governed by the Federal Reserve's Regulation T, when a trader buys on margin, key levels must be maintained throughout the life of the trade
 
 =head2 C<splits( )>
 

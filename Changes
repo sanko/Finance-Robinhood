@@ -2,6 +2,9 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+    - Lazy load ::Instrument data (save the API server on watchlist calls)
+    - Expose day_trade_ratio, min_tick_size, country, and margin_initial_ratio in ::Instrument objects
+    - ::Instrument->quote() returns a single quote object
     - Use Time::Piece if loaded (fallback to DateTime)
 
 0.13 2016-12-25T19:41:16Z

@@ -26,19 +26,15 @@ sub instruments {
     my $self = shift;
     my $res  = $self->_get_rh()->_send_request('GET',
                     Finance::Robinhood::endpoint('watchlists') . $self->name);
-    return $self->_get_rh()->_paginate(
-        {results => [
-             map {
-                 my ($status, $ins, $raw)
-                     = $self->_get_rh()
-                     ->_send_request('GET', $_->{instrument});
-                 $ins
-             } @{delete $res->{results}}
-         ],
-         %$res
-        },
-        'Finance::Robinhood::Instrument'
-    );
+    return
+        $self->_get_rh()->_paginate({results => [
+                                             map { {url => $_->{instrument}} }
+                                                 @{delete $res->{results}}
+                                     ],
+                                     %$res
+                                    },
+                                    'Finance::Robinhood::Instrument'
+        );
 }
 
 sub bulk_add_symbols {
