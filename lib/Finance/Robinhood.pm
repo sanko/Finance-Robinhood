@@ -10,7 +10,6 @@ use JSON::Tiny qw[decode_json];
 use Try::Tiny;
 use strictures 2;
 use namespace::clean;
-use DateTime;
 our $DEBUG = !1;
 require Data::Dump if $DEBUG;
 our $DEV = !1;
@@ -603,9 +602,18 @@ sub _send_request {
     return wantarray ? ($res->{status}, $rt, $res) : $rt;
 }
 
-# Coerce ISO 8601-ish strings into DateTime objects
+# Coerce ISO 8601-ish strings into Time::Piece or DateTime objects
 sub _2_datetime {
     return if !$_[0];
+    if ($DEV && !defined $Time::Piece::VERSION)
+    {    # We lose millisecond timestamps but gain speed!
+        require Time::Piece;
+    }
+    if ($Time::Piece::VERSION) {
+        $_[0] =~ s[\..*][];
+        return Time::Piece->strptime($_[0], '%Y-%m-%dT%H:%M:%S');
+    }
+    require DateTime;
     $_[0]
         =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
     DateTime->new(year  => $1,
@@ -977,8 +985,8 @@ This method returns a list of hashes which in turn contain the following keys:
 
 =over
 
-=item C<begins_at> - A DateTime object indicating the timestamp of this block
-of data.
+=item C<begins_at> - A Time::Piece or DateTime object indicating the timestamp
+of this block of data.
 
 =item C<close_price> - The most recent close price during this interval.
 

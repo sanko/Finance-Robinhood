@@ -54,7 +54,7 @@ This class has several getters and a few methods as follows...
 
 =head2 C<execution_date( )>
 
-DateTime::Tiny object representing the date the split will take place.
+Time::Piece or DateTime object representing the date the split will take place.
 
 =head2 C<instrument( )>
 

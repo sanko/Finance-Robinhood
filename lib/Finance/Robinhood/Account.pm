@@ -245,7 +245,7 @@ The amount of money from sell orders which has not settled (see T+3 rule).
 
 =head2 C<updated_at( )>
 
-DateTime object marking the last time the account was changed.
+Time::Piece or DateTime object marking the last time the account was changed.
 
 =head2 C<withdrawal_halted( )>
 

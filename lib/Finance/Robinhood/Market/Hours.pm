@@ -8,10 +8,9 @@ use namespace::clean;
 require Finance::Robinhood;
 #
 has $_ => (is => 'ro', required => 1) for (qw[is_open]);
-has $_ => (
-    is       => 'ro',
-    required => 1,
-    coerce   => \&Finance::Robinhood::_2_datetime
+has $_ => (is       => 'ro',
+           required => 1,
+           coerce   => \&Finance::Robinhood::_2_datetime
 ) for (qw[closes_at extended_closes_at date opens_at extended_opens_at]);
 has $_ => (is => 'bare', required => 1, reader => "_get_$_")
     for (qw[next_open_hours previous_open_hours]);
@@ -59,27 +58,27 @@ that this value is cached and may not be accurate.
 =head2 C<date( )>
 
 The particular date this object represents. This is returned in the form of a
-DateTime::Tiny object.
+Time::Piece or DateTime object.
 
 =head2 C<opens_at( )>
 
 The time the market opens for trading for this particular date. This is
-returned in the form of a DateTime::Tiny object.
+returned in the form of a Time::Piece or DateTime object.
 
 =head2 C<closes_at( )>
 
 The time the market closes on this particular date. This is returned in the
-form of a DateTime::Tiny object.
+form of a Time::Piece or DateTime object.
 
 =head2 C<extended_opens_at( )>
 
 The time the market opens for trading for this particular date for pre-open
-trading. This is returned in the form of a DateTime::Tiny object.
+trading. This is returned in the form of a Time::Piece object.
 
 =head2 C<extended_closes_at( )>
 
 The time the market closes on this particular date for after hours trading.
-This is returned in the form of a DateTime::Tiny object.
+This is returned in the form of a Time::Piece or DateTime object.
 
 =head2 C<next_open_hours( )>
 
