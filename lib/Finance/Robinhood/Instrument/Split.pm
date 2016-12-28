@@ -1,7 +1,7 @@
 package Finance::Robinhood::Instrument::Split;
 use 5.010;
 use Carp;
-our $VERSION = "0.13";
+our $VERSION = "0.14";
 use Moo;
 use strictures 2;
 use namespace::clean;

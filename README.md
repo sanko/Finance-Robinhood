@@ -338,8 +338,8 @@ So, to get five years of weekly historical data for Apple, you would write...
 
 This method returns a list of hashes which in turn contain the following keys:
 
-- `begins_at` - A DateTime object indicating the timestamp of this block
-of data.
+- `begins_at` - A Time::Piece or DateTime object indicating the timestamp
+of this block of data.
 - `close_price` - The most recent close price during this interval.
 - `high_price` - The most recent high price during this interval.
 - `interpolated` - Indicates whether the data was a statistical estimate.
