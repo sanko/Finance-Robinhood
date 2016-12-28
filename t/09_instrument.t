@@ -12,9 +12,14 @@ can_ok 'Finance::Robinhood::Instrument',
     market splits fundamentals
     quote
 ];
-my $msft = new_ok 'Finance::Robinhood::Instrument',
-    [id => '50810c35-d215-4866-9758-0ada4ac79ffa'];
-is $msft->symbol, 'MSFT', 'Instrument symbol == MSFT';
+my $msft_id = new_ok 'Finance::Robinhood::Instrument',
+    [id => '50810c35-d215-4866-9758-0ada4ac79ffa'], 'id => ...';
+my $msft_url = new_ok 'Finance::Robinhood::Instrument',
+    [url =>
+    'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/'
+    ], 'url => ...';
+is $msft_id->symbol,  'MSFT', 'Instrument symbol == MSFT [id]';
+is $msft_url->symbol, 'MSFT', 'Instrument symbol == MSFT [url]';
 my $aapl = Finance::Robinhood::instrument('AAPL');
 isa_ok $aapl, 'Finance::Robinhood::Instrument',
     'Searched with F::R::instrument(...)';
