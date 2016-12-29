@@ -326,11 +326,16 @@ sub instrument {
         $retval = Finance::Robinhood::Instrument->new($result);
     }
     else {
-        $result->{previous} =~ m[\?cursor=(.+)]
-            if defined $result->{previous};
-        my $prev = $1 // ();
-        $result->{next} =~ m[\?cursor=(.+)] if defined $result->{next};
-        my $next = $1 // ();
+        my ($prev, $next);
+        {
+            $result->{previous} =~ m[\?cursor=(.+)]
+                if defined $result->{previous};
+            $prev = $1 // ();
+        }
+        {
+            $result->{next} =~ m[\?cursor=(.+)] if defined $result->{next};
+            $next = $1 // ();
+        }
         $retval = {results => [map { Finance::Robinhood::Instrument->new($_) }
                                    @{$result->{results}}
                    ],
@@ -905,8 +910,9 @@ them, use the C<next> or C<previous> values.
     my $results = $rh->instrument( );
     my $results = Finance::Robinhood::instrument( );
 
-Returns a sample list of top securities as Finance::Robinhood::Instrument
-objects along with C<next> and C<previous> cursor values.
+Returns a paginated list of securities as Finance::Robinhood::Instrument
+objects along with C<next> and C<previous> cursor values. The list is sorted
+in reverse by their listing date. Use this to track securities that are new!
 
 =head1 Orders
 
