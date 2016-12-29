@@ -260,8 +260,9 @@ them, use the `next` or `previous` values.
     my $results = $rh->instrument( );
     my $results = Finance::Robinhood::instrument( );
 
-Returns a sample list of top securities as Finance::Robinhood::Instrument
-objects along with `next` and `previous` cursor values.
+Returns a paginated list of securities as Finance::Robinhood::Instrument
+objects along with `next` and `previous` cursor values. The list is sorted
+in reverse by their listing date. Use this to track securities that are new!
 
 # Orders
 

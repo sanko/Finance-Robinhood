@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.15 2016-12-29T16:42:12Z
+
     - 'next' and 'previous' keys were getting messed up in paginated results
     - Various minor, nondescript fixes
 
