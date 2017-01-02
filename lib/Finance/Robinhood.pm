@@ -617,17 +617,24 @@ sub _send_request {
 # Coerce ISO 8601-ish strings into Time::Piece or DateTime objects
 sub _2_datetime {
     return if !$_[0];
+    $_[0]
+        =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
     if ($DEV && !defined $Time::Piece::VERSION)
     {    # We lose millisecond timestamps but gain speed!
         require Time::Piece;
     }
     if ($Time::Piece::VERSION) {
-        $_[0] =~ s[\..*][];
-        return Time::Piece->strptime($_[0], '%Y-%m-%dT%H:%M:%S');
+        my @vals = Time::Piece::_mini_mktime(
+            (defined $6 ? $6 : 0),    # second
+            (defined $5 ? $5 : 0),    # minute
+            (defined $4 ? $4 : 0),    # hour
+            $3,                       # day
+            $2,                       # month
+            $1 - 1900                 # year
+        );
+        return scalar Time::Piece->_mktime(\@vals, (defined $8 ? $8 : ()));
     }
     require DateTime;
-    $_[0]
-        =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
     DateTime->new(year  => $1,
                   month => $2,
                   day   => $3,
