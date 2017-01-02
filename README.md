@@ -326,11 +326,12 @@ form does not require an account and may be called without ever logging in.
 
 You may retrieve historical quote data with this method. The first argument is
 a symbol. The second is an interval time and must be either `5minute`,
-`10minute`, `day`, or `week`.
+`10minute`, `day`, or `week`. The third argument is a span of time
+indicating how far into the past you would like to retrieve and may be one of
+the following: `day`, `week`, `year`, `5year`, or `all`. The fourth is a
+bounds which is one of the following: `extended`, `regular`, `trading`.
 
-The third argument is a span of time indicating how far into the past you
-would like to retrieve and may be one of the following: `day`, `week`,
-`year`, or `5year`.
+All are optional and may be filled with an undefined value.
 
 So, to get five years of weekly historical data for Apple, you would write...
 

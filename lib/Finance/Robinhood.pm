@@ -366,12 +366,19 @@ sub quote {
 
 sub historicals {
     my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
-    my ($symbol, $interval, $span) = @_;
+    my ($symbol, $interval, $span, $bounds) = @_;
+    my %fields = (interval => $interval,
+                  span     => $span,
+                  bounds   => $bounds
+    );
+    my $fields = join '&', map { $_ . '=' . $fields{$_} }
+        grep { defined $fields{$_} } keys %fields;
     my ($status, $data, $raw)
         = _send_request($self,
                         'GET',
                         Finance::Robinhood::endpoint('quotes/historicals')
-                            . "$symbol/?interval=$interval&span=$span"
+                            . "$symbol/"
+                            . ($fields ? "?$fields" : '')
         );
     return if $status != 200;
     for (@{$data->{historicals}}) {
@@ -976,11 +983,12 @@ form does not require an account and may be called without ever logging in.
 
 You may retrieve historical quote data with this method. The first argument is
 a symbol. The second is an interval time and must be either C<5minute>,
-C<10minute>, C<day>, or C<week>.
+C<10minute>, C<day>, or C<week>. The third argument is a span of time
+indicating how far into the past you would like to retrieve and may be one of
+the following: C<day>, C<week>, C<year>, C<5year>, or C<all>. The fourth is a
+bounds which is one of the following: C<extended>, C<regular>, C<trading>.
 
-The third argument is a span of time indicating how far into the past you
-would like to retrieve and may be one of the following: C<day>, C<week>,
-C<year>, or C<5year>.
+All are optional and may be filled with an undefined value.
 
 So, to get five years of weekly historical data for Apple, you would write...
 
