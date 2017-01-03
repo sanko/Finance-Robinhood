@@ -33,7 +33,7 @@ sub _build_raw {
     my $s = shift;
     my $url;
     if ($s->has_url) {
-        $url = $_[0]->_get_url;
+        $url = $s->_get_url;
     }
     elsif ($s->has_mic) {
         $url = Finance::Robinhood::endpoint('markets') . $s->mic . '/';
