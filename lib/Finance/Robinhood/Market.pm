@@ -22,12 +22,15 @@ has $_ => (
         (caller(1))[3] =~ m[.+::(.+)$];
         shift->_get_raw->{$1};
     }
-    )
-    for (
-        qw[mic url acronym city country name operating_mic timezone website]);
+) for (qw[mic acronym city country name operating_mic timezone website]);
 has $_ => (is => 'bare', lazy => 1, accessor => "_get_$_")
     for (qw[todays_hours]);
+has $_ => (is => 'lazy', predicate => 1, reader => "_get_$_") for (qw[url]);
 has $_ => (is => 'lazy', reader => "_get_$_") for (qw[raw]);
+
+sub _build_url {
+    shift->_get_raw()->{url};
+}
 
 sub _build_raw {
     my $s = shift;
@@ -56,7 +59,7 @@ sub todays_hours {
         $now = DateTime->now;
     }
     my $data = Finance::Robinhood::_send_request(undef, 'GET',
-                                   shift->url() . 'hours/' . $now->ymd . '/');
+                              $_[0]->_get_url() . 'hours/' . $now->ymd . '/');
     return $data ? Finance::Robinhood::Market::Hours->new($data) : ();
 }
 1;
