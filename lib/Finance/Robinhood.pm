@@ -628,8 +628,8 @@ sub _2_datetime {
             (defined $6 ? $6 : 0),    # second
             (defined $5 ? $5 : 0),    # minute
             (defined $4 ? $4 : 0),    # hour
-            $3,                       # day
-            $2,                       # month
+            $3 - 1,                   # day
+            $2 - 1,                   # month
             $1 - 1900                 # year
         );
         return scalar Time::Piece->_mktime(\@vals, (defined $8 ? $8 : ()));
