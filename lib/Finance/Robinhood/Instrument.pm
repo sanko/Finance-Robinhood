@@ -10,6 +10,7 @@ use strictures 2;
 use namespace::clean;
 use Finance::Robinhood::Market;
 use Finance::Robinhood::Instrument::Split;
+use Finance::Robinhood::Instrument::Fundamentals;
 #
 has $_ => (
     is        => 'lazy',
@@ -26,15 +27,22 @@ has $_ => (
 has $_ => (is     => 'ro',
            coerce => \&Finance::Robinhood::_2_datetime
 ) for (qw[list_date]);
-has $_ => (is => 'ro', lazy => 1, predicate => 1, reader => "_get_$_")
-    for (qw[market splits fundamentals url]);
+has $_ => (is        => 'lazy',
+           predicate => 1,
+           builder   => 1
+) for (qw[fundamentals url]);
+has $_ => (is        => 'lazy',
+           predicate => 1,
+           init_arg  => undef,
+           builder   => 1
+) for (qw[quote market splits]);
 has $_ => (is => 'lazy', reader => "_get_$_") for (qw[raw]);
 
 sub _build_raw {
     my $s = shift;
     my $url;
     if ($s->has_url) {
-        $url = $s->_get_url;
+        $url = $s->url;
     }
     elsif ($s->has_id) {
         $url = Finance::Robinhood::endpoint('instruments') . $s->id . '/';
@@ -47,20 +55,20 @@ sub _build_raw {
     return $result;
 }
 
-sub quote {
+sub _build_quote {
     return Finance::Robinhood::quote(shift->symbol())->{results}[0];
 }
 
-sub historicals {
+sub _build_historicals {
     return Finance::Robinhood::historicals(shift->symbol(), shift, shift);
 }
 
-sub splits {
+sub _build_splits {
 
     # Upcoming stock splits
     my ($status, $result, $raw)
         = Finance::Robinhood::_send_request(undef, 'GET',
-                                            shift->_get_splits());
+                                            shift->_get_raw->{'splits'});
     return [$result
                 && $result->{results} ?
                 map { Finance::Robinhood::Instrument::Split->new($_) }
@@ -69,15 +77,13 @@ sub splits {
     ];
 }
 
-sub market {
-    Finance::Robinhood::Market->new(url => shift->_get_market);
+sub _build_market {
+    Finance::Robinhood::Market->new(url => shift->_get_raw->{'market'});
 }
 
-sub fundamentals {
-    my ($status, $result, $raw)
-        = Finance::Robinhood::_send_request(undef, 'GET',
-                                            shift->_get_fundamentals());
-    return $status == 200 ? $result : ();
+sub _build_fundamentals {
+    Finance::Robinhood::Instrument::Fundamentals->new(
+                                    url => shift->_get_raw->{'fundamentals'});
 }
 1;
 

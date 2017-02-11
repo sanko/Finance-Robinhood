@@ -2,7 +2,10 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+    - Add ::Instrument::Fundamentals class
     - Add support for bound historical data (...see docs)
+    - Lazy load ::Market data
+    - More lazy load stuff
 
 0.15 2016-12-29T16:42:12Z
 
