@@ -1,7 +1,7 @@
 package Finance::Robinhood::Market::Hours;
 use 5.010;
 use Carp;
-our $VERSION = "0.15";
+our $VERSION = "0.16";
 use Moo;
 use strictures 2;
 use namespace::clean;
