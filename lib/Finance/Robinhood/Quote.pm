@@ -7,19 +7,47 @@ use strictures 2;
 use namespace::clean;
 require Finance::Robinhood;
 #
-has $_ => (is => 'ro', required => 1)
+has $_ => (is => 'ro', ,
+    builder => sub {
+        (caller(1))[3] =~ m[.+::(.+)$];
+        shift->_get_raw->{$1};
+    }, lazy => 1)
     for (qw[adjusted_previous_close
          ask_price ask_size bid_price bid_size last_extended_hours_trade_price
-         last_trade_price previous_close trading_halted symbol]
+         last_trade_price previous_close trading_halted]
     );
 has $_ => (
     is       => 'ro',
     required => 1,
     coerce   => \&Finance::Robinhood::_2_datetime
 ) for (qw[updated_at previous_close_date]);
+has $_ => (
+    is       => 'ro',
+    required => 1
+) for (qw[symbol]);
 
 sub refresh {
     return $_[0] = Finance::Robinhood::quote($_[0]->symbol())->{results}[0];
+}
+
+has $_ => (is => 'lazy', reader => "_get_$_") for (qw[raw]);
+
+sub _build_raw {
+    my $s = shift;
+    my $url;
+    if ($s->has_url) {
+        $url = $s->_get_url;
+    }
+
+    #elsif ($s->has_id) {
+    #    $url = Finance::Robinhood::endpoint('instruments') . $s->id . '/';
+    #}
+    else {
+        return {}    # We done messed up!
+    }
+    my ($status, $result, $raw)
+        = Finance::Robinhood::_send_request(undef, 'GET', $url);
+    return $result;
 }
 1;
 
