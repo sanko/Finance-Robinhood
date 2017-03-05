@@ -3,14 +3,14 @@ use 5.010;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.17";
+our $VERSION = "0.18";
 use Moo;
 use JSON::Tiny qw[decode_json];
 use strictures 2;
 use namespace::clean;
 use Finance::Robinhood::Market;
 use Finance::Robinhood::Instrument::Split;
-use Finance::Robinhood::Instrument::Fundamentals;
+use Finance::Robinhood::Fundamentals;
 #
 has $_ => (
     is        => 'lazy',
@@ -82,7 +82,7 @@ sub _build_market {
 }
 
 sub _build_fundamentals {
-    Finance::Robinhood::Instrument::Fundamentals->new(
+    Finance::Robinhood::Fundamentals->new(
                                     url => shift->_get_raw->{'fundamentals'});
 }
 1;

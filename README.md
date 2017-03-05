@@ -319,6 +319,22 @@ symbols, the objects are returned as a paginated list.
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.
 
+## `fundamentals( ... )`
+
+    my %msft = $rh->fundamentals('MSFT');
+    my $swa  = Finance::Robinhood::fundamentals('LUV');
+
+    my $fundamentals = $rh->fundamentals('AAPL', 'GOOG', 'MA');
+       $fundamentals = Finance::Robinhood::fundamentals('LUV', 'JBLU', 'DAL');
+
+Requests current information about a security which is returned as a
+Finance::Robinhood::Fundamentals object. If `fundamentals( ... )`
+is given a list of symbols, the objects are returned as a paginated list. The
+API will accept up to ten (10) symbols at a time.
+
+This function has both functional and object oriented forms. The functional
+form does not require an account and may be called without ever logging in.
+
 ## `historicals( ... )`
 
     # Snapshots of basic quote data for every five minutes of the previous day

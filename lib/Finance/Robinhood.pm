@@ -3,7 +3,7 @@ use 5.012;
 use strict;
 use warnings;
 use Carp;
-our $VERSION = "0.17";
+our $VERSION = "0.18";
 use Moo;
 use HTTP::Tiny '0.056';
 use JSON::Tiny qw[decode_json];
@@ -17,7 +17,7 @@ our $DEV = !1;
 use lib '../../lib';
 use Finance::Robinhood::Account;
 use Finance::Robinhood::Instrument;
-use Finance::Robinhood::Instrument::Fundamentals;
+use Finance::Robinhood::Fundamentals;
 use Finance::Robinhood::Order;
 use Finance::Robinhood::Position;
 use Finance::Robinhood::Quote;
@@ -372,7 +372,7 @@ sub fundamentals {
         _send_request($self, 'GET',
               Finance::Robinhood::endpoint('fundamentals') . '?symbols=' . join ',',
               @_);
-    return _paginate($self, $return, 'Finance::Robinhood::Instrument::Fundamentals');
+    return _paginate($self, $return, 'Finance::Robinhood::Fundamentals');
 
     #}
     #my $quote =
@@ -1011,7 +1011,7 @@ form does not require an account and may be called without ever logging in.
        $fundamentals = Finance::Robinhood::fundamentals('LUV', 'JBLU', 'DAL');
 
 Requests current information about a security which is returned as a
-Finance::Robinhood::Instrument::Fundamentals object. If C<fundamentals( ... )>
+Finance::Robinhood::Fundamentals object. If C<fundamentals( ... )>
 is given a list of symbols, the objects are returned as a paginated list. The
 API will accept up to ten (10) symbols at a time.
 

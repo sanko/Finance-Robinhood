@@ -1,7 +1,7 @@
-package Finance::Robinhood::Instrument::Fundamentals;
+package Finance::Robinhood::Fundamentals;
 use 5.010;
 use Carp;
-our $VERSION = "0.17";
+our $VERSION = "0.18";
 use Moo;
 use strictures 2;
 use namespace::clean;
@@ -56,7 +56,7 @@ sub refresh {
 
 =head1 NAME
 
-Finance::Robinhood::Instrument::Fundamentals - Fundamental Instrument Data
+Finance::Robinhood::Fundamentals - Fundamental Instrument Data
 
 =head1 SYNOPSIS
 
