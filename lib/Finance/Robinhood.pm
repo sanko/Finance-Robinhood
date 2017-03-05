@@ -1012,7 +1012,8 @@ form does not require an account and may be called without ever logging in.
 
 Requests current information about a security which is returned as a
 Finance::Robinhood::Instrument::Fundamentals object. If C<fundamentals( ... )>
-is given a list of symbols, the objects are returned as a paginated list.
+is given a list of symbols, the objects are returned as a paginated list. The
+API will accept up to ten (10) symbols at a time.
 
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.
