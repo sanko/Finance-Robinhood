@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+    - Add ::Robinhood::fundamentals(...) function/->fundamentals(...) method
+
 0.17 2017-03-05T02:07:57Z
 
     - Lazy load ::Quote data

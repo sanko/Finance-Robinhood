@@ -17,6 +17,7 @@ our $DEV = !1;
 use lib '../../lib';
 use Finance::Robinhood::Account;
 use Finance::Robinhood::Instrument;
+use Finance::Robinhood::Instrument::Fundamentals;
 use Finance::Robinhood::Order;
 use Finance::Robinhood::Position;
 use Finance::Robinhood::Quote;
@@ -41,7 +42,7 @@ my %endpoints = (
                 'dividends'              => 'dividends/',
                 'document_requests'      => 'upload/document_requests/',
                 'edocuments'             => 'documents/',
-                'fundamentals'           => 'fundamentals/%s',
+                'fundamentals'           => 'fundamentals/',
                 'instruments'            => 'instruments/',
                 'login'                  => 'api-token-auth/',
                 'logout'                 => 'api-token-logout/',
@@ -364,6 +365,24 @@ sub quote {
     #    : ();
 }
 
+sub fundamentals {
+    my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
+                                          #if (scalar @_ > 1 or wantarray) {
+    my $return =
+        _send_request($self, 'GET',
+              Finance::Robinhood::endpoint('fundamentals') . '?symbols=' . join ',',
+              @_);
+    return _paginate($self, $return, 'Finance::Robinhood::Instrument::Fundamentals');
+
+    #}
+    #my $quote =
+    #    _send_request($self, 'GET',
+    #                  Finance::Robinhood::endpoint('quotes') . shift . '/');
+    #return $quote ?
+    #    Finance::Robinhood::Quote->new($quote)
+    #    : ();
+}
+
 sub historicals {
     my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
     my ($symbol, $interval, $span, $bounds) = @_;
@@ -520,7 +539,7 @@ sub _paginate {    # Paginates results
             defined $class ?
                 [
                 map {
-                    $class->new(%$_, ($self ? (rh => $self) : ()))
+                    $class->new(%$_, ($self ? (rh => $self) : ()), raw => $_)
                 } grep {defined} @{$res->{results}}
                 ]
             : $res->{results}
@@ -979,6 +998,21 @@ both current and historical data on securities.
 Requests current information about a security which is returned as a
 Finance::Robinhood::Quote object. If C<quote( ... )> is given a list of
 symbols, the objects are returned as a paginated list.
+
+This function has both functional and object oriented forms. The functional
+form does not require an account and may be called without ever logging in.
+
+=head2 C<fundamentals( ... )>
+
+    my %msft = $rh->fundamentals('MSFT');
+    my $swa  = Finance::Robinhood::fundamentals('LUV');
+
+    my $fundamentals = $rh->fundamentals('AAPL', 'GOOG', 'MA');
+       $fundamentals = Finance::Robinhood::fundamentals('LUV', 'JBLU', 'DAL');
+
+Requests current information about a security which is returned as a
+Finance::Robinhood::Instrument::Fundamentals object. If C<fundamentals( ... )>
+is given a list of symbols, the objects are returned as a paginated list.
 
 This function has both functional and object oriented forms. The functional
 form does not require an account and may be called without ever logging in.

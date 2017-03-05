@@ -7,13 +7,12 @@ use strictures 2;
 use namespace::clean;
 require Finance::Robinhood;
 #
-has $_ => (required => 1, predicate => 1, is => 'ro', reader => "_get_$_", clearer => 1)
+has $_ => (predicate => 1, is => 'ro', reader => "_get_$_", clearer => 1)
     for (qw[url]);
 
 
 for my $method_name (qw[average_volume description dividend_yield high high_52_weeks low low_52_weeks market_cap open pe_ratio volume]) {
         no strict 'refs';
-
     *{__PACKAGE__ . '::' . $method_name} = sub {
         shift->_get_raw->{$method_name};
     };
@@ -79,6 +78,9 @@ This class has several getters and a few methods as follows...
 =head2 C<average_volume( )>
 
 =head2 C<description( )>
+
+Human readable description of the security. This is well-suited for display in
+an application.
 
 =head2 C<dividend_yield( )>
 

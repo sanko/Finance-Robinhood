@@ -17,4 +17,7 @@ ok $msft_url->high >= $msft_url->low, 'high >= low';
 ok $msft_url->high_52_weeks >= $msft_url->low_52_weeks,
     'high_52_weeks >= low_52_weeks';
 #
+is Finance::Robinhood::fundamentals('MSFT')->{results}[0]->description,
+    $msft_url->description, 'F::R::fundamentals returns list';
+#
 done_testing;
