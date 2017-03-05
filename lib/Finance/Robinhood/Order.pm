@@ -37,7 +37,7 @@ around BUILDARGS => sub {
             'POST',
             Finance::Robinhood::endpoint('orders'),
             {account    => {@args}->{account}->_get_url(),
-             instrument => {@args}->{instrument}->_get_url(),
+             instrument => {@args}->{instrument}->url(),
              symbol     => {@args}->{instrument}->symbol(),
              (map {
                   {@args}

@@ -7,31 +7,28 @@ use strictures 2;
 use namespace::clean;
 require Finance::Robinhood;
 #
-has $_ => (
-    is      => 'ro',
-    lazy    => 1,
-    builder => sub {
-        (caller(1))[3] =~ m[.+::(.+)$];
-        shift->_get_raw->{$1};
-    }
-    )
-    for (
-    qw[average_volume description dividend_yield high high_52_weeks low low_52_weeks market_cap open pe_ratio volume]
-    );
-has $_ => (predicate => 1, is => 'ro', reader => "_get_$_")
-    for (qw[instrument]);
-has $_ => (required => 1, predicate => 1, is => 'ro', reader => "_get_$_")
+has $_ => (required => 1, predicate => 1, is => 'ro', reader => "_get_$_", clearer => 1)
     for (qw[url]);
+
+
+for my $method_name (qw[average_volume description dividend_yield high high_52_weeks low low_52_weeks market_cap open pe_ratio volume]) {
+        no strict 'refs';
+
+    *{__PACKAGE__ . '::' . $method_name} = sub {
+        shift->_get_raw->{$method_name};
+    };
+
+}
 
 sub instrument {
     my ($status, $result, $raw)
         = Finance::Robinhood::_send_request(undef, 'GET',
-                                            shift->_get_instrument());
+                                            shift->_get_raw->{'instrument'});
     return $result ?
         map { Finance::Robinhood::Instrument->new($_) } @{$result->{results}}
         : ();
 }
-has $_ => (is => 'lazy', reader => "_get_$_") for (qw[raw]);
+has $_ => (is => 'lazy', reader => "_get_$_", clearer => 1) for (qw[raw]);
 
 sub _build_raw {
     my $s = shift;
@@ -49,6 +46,10 @@ sub _build_raw {
     my ($status, $result, $raw)
         = Finance::Robinhood::_send_request(undef, 'GET', $url);
     return $result;
+}
+
+sub refresh {
+   $_[0]->clear_raw;
 }
 1;
 
@@ -100,6 +101,8 @@ Generates a new Finance::Robinhood::Instrument object related to this split.
 =head2 C<pe_ratio( )>
 
 =head2 C<volume( )>
+
+=head2 C<refresh( )>
 
 =head1 LEGAL
 
