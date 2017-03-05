@@ -14,7 +14,9 @@ has $_ => (is => 'ro', ,
     }, lazy => 1)
     for (qw[adjusted_previous_close
          ask_price ask_size bid_price bid_size last_extended_hours_trade_price
-         last_trade_price previous_close trading_halted]
+         last_trade_price previous_close trading_halted
+         last_trade_price_source
+         ]
     );
 has $_ => (
     is       => 'ro',
@@ -120,6 +122,12 @@ If trading is halted on a security or its market, this will be a true value.
 
 The timestamp of the data. This is very important in cases where prices are
 being tracked.
+
+=head2 C<last_trade_price_source( )
+
+Where was the last trade price from.
+
+Typically, 'consolidated' for the tape, 'nls' for live data from Nasdaq.
 
 =head2 C<refresh( )>
 

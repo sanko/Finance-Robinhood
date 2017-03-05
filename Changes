@@ -3,6 +3,7 @@ Revision history for Perl extension Finance-Robinhood
 {{$NEXT}}
 
     - Lazy load ::Quote data
+    - Expose source of quote (consolidated tape, nasdaq live, etc.)
 
 0.16 2017-02-11T21:13:47Z
 
