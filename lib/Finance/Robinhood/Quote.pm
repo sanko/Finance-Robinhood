@@ -1,7 +1,7 @@
 package Finance::Robinhood::Quote;
 use 5.010;
 use Carp;
-our $VERSION = "0.16";
+our $VERSION = "0.17";
 use Moo;
 use strictures 2;
 use namespace::clean;
@@ -123,7 +123,7 @@ If trading is halted on a security or its market, this will be a true value.
 The timestamp of the data. This is very important in cases where prices are
 being tracked.
 
-=head2 C<last_trade_price_source( )
+=head2 C<last_trade_price_source( )>
 
 Where was the last trade price from.
 
