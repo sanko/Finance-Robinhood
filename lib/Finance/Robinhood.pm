@@ -369,9 +369,13 @@ sub fundamentals {
     my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
                                           #if (scalar @_ > 1 or wantarray) {
     my $return =
-        _send_request($self, 'GET',
-              Finance::Robinhood::endpoint('fundamentals') . '?symbols=' . join ',',
-              @_);
+        _send_request($self,
+                      'GET',
+                      Finance::Robinhood::endpoint('fundamentals')
+                          . '?symbols='
+                          . join ',',
+                      @_
+        );
     return _paginate($self, $return, 'Finance::Robinhood::Fundamentals');
 
     #}
@@ -423,8 +427,14 @@ sub list_orders {
                                  . (ref $type
                                         && ref $type eq 'HASH'
                                         && defined $type->{cursor}
-                                    ?
-                                        '?cursor=' . $type->{cursor}
+                                    ? '?cursor=' . $type->{cursor}
+                                    : ''
+                                 )
+                                 . (ref $type
+                                        && ref $type eq 'HASH'
+                                        && defined $type->{'since'}
+                                    ? '?updated_at[gte]='
+                                        . $type->{'since'}
                                     : ''
                                  )
         );
@@ -980,6 +990,11 @@ objects. Cursor keys C<next> and C<previous> may also be present.
 You'll likely generate more than a hand full of buy and sell orders which
 would generate more than a single page of results. To gather them, use the
 C<next> or C<previous> values.
+
+    my $new_orders = $rh->list_orders({ since => $timestamp });
+
+To gather orders placed after a certain date or time, use the C<since>
+parameter. The C<$timestamp> is seconds from epoch.
 
 =head1 Quotes and Historical Data
 

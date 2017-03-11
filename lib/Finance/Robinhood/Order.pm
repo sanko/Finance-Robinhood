@@ -145,7 +145,7 @@ Finance::Robinhood::Order - Order to Buy or Sell a Security
 =head1 DESCRIPTION
 
 This class represents a single buy or sell order. These are returned by the
-C<locate_order( ... )> and C<list_order( ... )> methods of Finance::Robinhood.
+C<locate_order( ... )> and C<list_orders( ... )> methods of Finance::Robinhood.
 
 Of course, you may place new orders with the C<new( ... )> constructor of this
 class.
