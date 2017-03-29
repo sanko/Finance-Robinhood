@@ -8,7 +8,8 @@ use namespace::clean;
 require Finance::Robinhood;
 #
 has $_ => (is => 'ro', required => 1)
-    for (qw[average_buy_price intraday_quantity quantity
+    for (qw[intraday_average_buy_price average_buy_price
+         intraday_quantity quantity
          shares_held_for_buys shares_held_for_sells url]);
 has $_ => (is       => 'ro',
            required => 1,
@@ -63,6 +64,10 @@ Returns the Finance::Robinhood::Account object related to this order.
 =head2 C<average_buy_price( )>
 
 How much you spent on average for shares of this security.
+
+=head2 C<intraday_average_buy_price( )>
+
+
 
 =head2 C<created_at( )>
 

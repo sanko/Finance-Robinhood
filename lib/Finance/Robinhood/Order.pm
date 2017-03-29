@@ -9,7 +9,9 @@ require Finance::Robinhood;
 #
 has $_ => (is => 'ro', required => 1)
     for (qw[average_price id cumulative_quantity fees price quantity
-         reject_reason side state stop_price time_in_force trigger type url]);
+         override_dtbp_checks extended_hours override_day_trade_checks
+         reject_reason side state stop_price time_in_force trigger type url]
+    );
 has $_ => (is       => 'ro',
            required => 1,
            coerce   => \&Finance::Robinhood::_2_datetime
@@ -39,6 +41,11 @@ around BUILDARGS => sub {
             {account    => {@args}->{account}->_get_url(),
              instrument => {@args}->{instrument}->url(),
              symbol     => {@args}->{instrument}->symbol(),
+             (map {
+                  {@args}
+                  ->{$_} ? ($_ => ({@args}->{$_} ? 'true' : 'false')) : ()
+              } qw[override_dtbp_checks extended_hours override_day_trade_checks]
+             ),
              (map {
                   {@args}
                   ->{$_} ? ($_ => {@args}->{$_}) : ()
@@ -102,6 +109,10 @@ sub position {
         ?
         Finance::Robinhood::Position->new(rh => $self->_get_rh(), %$result)
         : ();
+}
+
+sub _can_cancel {
+    shift->_get_cancel ? 1 : 0;
 }
 
 sub cancel {
@@ -298,6 +309,21 @@ C<stop_price>. I obviously would not modify your orders to comply!
 Please note that the API wants prices including C<stop_price> to be I<at most>
 4 decimal places. It is your responsibility to make sure of that.
 
+=item C<override_dtbp_checks>
+
+This tells Robinhood's API servers to accept the order even if it violates the
+Day-Trade Bying Power limits.
+
+=item C<extended_hours>
+
+This tells the API server to accept the order after the markets are closed. If
+you'd like these to execute after hours, you must set the type to 'limit' and
+have a Robinhood Gold subscription.
+
+=item C<override_day_trade_checks>
+
+This overrides the API's Pattern Day Trade Protection warnings.
+
 =back
 
 =head2 C<account( )>
@@ -412,6 +438,18 @@ The timestamp of the most recent execution.
 =head2 C<upated_at( )>
 
 Timestamp of the last change made to this order.
+
+=head2 C<override_dtbp_checks( )>
+
+True if the Day-Trading Buying Power checks are turned off.
+
+=head2 C<extended_hours( )>
+
+Returns true if the order is set to execute after hours.
+
+=head2 C<override_day_trade_checks( )>
+
+Returns true if the Pattern Day Trade checks are disabled.
 
 =head1 Order Cheat Sheet
 

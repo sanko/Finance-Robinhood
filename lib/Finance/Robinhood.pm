@@ -24,108 +24,110 @@ use Finance::Robinhood::Quote;
 use Finance::Robinhood::Watchlist;
 use Finance::Robinhood::Portfolio;
 #
-has token => (is => 'ro', writer => '_set_token');
+has token => ( is => 'ro', writer => '_set_token' );
 #
 my $base = 'https://api.robinhood.com/';
 
 # Different endpoints we can call for the API
 my %endpoints = (
-                'accounts'               => 'accounts/',
-                'accounts/positions'     => 'accounts/%s/positions/',
-                'portfolios'             => 'portfolios/',
-                'portfolios/historicals' => 'portfolios/historicals/',
-                'ach_deposit_schedules'  => 'ach/deposit_schedules/',
-                'ach_iav_auth'           => 'ach/iav/auth/',
-                'ach_relationships'      => 'ach/relationships/',
-                'ach_transfers'          => 'ach/transfers/',
-                'applications'           => 'applications/',
-                'dividends'              => 'dividends/',
-                'document_requests'      => 'upload/document_requests/',
-                'edocuments'             => 'documents/',
-                'fundamentals'           => 'fundamentals/',
-                'instruments'            => 'instruments/',
-                'login'                  => 'api-token-auth/',
-                'logout'                 => 'api-token-logout/',
-                'margin_upgrades'        => 'margin/upgrades/',
-                'markets'                => 'markets/',
-                'notifications'          => 'notifications/',
-                'notifications/devices'  => 'notifications/devices/',
-                'cards'                  => 'midlands/notifications/stack/',
-                'cards/dismiss' => 'midlands/notifications/stack/%s/dismiss/',
-                'orders'        => 'orders/',
-                'password_reset'          => 'password_reset/',
-                'password_reset/request'  => 'password_reset/request/',
-                'quote'                   => 'quote/',
-                'quotes'                  => 'quotes/',
-                'quotes/historicals'      => 'quotes/historicals/',
-                'user'                    => 'user/',
-                'user/id'                 => 'user/id/',
-                'user/additional_info'    => 'user/additional_info/',
-                'user/basic_info'         => 'user/basic_info/',
-                'user/employment'         => 'user/employment/',
-                'user/investment_profile' => 'user/investment_profile/',
-                'user/identity_mismatch'  => 'user/identity_mismatch',
-                'watchlists'              => 'watchlists/',
-                'watchlists/bulk_add'     => 'watchlists/%s/bulk_add/'
+    'accounts'                => 'accounts/',
+    'accounts/positions'      => 'accounts/%s/positions/',
+    'portfolios'              => 'portfolios/',
+    'portfolios/historicals'  => 'portfolios/historicals/',
+    'ach_deposit_schedules'   => 'ach/deposit_schedules/',
+    'ach_iav_auth'            => 'ach/iav/auth/',
+    'ach_relationships'       => 'ach/relationships/',
+    'ach_transfers'           => 'ach/transfers/',
+    'applications'            => 'applications/',
+    'dividends'               => 'dividends/',
+    'document_requests'       => 'upload/document_requests/',
+    'edocuments'              => 'documents/',
+    'fundamentals'            => 'fundamentals/',
+    'instruments'             => 'instruments/',
+    'login'                   => 'api-token-auth/',
+    'logout'                  => 'api-token-logout/',
+    'margin_upgrades'         => 'margin/upgrades/',
+    'markets'                 => 'markets/',
+    'notifications'           => 'notifications/',
+    'notifications/devices'   => 'notifications/devices/',
+    'cards'                   => 'midlands/notifications/stack/',
+    'cards/dismiss'           => 'midlands/notifications/stack/%s/dismiss/',
+    'orders'                  => 'orders/',
+    'password_reset'          => 'password_reset/',
+    'password_reset/request'  => 'password_reset/request/',
+    'quote'                   => 'quote/',
+    'quotes'                  => 'quotes/',
+    'quotes/historicals'      => 'quotes/historicals/',
+    'user'                    => 'user/',
+    'user/id'                 => 'user/id/',
+    'user/additional_info'    => 'user/additional_info/',
+    'user/basic_info'         => 'user/basic_info/',
+    'user/employment'         => 'user/employment/',
+    'user/investment_profile' => 'user/investment_profile/',
+    'user/identity_mismatch'  => 'user/identity_mismatch',
+    'watchlists'              => 'watchlists/',
+    'watchlists/bulk_add'     => 'watchlists/%s/bulk_add/'
 );
 
 sub endpoint {
-    $endpoints{$_[0]} ?
-        ($DEV > 10 ?
-             'http://brokeback.dev.robinhood.com/'
-         : 'https://api.robinhood.com/'
-        )
-        . $endpoints{+shift}
-        : ();
+    $endpoints{ $_[0] }
+      ? (
+        $DEV > 10
+        ? 'http://brokeback.dev.robinhood.com/'
+        : 'https://api.robinhood.com/'
+      )
+      . $endpoints{ +shift }
+      : ();
 }
 #
 # Send a username and password to Robinhood to get back a token.
 #
-my ($client, $res);
+my ( $client, $res );
 my %headers = (
-         'Accept' => '*/*',
-         'Accept-Language' =>
-             'en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5',
-         'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
-         'X-Robinhood-API-Version' => '1.120.0',
-         'User-Agent'              => 'Robinhood/2357 (Android/2.19.0)'
+    'Accept' => '*/*',
+    'Accept-Language' =>
+      'en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5',
+    'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
+    'X-Robinhood-API-Version' => '1.120.0',
+    'User-Agent'              => 'Robinhood/2357 (Android/2.19.0)'
 );
 sub errors { shift; carp shift; }
 
 sub login {
-    my ($self, $username, $password) = @_;
+    my ( $self, $username, $password ) = @_;
 
     # Make API Call
-    my ($status, $data, $raw)
-        = _send_request(undef, 'POST',
-                        Finance::Robinhood::endpoint('login'),
-                        {username => $username,
-                         password => $password
-                        }
-        );
+    my ( $status, $data, $raw ) = _send_request(
+        undef, 'POST',
+        Finance::Robinhood::endpoint('login'),
+        {
+            username => $username,
+            password => $password
+        }
+    );
 
     # Make sure we have a token.
-    if ($status != 200 || !defined($data->{token})) {
-        $self->errors(join ' ', @{$data->{non_field_errors}});
+    if ( $status != 200 || !defined( $data->{token} ) ) {
+        $self->errors( join ' ', @{ $data->{non_field_errors} } );
         return !1;
     }
 
     # Set the token we just received.
-    return $self->_set_token($data->{token});
+    return $self->_set_token( $data->{token} );
 }
 
 sub logout {
     my ($self) = @_;
 
     # Make API Call
-    my ($status, $rt, $raw)
-        = $self->_send_request('POST',
-                               Finance::Robinhood::endpoint('logout'));
-    return $status == 200 ?
+    my ( $status, $rt, $raw ) =
+      $self->_send_request( 'POST', Finance::Robinhood::endpoint('logout') );
+    return $status == 200
+      ?
 
-        # The old token is now invalid, so we might as well delete it
-        $self->_set_token(())
-        : ();
+      # The old token is now invalid, so we might as well delete it
+      $self->_set_token( () )
+      : ();
 }
 
 sub forgot_password {
@@ -133,104 +135,102 @@ sub forgot_password {
     my ($email) = @_;
 
     # Make API Call
-    my ($status, $rt, $raw)
-        = _send_request(undef, 'POST',
-                       Finance::Robinhood::endpoint('password_reset/request'),
-                       {email => $email});
+    my ( $status, $rt, $raw ) = _send_request(
+        undef, 'POST',
+        Finance::Robinhood::endpoint('password_reset/request'),
+        { email => $email }
+    );
     return $status == 200;
 }
 
 sub change_password {
     my $self = shift if ref $_[0] && ref $_[0] eq __PACKAGE__;
-    my ($user, $password, $token) = @_;
+    my ( $user, $password, $token ) = @_;
 
     # Make API Call
-    my ($status, $rt, $raw)
-        = _send_request(undef, 'POST',
-                        Finance::Robinhood::endpoint('password_reset'),
-                        {username => $user,
-                         password => $password,
-                         token    => $token
-                        }
-        );
+    my ( $status, $rt, $raw ) = _send_request(
+        undef, 'POST',
+        Finance::Robinhood::endpoint('password_reset'),
+        {
+            username => $user,
+            password => $password,
+            token    => $token
+        }
+    );
     return $status == 200;
 }
 
 sub user_info {
     my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET', Finance::Robinhood::endpoint('user'));
-    return $status == 200 ?
-        map { $_ => $data->{$_} } qw[email id last_name first_name username]
-        : ();
+    my ( $status, $data, $raw ) =
+      $self->_send_request( 'GET', Finance::Robinhood::endpoint('user') );
+    return $status == 200
+      ? map { $_ => $data->{$_} } qw[email id last_name first_name username]
+      : ();
 }
 
 sub user_id {
     my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                               Finance::Robinhood::endpoint('user/id'));
+    my ( $status, $data, $raw ) =
+      $self->_send_request( 'GET', Finance::Robinhood::endpoint('user/id') );
     return $status == 200 ? $data->{id} : ();
 }
 
 sub basic_info {
     my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                             Finance::Robinhood::endpoint('user/basic_info'));
-    return $status != 200 ?
-        ()
-        : ((map { $_ => _2_datetime(delete $data->{$_}) }
-                qw[date_of_birth updated_at]
-           ),
-           map { m[url] ? () : ($_ => $data->{$_}) } keys %$data
-        );
+    my ( $status, $data, $raw ) = $self->_send_request( 'GET',
+        Finance::Robinhood::endpoint('user/basic_info') );
+    return $status != 200
+      ? ()
+      : (
+        (
+            map { $_ => _2_datetime( delete $data->{$_} ) }
+              qw[date_of_birth updated_at]
+        ),
+        map { m[url] ? () : ( $_ => $data->{$_} ) } keys %$data
+      );
 }
 
 sub additional_info {
     my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                               Finance::Robinhood::endpoint(
-                                                       'user/additional_info')
-        );
-    return $status != 200 ?
-        ()
-        : ((map { $_ => _2_datetime(delete $data->{$_}) } qw[updated_at]),
-           map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
+    my ( $status, $data, $raw ) = $self->_send_request( 'GET',
+        Finance::Robinhood::endpoint('user/additional_info') );
+    return $status != 200
+      ? ()
+      : (
+        ( map { $_ => _2_datetime( delete $data->{$_} ) } qw[updated_at] ),
+        map { m[user] ? () : ( $_ => $data->{$_} ) } keys %$data
+      );
 }
 
 sub employment_info {
     my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                             Finance::Robinhood::endpoint('user/employment'));
-    return $status != 200 ?
-        ()
-        : ((map { $_ => _2_datetime(delete $data->{$_}) } qw[updated_at]),
-           map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
+    my ( $status, $data, $raw ) = $self->_send_request( 'GET',
+        Finance::Robinhood::endpoint('user/employment') );
+    return $status != 200
+      ? ()
+      : (
+        ( map { $_ => _2_datetime( delete $data->{$_} ) } qw[updated_at] ),
+        map { m[user] ? () : ( $_ => $data->{$_} ) } keys %$data
+      );
 }
 
 sub investment_profile {
     my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                               Finance::Robinhood::endpoint(
-                                                    'user/investment_profile')
-        );
-    return $status != 200 ?
-        ()
-        : ((map { $_ => _2_datetime(delete $data->{$_}) } qw[updated_at]),
-           map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
+    my ( $status, $data, $raw ) = $self->_send_request( 'GET',
+        Finance::Robinhood::endpoint('user/investment_profile') );
+    return $status != 200
+      ? ()
+      : (
+        ( map { $_ => _2_datetime( delete $data->{$_} ) } qw[updated_at] ),
+        map { m[user] ? () : ( $_ => $data->{$_} ) } keys %$data
+      );
 }
 
 sub identity_mismatch {
     my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                               Finance::Robinhood::endpoint(
-                                                     'user/identity_mismatch')
-        );
+    my ( $status, $data, $raw ) = $self->_send_request( 'GET',
+        Finance::Robinhood::endpoint('user/identity_mismatch') );
     return $status == 200 ? $self->_paginate($data) : ();
 }
 
@@ -238,10 +238,9 @@ sub accounts {
     my ($self) = @_;
 
     # TODO: Deal with next and previous results? Multiple accounts?
-    my $return = $self->_send_request('GET',
-                                      Finance::Robinhood::endpoint('accounts')
-    );
-    return $self->_paginate($return, 'Finance::Robinhood::Account');
+    my $return =
+      $self->_send_request( 'GET', Finance::Robinhood::endpoint('accounts') );
+    return $self->_paginate( $return, 'Finance::Robinhood::Account' );
 }
 #
 # Returns the porfillo summery of an account by url.
@@ -250,46 +249,11 @@ sub portfolios {
     my ($self) = @_;
 
     # TODO: Deal with next and previous results? Multiple portfolios?
-    my $return = $self->_send_request('GET',
-                                      Finance::Robinhood::endpoint(
-                                                                 'portfolios')
-    );
-    return $self->_paginate($return, 'Finance::Robinhood::Portfolio');
+    my $return =
+      $self->_send_request( 'GET', Finance::Robinhood::endpoint('portfolios') );
+    return $self->_paginate( $return, 'Finance::Robinhood::Portfolio' );
 }
-#
-# Return the positions for an account.
-# This is sort of a heavy call as it makes many API calls to populate all the data.
-#
-#sub get_current_positions {
-#    my ($self, $account) = @_;
-#    my @rt;
-#
-#    # Get the positions.
-#    my $pos =
-#        $self->_send_request('GET',
-#                             sprintf(Finance::Robinhood::endpoint(
-#                                                        'accounts/positions'),
-#                                     $account->account_number()
-#                             )
-#        );
-#
-#    # Now loop through and get the ticker information.
-#    for my $result (@{$pos->{results}}) {
-#        ddx $result;
-#
-#        # We ignore past stocks that we traded.
-#        if ($result->{'quantity'} > 0) {
-#
-#            # TODO: If the call fails, deal with it as ()
-#            my $instrument = Finance::Robinhood::Instrument->new('GET',
-#                               $self->_send_request($result->{'instrument'}));
-#
-#            # Add on to the new array.
-#            push @rt, $instrument;
-#        }
-#    }
-#    return @rt;
-#}
+
 sub instrument {
 
 #my $msft      = Finance::Robinhood::instrument('MSFT');
@@ -299,49 +263,49 @@ sub instrument {
 #my $msft      = $rh->instrument({id     => '50810c35-d215-4866-9758-0ada4ac79ffa'});
     my $self = shift if ref $_[0] && ref $_[0] eq __PACKAGE__;
     my ($type) = @_;
-    my $result = _send_request($self, 'GET',
-                               Finance::Robinhood::endpoint('instruments')
-                                   . (  !defined $type ? ''
-                                      : !ref $type     ? '?query=' . $type
-                                      : ref $type eq 'HASH'
-                                          && defined $type->{cursor}
-                                      ? '?cursor=' . $type->{cursor}
-                                      : ref $type eq 'HASH'
-                                          && defined $type->{query}
-                                      ? '?query=' . $type->{query}
-                                      : ref $type eq 'HASH'
-                                          && defined $type->{id}
-                                      ? $type->{id} . '/'
-                                      : ''
-                                   )
+    my $result = _send_request(
+        $self, 'GET',
+        Finance::Robinhood::endpoint('instruments')
+          . (
+              !defined $type ? ''
+            : !ref $type     ? '?query=' . $type
+            : ref $type eq 'HASH'
+              && defined $type->{cursor} ? '?cursor=' . $type->{cursor}
+            : ref $type eq 'HASH'
+              && defined $type->{query} ? '?query=' . $type->{query}
+            : ref $type eq 'HASH' && defined $type->{id} ? $type->{id} . '/'
+            :                                              ''
+          )
     );
     $result // return !1;
 
     #ddx $result;
     my $retval = ();
-    if (defined $type && !ref $type) {
+    if ( defined $type && !ref $type ) {
         ($retval) = map { Finance::Robinhood::Instrument->new($_) }
-            grep { $_->{symbol} eq $type } @{$result->{results}};
+          grep { $_->{symbol} eq $type } @{ $result->{results} };
     }
-    elsif (defined $type && ref $type eq 'HASH' && defined $type->{id}) {
+    elsif ( defined $type && ref $type eq 'HASH' && defined $type->{id} ) {
         $retval = Finance::Robinhood::Instrument->new($result);
     }
     else {
-        my ($prev, $next);
+        my ( $prev, $next );
         {
             $result->{previous} =~ m[\?cursor=(.+)]
-                if defined $result->{previous};
+              if defined $result->{previous};
             $prev = $1 // ();
         }
         {
             $result->{next} =~ m[\?cursor=(.+)] if defined $result->{next};
             $next = $1 // ();
         }
-        $retval = {results => [map { Finance::Robinhood::Instrument->new($_) }
-                                   @{$result->{results}}
-                   ],
-                   previous => $prev,
-                   next     => $next
+        $retval = {
+            results => [
+                map { Finance::Robinhood::Instrument->new($_) }
+                  @{ $result->{results} }
+            ],
+            previous => $prev,
+            next     => $next
         };
     }
     return $retval;
@@ -351,10 +315,9 @@ sub quote {
     my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
                                           #if (scalar @_ > 1 or wantarray) {
     my $return =
-        _send_request($self, 'GET',
-              Finance::Robinhood::endpoint('quotes') . '?symbols=' . join ',',
-              @_);
-    return _paginate($self, $return, 'Finance::Robinhood::Quote');
+      _send_request( $self, 'GET',
+        Finance::Robinhood::endpoint('quotes') . '?symbols=' . join ',', @_ );
+    return _paginate( $self, $return, 'Finance::Robinhood::Quote' );
 
     #}
     #my $quote =
@@ -369,14 +332,10 @@ sub fundamentals {
     my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
                                           #if (scalar @_ > 1 or wantarray) {
     my $return =
-        _send_request($self,
-                      'GET',
-                      Finance::Robinhood::endpoint('fundamentals')
-                          . '?symbols='
-                          . join ',',
-                      @_
-        );
-    return _paginate($self, $return, 'Finance::Robinhood::Fundamentals');
+      _send_request( $self, 'GET',
+        Finance::Robinhood::endpoint('fundamentals') . '?symbols=' . join ',',
+        @_ );
+    return _paginate( $self, $return, 'Finance::Robinhood::Fundamentals' );
 
     #}
     #my $quote =
@@ -389,169 +348,165 @@ sub fundamentals {
 
 sub historicals {
     my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
-    my ($symbol, $interval, $span, $bounds) = @_;
-    my %fields = (interval => $interval,
-                  span     => $span,
-                  bounds   => $bounds
+    my ( $symbol, $interval, $span, $bounds ) = @_;
+    my %fields = (
+        interval => $interval,
+        span     => $span,
+        bounds   => $bounds
     );
     my $fields = join '&', map { $_ . '=' . $fields{$_} }
-        grep { defined $fields{$_} } keys %fields;
-    my ($status, $data, $raw)
-        = _send_request($self,
-                        'GET',
-                        Finance::Robinhood::endpoint('quotes/historicals')
-                            . "$symbol/"
-                            . ($fields ? "?$fields" : '')
-        );
+      grep { defined $fields{$_} } keys %fields;
+    my ( $status, $data, $raw ) = _send_request( $self, 'GET',
+            Finance::Robinhood::endpoint('quotes/historicals')
+          . "$symbol/"
+          . ( $fields ? "?$fields" : '' ) );
     return if $status != 200;
-    for (@{$data->{historicals}}) {
-        $_->{begins_at} = _2_datetime($_->{begins_at});
+    for ( @{ $data->{historicals} } ) {
+        $_->{begins_at} = _2_datetime( $_->{begins_at} );
     }
     return $data->{historicals};
 }
 
 sub locate_order {
-    my ($self, $order_id) = @_;
-    my $result = $self->_send_request('GET',
-                    Finance::Robinhood::endpoint('orders') . $order_id . '/');
-    return $result ?
-        Finance::Robinhood::Order->new(rh => $self, %$result)
-        : ();
+    my ( $self, $order_id ) = @_;
+    my $result = $self->_send_request( 'GET',
+        Finance::Robinhood::endpoint('orders') . $order_id . '/' );
+    return $result
+      ? Finance::Robinhood::Order->new( rh => $self, %$result )
+      : ();
 }
 
 sub list_orders {
-    my ($self, $type) = @_;
-    my $result =
-        $self->_send_request('GET',
-                             Finance::Robinhood::endpoint('orders')
-                                 . (ref $type
-                                        && ref $type eq 'HASH'
-                                        && defined $type->{cursor}
-                                    ? '?cursor=' . $type->{cursor}
-                                    : ''
-                                 )
-                                 . (ref $type
-                                        && ref $type eq 'HASH'
-                                        && defined $type->{'since'}
-                                    ? '?updated_at[gte]='
-                                        . $type->{'since'}
-                                    : ''
-                                 )
-        );
+    my ( $self, $type ) = @_;
+    my $result = $self->_send_request(
+        'GET',
+        Finance::Robinhood::endpoint('orders')
+          . (
+            ref $type
+              && ref $type eq 'HASH'
+              && defined $type->{cursor} ? '?cursor=' . $type->{cursor}
+            : ref $type && ref $type eq 'HASH' && defined $type->{'since'}
+            ? '?updated_at[gte]=' . $type->{'since'}
+            : ref $type
+              && ref $type eq 'HASH'
+              && defined $type->{'instrument'}
+              && 'Finance::Robinhood::Instrument' eq ref $type->{'instrument'}
+            ? '?instrument=' . $type->{'instrument'}->url
+            : ''
+          )
+    );
     $result // return !1;
     return () if !$result;
-    return $self->_paginate($result, 'Finance::Robinhood::Order');
+    return $self->_paginate( $result, 'Finance::Robinhood::Order' );
 }
 
 # Methods under construction
 sub cards {
-    return shift->_send_request('GET', Finance::Robinhood::endpoint('cards'));
+    return shift->_send_request( 'GET', Finance::Robinhood::endpoint('cards') );
 }
 
 sub dividends {
     return
-        shift->_send_request('GET',
-                             Finance::Robinhood::endpoint('dividends'));
+      shift->_send_request( 'GET', Finance::Robinhood::endpoint('dividends') );
 }
 
 sub notifications {
     return
-        shift->_send_request('GET',
-                             Finance::Robinhood::endpoint('notifications'));
+      shift->_send_request( 'GET',
+        Finance::Robinhood::endpoint('notifications') );
 }
 
 sub notifications_devices {
     return
-        shift->_send_request('GET',
-                             Finance::Robinhood::endpoint(
-                                                      'notifications/devices')
-        );
+      shift->_send_request( 'GET',
+        Finance::Robinhood::endpoint('notifications/devices') );
 }
 
 sub create_watchlist {
-    my ($self, $name) = @_;
-    my ($status, $result)
-        = $self->_send_request('POST',
-                               Finance::Robinhood::endpoint('watchlists'),
-                               {name => $name});
+    my ( $self,   $name )   = @_;
+    my ( $status, $result ) = $self->_send_request(
+        'POST',
+        Finance::Robinhood::endpoint('watchlists'),
+        { name => $name }
+    );
     return $status == 201
-        ?
-        Finance::Robinhood::Watchlist->new(rh => $self, %$result)
-        : ();
+      ? Finance::Robinhood::Watchlist->new( rh => $self, %$result )
+      : ();
 }
 
 sub delete_watchlist {
-    my ($self, $watchlist) = @_;
-    my ($status, $result, $response)
-        = $self->_send_request('DELETE',
-                               Finance::Robinhood::endpoint('watchlists')
-                                   . (ref $watchlist ?
-                                          $watchlist->name()
-                                      : $watchlist
-                                   )
-                                   . '/'
-        );
+    my ( $self, $watchlist ) = @_;
+    my ( $status, $result, $response ) = $self->_send_request(
+        'DELETE',
+        Finance::Robinhood::endpoint('watchlists')
+          . (
+            ref $watchlist
+            ? $watchlist->name()
+            : $watchlist
+          )
+          . '/'
+    );
     return $status == 204;
 }
 
 sub watchlists {
-    my ($self, $cursor) = @_;
-    my $result =
-        $self->_send_request('GET',
-                             Finance::Robinhood::endpoint('watchlists')
-                                 . (ref $cursor
-                                        && ref $cursor eq 'HASH'
-                                        && defined $cursor->{cursor}
-                                    ?
-                                        '?cursor=' . $cursor->{cursor}
-                                    : ''
-                                 )
-        );
+    my ( $self, $cursor ) = @_;
+    my $result = $self->_send_request(
+        'GET',
+        Finance::Robinhood::endpoint('watchlists')
+          . (
+            ref $cursor
+              && ref $cursor eq 'HASH' && defined $cursor->{cursor}
+            ? '?cursor=' . $cursor->{cursor}
+            : ''
+          )
+    );
     $result // return !1;
     return () if !$result;
-    return $self->_paginate($result, 'Finance::Robinhood::Watchlist');
+    return $self->_paginate( $result, 'Finance::Robinhood::Watchlist' );
 }
 
 sub watchlist {
-    my ($self, $name) = @_;
-    my ($status, $result)
-        = $self->_send_request('GET',
-                       Finance::Robinhood::endpoint('watchlists') . "$name/");
-    return $status == 200 ?
-        Finance::Robinhood::Watchlist->new(name => $name,
-                                           rh   => $self,
-                                           %$result
-        )
-        : ();
+    my ( $self,   $name )   = @_;
+    my ( $status, $result ) = $self->_send_request( 'GET',
+        Finance::Robinhood::endpoint('watchlists') . "$name/" );
+    return $status == 200
+      ? Finance::Robinhood::Watchlist->new(
+        name => $name,
+        rh   => $self,
+        %$result
+      )
+      : ();
 }
 
 sub markets {
     my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
-    my ($symbol, $interval, $span) = @_;
-    my $result = _send_request(undef, 'GET',
-                               Finance::Robinhood::endpoint('markets'));
-    return _paginate($self, $result, 'Finance::Robinhood::Market');
+    my ( $symbol, $interval, $span ) = @_;
+    my $result =
+      _send_request( undef, 'GET', Finance::Robinhood::endpoint('markets') );
+    return _paginate( $self, $result, 'Finance::Robinhood::Market' );
 }
 
 # ---------------- Private Helper Functions --------------- //
 # Send request to API.
 #
 sub _paginate {    # Paginates results
-    my ($self, $res, $class) = @_;
-    my ($prev)
-        = defined $res->{previous} ?
-        ($res->{previous} =~ m[\?cursor=(.+)$])
-        : ();
-    my ($next)
-        = defined $res->{next} ? ($res->{next} =~ m[\?cursor=(.+)$]) : ();
+    my ( $self, $res, $class ) = @_;
+    my ($prev) =
+      defined $res->{previous}
+      ? ( $res->{previous} =~ m[\?cursor=(.+)$] )
+      : ();
+    my ($next) =
+      defined $res->{next} ? ( $res->{next} =~ m[\?cursor=(.+)$] ) : ();
     return {
         results => (
-            defined $class ?
-                [
+            defined $class
+            ? [
                 map {
-                    $class->new(%$_, ($self ? (rh => $self) : ()), raw => $_)
-                } grep {defined} @{$res->{results}}
-                ]
+                    $class->new( %$_, ( $self ? ( rh => $self ) : () ),
+                        raw => $_ )
+                } grep { defined } @{ $res->{results} }
+              ]
             : $res->{results}
         ),
         previous => $prev,
@@ -562,54 +517,61 @@ sub _paginate {    # Paginates results
 sub _send_request {
 
     # TODO: Expose errors (400:{detail=>'Not enough shares to sell'}, etc.)
-    my ($self, $verb, $url, $data) = @_;
+    my ( $self, $verb, $url, $data ) = @_;
 
     # Make sure we have a token.
-    if (defined $self && !defined($self->token)) {
+    if ( defined $self && !defined( $self->token ) ) {
         carp
-            'No API token set. Please authorize by using ->login($user, $pass) or passing a token to ->new(...).';
+'No API token set. Please authorize by using ->login($user, $pass) or passing a token to ->new(...).';
         return !1;
     }
 
     # Setup request client.
-    $client = HTTP::Tiny->new(agent => 'Finance::Robinhood/' . $VERSION . ' ')
-        if !defined $client;
+    $client = HTTP::Tiny->new( agent => 'Finance::Robinhood/' . $VERSION . ' ' )
+      if !defined $client;
 
     # Make API call.
     if ($DEBUG) {
         warn "$verb $url";
         require Data::Dump;
-        Data::Dump::ddx($verb, $url,
-                        {headers => {%headers,
-                                     ($self && defined $self->token()
-                                      ? (Authorization => 'Token '
-                                          . $self->token())
-                                      : ()
-                                     )
-                         },
-                         (defined $data
-                          ? (content => $client->www_form_urlencode($data))
-                          : ()
-                         )
-                        }
+        Data::Dump::ddx(
+            $verb, $url,
+            {
+                headers => {
+                    %headers,
+                    (
+                        $self && defined $self->token()
+                        ? ( Authorization => 'Token ' . $self->token() )
+                        : ()
+                    )
+                },
+                (
+                    defined $data
+                    ? ( content => $client->www_form_urlencode($data) )
+                    : ()
+                )
+            }
         );
     }
 
     #warn $post;
-    $res = $client->request($verb, $url,
-                            {headers => {%headers,
-                                         ($self && defined $self->token()
-                                          ? (Authorization => 'Token '
-                                             . $self->token())
-                                          : ()
-                                         )
-                             },
-                             (defined $data
-                              ? (content =>
-                                  $client->www_form_urlencode($data))
-                              : ()
-                             )
-                            }
+    $res = $client->request(
+        $verb, $url,
+        {
+            headers => {
+                %headers,
+                (
+                    $self && defined $self->token()
+                    ? ( Authorization => 'Token ' . $self->token() )
+                    : ()
+                )
+            },
+            (
+                defined $data
+                ? ( content => $client->www_form_urlencode($data) )
+                : ()
+            )
+        }
     );
 
     # Make sure the API returned happy
@@ -629,49 +591,49 @@ sub _send_request {
 
     #ddx $res;
     #warn $res->{content};
-    my $rt = $json ?
-        try {
+    my $rt = $json
+      ? try {
         decode_json($json)
     }
     catch {
         warn "caught error: $_";
         ()
     }
-    : ();
+      : ();
 
     # Return happy.
-    return wantarray ? ($res->{status}, $rt, $res) : $rt;
+    return wantarray ? ( $res->{status}, $rt, $res ) : $rt;
 }
 
 # Coerce ISO 8601-ish strings into Time::Piece or DateTime objects
 sub _2_datetime {
     return if !$_[0];
-    $_[0]
-        =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
-    if ($DEV && !defined $Time::Piece::VERSION)
+    $_[0] =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
+    if ( $DEV && !defined $Time::Piece::VERSION )
     {    # We lose millisecond timestamps but gain speed!
         require Time::Piece;
     }
     if ($Time::Piece::VERSION) {
         my @vals = Time::Piece::_mini_mktime(
-            (defined $6 ? $6 : 0),    # second
-            (defined $5 ? $5 : 0),    # minute
-            (defined $4 ? $4 : 0),    # hour
-            $3 - 1,                   # day
-            $2 - 1,                   # month
-            $1 - 1900                 # year
+            ( defined $6 ? $6 : 0 ),    # second
+            ( defined $5 ? $5 : 0 ),    # minute
+            ( defined $4 ? $4 : 0 ),    # hour
+            $3 - 1,                     # day
+            $2 - 1,                     # month
+            $1 - 1900                   # year
         );
-        return scalar Time::Piece->_mktime(\@vals, (defined $8 ? $8 : ()));
+        return scalar Time::Piece->_mktime( \@vals, ( defined $8 ? $8 : () ) );
     }
     require DateTime;
-    DateTime->new(year  => $1,
-                  month => $2,
-                  day   => $3,
-                  (defined $4 ? (hour       => $4) : ()),
-                  (defined $5 ? (minute     => $5) : ()),
-                  (defined $6 ? (second     => $6) : ()),
-                  (defined $7 ? (nanosecond => $7) : ()),
-                  (defined $8 ? (time_zone  => $8) : ())
+    DateTime->new(
+        year  => $1,
+        month => $2,
+        day   => $3,
+        ( defined $4 ? ( hour       => $4 ) : () ),
+        ( defined $5 ? ( minute     => $5 ) : () ),
+        ( defined $6 ? ( second     => $6 ) : () ),
+        ( defined $7 ? ( nanosecond => $7 ) : () ),
+        ( defined $8 ? ( time_zone  => $8 ) : () )
     );
 }
 1;
@@ -991,10 +953,15 @@ You'll likely generate more than a hand full of buy and sell orders which
 would generate more than a single page of results. To gather them, use the
 C<next> or C<previous> values.
 
-    my $new_orders = $rh->list_orders({ since => $timestamp });
+    my $new_orders = $rh->list_orders({ since => 1489273695 });
 
 To gather orders placed after a certain date or time, use the C<since>
-parameter. The C<$timestamp> is seconds from epoch.
+parameter.
+
+    my $new_orders = $rh->list_orders({ instrument => $msft });
+
+Gather only orders related to a certain instrument. Pass a full
+Finance::Robinhood::Instrument object.
 
 =head1 Quotes and Historical Data
 

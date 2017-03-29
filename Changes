@@ -2,7 +2,11 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
-	- Gather orders after a certain time with list_orders({since => $timestamp})
+    - Robinhood Instant/Gold features:
+        - extended_hours value in ::Order
+        - override_day_trade_checks value in ::Order
+        - override_day_trade_checks value in ::Order
+    - Gather orders after a certain time with ::Robinhood::list_orders({since => $timestamp})
 
 0.18 2017-03-05T17:28:26Z
 

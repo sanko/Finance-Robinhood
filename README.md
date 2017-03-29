@@ -298,6 +298,16 @@ You'll likely generate more than a hand full of buy and sell orders which
 would generate more than a single page of results. To gather them, use the
 `next` or `previous` values.
 
+    my $new_orders = $rh->list_orders({ since => 1489273695 });
+
+To gather orders placed after a certain date or time, use the `since`
+parameter.
+
+    my $new_orders = $rh->list_orders({ instrument => $msft });
+
+Gather only orders related to a certain instrument. Pass a full
+Finance::Robinhood::Instrument object.
+
 # Quotes and Historical Data
 
 If you're doing anything beyond randomly choosing stocks with a symbol
