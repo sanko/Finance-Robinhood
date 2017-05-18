@@ -33,8 +33,9 @@ MYMETA.*
 *.csv
 
 eg/automated.pl
-eg/Untitled3.pl
+eg/Untitled*.pl
 eg/stock_tracker.pl
-eg/trailing_stop.pl
+eg/trailing_stop.*
+
 
 SciTE.session
