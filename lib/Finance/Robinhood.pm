@@ -608,32 +608,26 @@ sub _send_request {
 # Coerce ISO 8601-ish strings into Time::Piece or DateTime objects
 sub _2_datetime {
     return if !$_[0];
-    $_[0] =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
-    if ( $DEV && !defined $Time::Piece::VERSION )
+    if ($DEV && !defined $Time::Moment::VERSION)
     {    # We lose millisecond timestamps but gain speed!
-        require Time::Piece;
+        require Time::Moment;
     }
-    if ($Time::Piece::VERSION) {
-        my @vals = Time::Piece::_mini_mktime(
-            ( defined $6 ? $6 : 0 ),    # second
-            ( defined $5 ? $5 : 0 ),    # minute
-            ( defined $4 ? $4 : 0 ),    # hour
-            $3 - 1,                     # day
-            $2 - 1,                     # month
-            $1 - 1900                   # year
-        );
-        return scalar Time::Piece->_mktime( \@vals, ( defined $8 ? $8 : () ) );
+    if ($Time::Moment::VERSION) {
+        return
+            Time::Moment->from_string($_[0] =~ m[T] ? $_[0] : $_[0] . 'T00Z',
+                                      lenient => 1);
     }
     require DateTime;
-    DateTime->new(
-        year  => $1,
-        month => $2,
-        day   => $3,
-        ( defined $4 ? ( hour       => $4 ) : () ),
-        ( defined $5 ? ( minute     => $5 ) : () ),
-        ( defined $6 ? ( second     => $6 ) : () ),
-        ( defined $7 ? ( nanosecond => $7 ) : () ),
-        ( defined $8 ? ( time_zone  => $8 ) : () )
+    $_[0]
+        =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
+    DateTime->new(year  => $1,
+                  month => $2,
+                  day   => $3,
+                  (defined $4 ? (hour       => $4) : ()),
+                  (defined $5 ? (minute     => $5) : ()),
+                  (defined $6 ? (second     => $6) : ()),
+                  (defined $7 ? (nanosecond => $7) : ()),
+                  (defined $8 ? (time_zone  => $8) : ())
     );
 }
 1;
