@@ -59,7 +59,7 @@ sub _build_quote {
     return Finance::Robinhood::quote(shift->symbol())->{results}[0];
 }
 
-sub _build_historicals {
+sub historicals {
     return Finance::Robinhood::historicals(shift->symbol(), shift, shift);
 }
 

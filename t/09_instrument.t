@@ -29,5 +29,7 @@ isa_ok $aapl->market, 'Finance::Robinhood::Market', '->market( )';
 isa_ok $aapl->splits->[0], 'Finance::Robinhood::Instrument::Split',
     '->splits( )';
 isa_ok $aapl->quote, 'Finance::Robinhood::Quote', '->quote( )';
+isa_ok $aapl->historicals('day', 'year')->[0], 'HASH',
+    '->historicals("day", "year")';
 #
 done_testing;
