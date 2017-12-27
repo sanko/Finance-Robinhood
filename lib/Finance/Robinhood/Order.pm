@@ -41,6 +41,9 @@ around BUILDARGS => sub {
             {account    => {@args}->{account}->_get_url(),
              instrument => {@args}->{instrument}->url(),
              symbol     => {@args}->{instrument}->symbol(),
+             price      => {@args}->{price}
+                 // {@args}->{instrument}->last_extended_hours_trade_price()
+                 // {@args}->{instrument}->quote->bid_price(),
              (map {
                   {@args}
                   ->{$_} ? ($_ => ({@args}->{$_} ? 'true' : 'false')) : ()
@@ -50,15 +53,6 @@ around BUILDARGS => sub {
                   {@args}
                   ->{$_} ? ($_ => {@args}->{$_}) : ()
               } qw[type trigger time_in_force stop_price side quantity]
-             ),
-             (map {
-                  ($_ => (defined {@args}->{$_} ? {@args}->{$_}
-                          : {@args}->{type} eq 'market'
-                          ? {@args}->{instrument}->quote->bid_price()
-                          : ()
-                   )
-                      )
-              } qw[price]
              )
             }
             );

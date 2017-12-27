@@ -22,7 +22,7 @@ has $_ => (
     )
     for (
         qw[bloomberg_unique day_trade_ratio min_tick_size margin_initial_ratio
-        id maintenance_ratio name state symbol tradeable country]);
+        id maintenance_ratio name state symbol tradeable country type]);
 #
 has $_ => (is     => 'ro',
            coerce => \&Finance::Robinhood::_2_datetime
@@ -133,6 +133,11 @@ C<year>, or C<5year>.
 =head2 C<market( )>
 
 This makes an API call for information this particular instrument is traded on.
+
+=head2 C<type( )>
+
+What sort of instrument this is. May be a C<stock>, C<adr>, C<cef>, C<reit>,
+C<etp>, etc.
 
 =head2 C<tradeable( )>
 
