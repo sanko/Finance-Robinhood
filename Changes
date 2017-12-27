@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.20 2017-12-27T15:09:49Z
+
     - Expose historicals call in ::Instument
     - Make Time::Moment the default time class
 
