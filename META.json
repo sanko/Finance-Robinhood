@@ -47,7 +47,7 @@
             "HTTP::Tiny" : "0.056",
             "IO::Socket::SSL" : "2.020",
             "JSON::Tiny" : "0.54",
-            "Moo" : "2.000002",
+            "Moo" : "2.003004",
             "Try::Tiny" : "0.24",
             "namespace::clean" : "0.26",
             "perl" : "5.012",
@@ -72,6 +72,6 @@
          "web" : "https://github.com/sanko/Finance-Robinhood"
       }
    },
-   "version" : "0.20",
+   "version" : "0.21",
    "x_serialization_backend" : "JSON::PP version 2.97001"
 }
