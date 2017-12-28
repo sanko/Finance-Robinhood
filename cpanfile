@@ -3,7 +3,7 @@ requires 'perl', '5.012';
 requires 'HTTP::Tiny', '0.056';
 requires 'Carp', '1.36';
 #requires 'Data::Dump';
-requires 'Moo', '2.000002';
+requires 'Moo', '2.003004';
 requires 'JSON::Tiny', '0.54';
 requires 'strictures', '2';
 requires 'namespace::clean', '0.26';

@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+	- Require Moo 2.003004 due to an upstream bug in 2.003003
+
 0.20 2017-12-27T15:09:49Z
 
     - Expose historicals call in ::Instument
