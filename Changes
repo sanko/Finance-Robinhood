@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+    - Redesigned from the ground up now that Crypto, Options, and OAuth2 are rolled in
+
 0.21 2017-12-28T22:14:10Z
 
 	- Require Moo 2.003004 due to an upstream bug in 2.003003
