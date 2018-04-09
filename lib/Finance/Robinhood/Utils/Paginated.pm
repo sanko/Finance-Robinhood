@@ -86,7 +86,7 @@ sub next_page {
 
     my $records = $paginator->all();
 
-This is rolls through every page building one giant array ref of all records.
+This rolls through every page building one giant array ref of all records.
 
 =cut
 
