@@ -4,4 +4,4 @@ module_maker="ModuleBuildTiny"
 license="artistic_2"
 
 [release]
-pause_config = "~/.pause"
+#pause_config = "~/.pause"

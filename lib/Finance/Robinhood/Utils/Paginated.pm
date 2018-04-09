@@ -21,7 +21,7 @@ Finance::Robinhood::Utils::Paginated - Represent paginated data in an iterative 
 =cut
 
 use Moo;
-our $VERSION = '0.9.0';
+our $VERSION = '0.9.0_001';
 use Finance::Robinhood::Utils::Client;
 
 =head1 METHODS
