@@ -34,6 +34,8 @@ use Finance::Robinhood::Utils::Client;
 use Finance::Robinhood::Utils::Credentials;
 use Finance::Robinhood::Utils::Paginated;
 use Finance::Robinhood::User;
+use Finance::Robinhood::User::Id;
+use Finance::Robinhood::User::BasicInfo;
 use Finance::Robinhood::ACH;
 #
 our %Endpoints = (
