@@ -109,6 +109,18 @@ has 'client' => (
 
 Logging in allows you to buy and sell securities with your Robinhood account.
 
+    my $token = $rh->login($user, $password, \&mfa_callback);
+
+    sub mfa_callback {
+        my ($auth) = @_;
+        print "Enter MFA code: ";
+        my $code = <>; chomp $code;
+        return $code
+    }
+
+If your account has MFA enabled, you must also provide a callback which should
+return the code sent to you via SMS or in your token app.
+
 =cut
 
 #
