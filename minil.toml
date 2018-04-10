@@ -1,7 +1,10 @@
 name = "Finance-Robinhood"
-badges = ["travis"]
+badges=['travis', 'metacpan', 'appveyor']
 module_maker="ModuleBuildTiny"
 license="artistic_2"
+authority="cpan:SANKO"
 
 [release]
-#pause_config = "~/.pause"
+hook=[
+    'perltidy `git ls-tree -r HEAD --name-only | grep -E "(lib|t|eg)/.+\.(pm|pl|t)$"'
+]
