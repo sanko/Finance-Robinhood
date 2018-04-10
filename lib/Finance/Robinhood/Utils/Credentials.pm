@@ -17,8 +17,8 @@ sub migrate {
 sub headers {
     my $s = shift;
     if ( $s->has_oauth ) {
-        #use Data::Dump;
 
+        #use Data::Dump;
         # TODO: If expired, use refresh token to get new access token
         #ddx $s->oauth;
         return { Authorization => 'Bearer ' . $s->oauth->{access_token} };

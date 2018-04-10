@@ -35,19 +35,14 @@ has 'legs' => (
 );
 
 sub cancel {
-    my $s = shift;
+    my ($s) = @_;
     return if !$s->cancel_url;
-    Finance::Robinhood::Utils::Client->instance->post(
-        $s->cancel_url
-
-            #sprintf
-            #$Finance::Robinhood::Endpoints{'options/orders/{id}/cancel'},
-            #$s->id
-    );
+    Finance::Robinhood::Utils::Client->instance->post( $s->cancel_url );
 }
 
 sub day_trade_checks {
     my $s = shift;
+
     #use Data::Dump;
     #ddx( Finance::Robinhood::Utils::Client->instance->account );
     Finance::Robinhood::Utils::Client->instance->get(

@@ -53,9 +53,10 @@ sub _http {
     my ( $s, $method, $url, $args, $headers ) = @_;
 ###
     #warn $url;
-    #use Data::Dump;
+    use Data::Dump;
+
     #ddx [caller(1)];
-    #ddx \@_;
+    ddx [ $method, $url, $args, $headers ];
     %$headers = ( %{ $s->headers // () }, $headers ? %$headers : () );
 
     #@$headers{keys %$args} = values %$args;

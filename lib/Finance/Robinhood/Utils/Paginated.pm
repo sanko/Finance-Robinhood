@@ -32,9 +32,10 @@ This class wraps that data in a friendly way.
 
 =cut
 
-has '_results' => ( is => 'rw', predicate => 1 );
-has '_next'    => ( is => 'rw', init_arg  => 'next', predicate => 1, clearer => 1 );
-has '_class'   => ( is => 'ro', init_arg  => 'class', predicate => 1 );
+has '_results'  => ( is => 'rw', predicate => 1 );
+has '_next'     => ( is => 'rw', init_arg  => 'next', predicate => 1, clearer => 1 );
+has '_previous' => ( is => 'rw', init_arg  => 'previous', predicate => 1, clearer => 1 );
+has '_class'    => ( is => 'ro', init_arg  => 'class', predicate => 1 );
 
 =head2 C<next( )>
 
@@ -72,17 +73,19 @@ sub next_page {
     return if !$s->_has_next();
     my $page = $s->_next();
     my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get($page);
+
+    #warn $data->{next} // 'No next!';
     if ( !$data || !$data->{next} || $data->{next} eq $page ) {
         $s->_clear_next;
     }
-    else { $s->_next( $data->{next} ) }
+    else { $s->_next( $data->{next} ); $s->_previous( $data->{previous} ) }
     $data->{results} = [ map { $_ = $_ ? $s->_class->new($_) : $_ } @{ $data->{results} } ]
         if $s->_has_class;
     $s->_results( $data->{results} );
     return ( $status, $data->{results} );
 }
 
-=head2 all
+=head2 C<all( )>
 
     my $records = $paginator->all();
 

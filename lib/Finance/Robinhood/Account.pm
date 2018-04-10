@@ -5,7 +5,8 @@ use DateTime::Tiny;
 use Date::Tiny;
 #
 use Finance::Robinhood::Account::InstantEligibility;
-use Finance::Robinhood::Account::MarginBalances has [
+use Finance::Robinhood::Account::MarginBalances;
+has [
     qw[account_number buying_power
         cash cash_available_for_withdrawl cash_balances cash_held_for_orders
         deactivated deposit_halted

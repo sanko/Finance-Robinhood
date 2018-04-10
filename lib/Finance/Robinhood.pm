@@ -21,6 +21,7 @@ use warnings;
 use Moo;
 our $VERSION = '0.9.0_001';
 use Finance::Robinhood::Account;
+use Finance::Robinhood::Dividend;
 use Finance::Robinhood::Equity::Instrument;
 use Finance::Robinhood::Equity::Quote;
 use Finance::Robinhood::Options::Chain;
@@ -35,6 +36,8 @@ use Finance::Robinhood::Utils::Paginated;
 use Finance::Robinhood::ACH;
 #
 our %Endpoints = (
+    'dividends'                  => 'https://api.robinhood.com/dividends/',
+    'dividends/{id}'             => 'https://api.robinhood.com/dividends/%s/',
     'api-token-auth'             => 'https://api.robinhood.com/api-token-auth/',
     'api-token-logout'           => 'https://api.robinhood.com/api-token-logout/',
     'accounts'                   => 'https://api.robinhood.com/accounts/',
@@ -337,7 +340,7 @@ Gather info about several options chains at once by id. This is returned as a C<
     my $inst = $rh->options_chains( equity_instrument_ids => ['6a17083e-2867-4a20-9b78-a0a46b422279'] );
     my $all = $inst->all;
 
-Gather  options chains related to a security by the security's  id. This is returned as a C<Finance::Robinhood::Utils::Paginated> object.
+Gather options chains related to a security by the security's  id. This is returned as a C<Finance::Robinhood::Utils::Paginated> object.
 
 =cut
 
@@ -437,29 +440,27 @@ sub place_options_order {
     $args{'override_dtbp_checks'}      //= \0;
     $args{'ref_id'}                    //= uuid();    # Random
 
-
-#my $post = {
-#    account => Finance::Robinhood::Utils::Client->instance->account->url,
-#    direction => 'debit', # credit or 'debit'
-#    legs => [
-#        {
-#        option => $s->url,
-#        position_effect => 'open', #  open or close
-#        ratio_quantity=> 1,
-#        side=> 'buy' # buy or sell
-#        }
-#    ],
-#    override_day_trade_checks => \0,
-#    override_dtbp_checks => \0,
-#    price => .05,
-#    quantity=> 1,
-#    ref_id => uuid(), # Random 
-#    time_in_force => 'gfd',
-#    type => 'limit',
-#    #
-#    trigger => 'immediate'
-#}; 
-
+    #my $post = {
+    #    account => Finance::Robinhood::Utils::Client->instance->account->url,
+    #    direction => 'debit', # credit or 'debit'
+    #    legs => [
+    #        {
+    #        option => $s->url,
+    #        position_effect => 'open', #  open or close
+    #        ratio_quantity=> 1,
+    #        side=> 'buy' # buy or sell
+    #        }
+    #    ],
+    #    override_day_trade_checks => \0,
+    #    override_dtbp_checks => \0,
+    #    price => .05,
+    #    quantity=> 1,
+    #    ref_id => uuid(), # Random
+    #    time_in_force => 'gfd',
+    #    type => 'limit',
+    #    #
+    #    trigger => 'immediate'
+    #};
     #ddx \%args;
     my ( $status, $data ) = $s->post( $Endpoints{'options/orders'}, \%args );
     $status == 201 ? Finance::Robinhood::Options::Order->new($data) : $data;
@@ -653,6 +654,36 @@ sub ach_deposit_schedules {
         class => 'Finance::Robinhood::ACH::ScheduledDeposit',
         next  => $Endpoints{'ach/deposit_schedules'}
     );
+}
+
+=head2 C<dividends( )>
+
+    my $ok = $rh->dividends( );
+
+Gather info about expected dividends for positions you hold. This is returned as a C<Finance::Robinhood::Utils::Paginated> object.
+
+=cut
+
+sub dividends {
+    my ($s) = @_;
+    Finance::Robinhood::Utils::Paginated->new(
+        class => 'Finance::Robinhood::Dividend',
+        next  => $Endpoints{'dividends'}
+    );
+}
+
+=head2 C<dividend( )>
+
+    my $ok = $rh->dividend( '3adf982a-cd20-98af-eaea-cea294475923' );
+
+Gather info about a dividend payment by ID. This is returned as a C<Finance::Robinhood::Dividend> object.
+
+=cut
+
+sub dividend {
+    my ( $s, $id ) = @_;
+    my ( $status, $data ) = $s->get( sprintf $Endpoints{'dividends/{id}'}, $id );
+    $status == 200 ? Finance::Robinhood::Dividend->new($data) : $data;
 }
 
 =head1 LEGAL
