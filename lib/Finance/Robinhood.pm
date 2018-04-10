@@ -33,9 +33,11 @@ use Finance::Robinhood::Utils 'v4_uuid' => { -as => 'uuid' };
 use Finance::Robinhood::Utils::Client;
 use Finance::Robinhood::Utils::Credentials;
 use Finance::Robinhood::Utils::Paginated;
+use Finance::Robinhood::User;
 use Finance::Robinhood::ACH;
 #
 our %Endpoints = (
+    'user'                       => 'https://api.robinhood.com/user/',
     'dividends'                  => 'https://api.robinhood.com/dividends/',
     'dividends/{id}'             => 'https://api.robinhood.com/dividends/%s/',
     'api-token-auth'             => 'https://api.robinhood.com/api-token-auth/',
@@ -205,6 +207,20 @@ Convert your old skool token to an OAuth2 token.
 sub migrate_token {
     my ($s) = @_;
     Finance::Robinhood::Utils::Credentials->instance->migrate();
+}
+
+=head2 C<user( )>
+
+    my $ok = $rh->user( );
+
+Gather very basic info about your account. This is returned as a C<Finance::Robinhood::User> object.
+
+=cut
+
+sub user {
+    my ($s) = @_;
+    my ( $status, $data ) = $s->get( $Endpoints{'user'} );
+    $status == 200 ? Finance::Robinhood::User->new($data) : $data;
 }
 
 =head2 C<equity_quote( ... )>
