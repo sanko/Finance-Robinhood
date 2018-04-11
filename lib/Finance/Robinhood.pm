@@ -19,7 +19,7 @@ Finance::Robinhood - Trade Stocks, ETFs, Options, and Cryptocurrency without Com
 use strict;
 use warnings;
 use Moo;
-our $VERSION = '0.9.0_001';
+our $VERSION = '0.90_001';
 use Finance::Robinhood::Account;
 use Finance::Robinhood::Dividend;
 use Finance::Robinhood::Equity::Instrument;

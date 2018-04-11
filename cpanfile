@@ -12,6 +12,7 @@ requires 'IO::Socket::SSL', '2.020';
 requires 'DateTime::Tiny';
 requires 'Date::Tiny';
 requires 'Try::Tiny', '0.24';
+requires 'Exporter::Tiny';
 
 on 'test' => sub {
     requires 'Test::More', '0.98';
