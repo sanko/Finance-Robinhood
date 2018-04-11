@@ -10,7 +10,8 @@ use Date::Tiny;
 #      "market": "https://api.robinhood.com/markets/BATS/",
 #
 has [
-    qw[type margin_initial_ratio tradability bloomberg_unique name symbol state country day_trade_ratio
+    qw[type margin_initial_ratio tradability bloomberg_unique
+        name symbol state country day_trade_ratio
         tradeable maintenance_ratio id simple_name min_tick_size]
 ] => ( is => 'ro' );
 has 'list_date' => (

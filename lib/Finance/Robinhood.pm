@@ -24,6 +24,9 @@ use Finance::Robinhood::Account;
 use Finance::Robinhood::Dividend;
 use Finance::Robinhood::Equity::Instrument;
 use Finance::Robinhood::Equity::Quote;
+use Finance::Robinhood::Forex::CurrencyPair;
+use Finance::Robinhood::Forex::AssetCurrency;
+use Finance::Robinhood::Forex::QuoteCurrency;
 use Finance::Robinhood::Options::Chain;
 use Finance::Robinhood::Options::Event;
 use Finance::Robinhood::Options::Instrument;
@@ -38,8 +41,10 @@ use Finance::Robinhood::User::Id;
 use Finance::Robinhood::User::BasicInfo;
 use Finance::Robinhood::User::InvestmentProfile;
 use Finance::Robinhood::ACH;
+use Finance::Robinhood::Tag;
 #
 our %Endpoints = (
+    'midlands/search'            => 'https://midlands.robinhood.com/search/',
     'user'                       => 'https://api.robinhood.com/user/',
     'user/investment_profile'    => 'https://api.robinhood.com/user/investment_profile/',
     'dividends'                  => 'https://api.robinhood.com/dividends/',
@@ -704,6 +709,27 @@ sub dividend {
     my ( $s, $id ) = @_;
     my ( $status, $data ) = $s->get( sprintf $Endpoints{'dividends/{id}'}, $id );
     $status == 200 ? Finance::Robinhood::Dividend->new($data) : $data;
+}
+
+=head2 C<search( ... )>
+
+    my $results = $rh->search( 'finance' );
+
+Searches for currency pairs, tags, and equity instruments. A list of each is returned as values of a hash.
+
+=cut
+
+sub search {
+    my ( $s, $query ) = @_;
+    my ( $status, $data ) = $s->get( $Endpoints{'midlands/search'}, { query => $query } );
+    if ( $status == 200 ) {
+        $data->{'currency_pairs'} = [ map { Finance::Robinhood::Forex::CurrencyPair->new($_) }
+                @{ $data->{'currency_pairs'} } ];
+        $data->{'tags'}        = [ map { Finance::Robinhood::Tag->new($_) } @{ $data->{'tags'} } ];
+        $data->{'instruments'} = [ map { Finance::Robinhood::Equity::Instrument->new($_) }
+                @{ $data->{'instruments'} } ];
+    }
+    $data;
 }
 
 =head1 LEGAL

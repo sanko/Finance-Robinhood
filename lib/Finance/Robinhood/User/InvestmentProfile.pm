@@ -56,16 +56,15 @@ for my $field (
         }
 }
 after suitability_verified => sub {
-    shift->_patch(
-        {suitability_verified => !!pop ? \1 : \0 });
+    my ( $s, $bool ) = @_;
+    $s->_patch( { suitability_verified => $bool ? \1 : \0 } );
 };
 
 sub _patch {
-    my ($s, $val) = @_;
-    my ($status, $data) = Finance::Robinhood::Utils::Client->instance->patch(
-    $Finance::Robinhood::Endpoints{'user/investment_profile'} ,
-    $val
-    );
+    my ( $s, $val ) = @_;
+    my ( $status, $data )
+        = Finance::Robinhood::Utils::Client->instance->patch(
+        $Finance::Robinhood::Endpoints{'user/investment_profile'}, $val );
     $_[0]->_set_updated_at( $data->{updated_at} ) if $status == 200;
-    }
-     1;
+}
+1;
