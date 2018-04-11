@@ -61,7 +61,7 @@ sub _http {
 
     #@$headers{keys %$args} = values %$args;
     delete $headers->{'Authorization'} if $args->{'skip_authorization'};
-    if ( $method eq 'POST' && $args->{content} ) {
+    if ( $method ne 'GET' && $args->{content} ) {
         if (0) {
             $headers->{'Content-Type'} = 'application/x-www-form-urlencoded';
             $args->{content} = __urlencode( $args->{content} );
@@ -129,6 +129,16 @@ sub get {
 sub post {
     my ( $s, $url, $data ) = @_;
     return $s->_http( 'POST', $url, { content => $data } );
+}
+
+sub put {
+    my ( $s, $url, $data ) = @_;
+    return $s->_http( 'PUT', $url, { content => $data } );
+}
+
+sub patch {
+    my ( $s, $url, $data ) = @_;
+    return $s->_http( 'PATCH', $url, { content => $data } );
 }
 
 sub delete {

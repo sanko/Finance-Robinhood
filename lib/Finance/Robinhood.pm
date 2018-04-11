@@ -36,10 +36,12 @@ use Finance::Robinhood::Utils::Paginated;
 use Finance::Robinhood::User;
 use Finance::Robinhood::User::Id;
 use Finance::Robinhood::User::BasicInfo;
+use Finance::Robinhood::User::InvestmentProfile;
 use Finance::Robinhood::ACH;
 #
 our %Endpoints = (
     'user'                       => 'https://api.robinhood.com/user/',
+    'user/investment_profile'    => 'https://api.robinhood.com/user/investment_profile/',
     'dividends'                  => 'https://api.robinhood.com/dividends/',
     'dividends/{id}'             => 'https://api.robinhood.com/dividends/%s/',
     'api-token-auth'             => 'https://api.robinhood.com/api-token-auth/',

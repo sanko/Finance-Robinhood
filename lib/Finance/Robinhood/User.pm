@@ -7,14 +7,10 @@ has [
     qw[email email_verified id first_name last_name username url
         ]
 ] => ( is => 'ro' );
-has '_' . $_ => ( is => 'ro', init_arg => $_ ) for qw[id_info basic_info];
-
-# TODO: Inflate these urls
-has [
-    qw[additional_info employment international_info
-        investment_profile
-        ]
-] => ( is => 'ro' );
+has '_' . $_ => ( is => 'ro', init_arg => $_ )
+    for qw[id_info basic_info additional_info employment international_info
+    investment_profile
+];
 has ['created_at'] => (
     is     => 'ro',
     coerce => sub {
@@ -52,5 +48,20 @@ sub id_info {
     my ($s) = @_;
     my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get( $s->_id_info );
     $status == 200 ? Finance::Robinhood::User::Id->new($data) : $data;
+}
+
+=head2 C<investment_profile( )>
+
+    my $profile = $rh->user->investment_profile( );
+
+Grab user's investment experience information. This is returned as a C<Finance::Robinhood::User::InvestmentProfile> object.
+
+=cut
+
+sub investment_profile {
+    my ($s) = @_;
+    my ( $status, $data )
+        = Finance::Robinhood::Utils::Client->instance->get( $s->_investment_profile );
+    $status == 200 ? Finance::Robinhood::User::InvestmentProfile->new($data) : $data;
 }
 1;
