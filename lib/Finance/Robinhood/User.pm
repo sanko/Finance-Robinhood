@@ -64,4 +64,19 @@ sub investment_profile {
         = Finance::Robinhood::Utils::Client->instance->get( $s->_investment_profile );
     $status == 200 ? Finance::Robinhood::User::InvestmentProfile->new($data) : $data;
 }
+
+=head2 C<additional_info( )>
+
+    my $add_info = $rh->user->additional_info( );
+
+Grab additional user information. This is returned as a C<Finance::Robinhood::User::AdditionalInfo> object.
+
+=cut
+
+sub additional_info {
+    my ($s) = @_;
+    my ( $status, $data )
+        = Finance::Robinhood::Utils::Client->instance->get( $s->_additional_info );
+    $status == 200 ? Finance::Robinhood::User::AdditionalInfo->new($data) : $data;
+}
 1;
