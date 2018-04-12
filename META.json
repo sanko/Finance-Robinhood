@@ -43,8 +43,10 @@
       "runtime" : {
          "requires" : {
             "Carp" : "1.36",
+            "Data::Dump" : "0",
             "Date::Tiny" : "0",
             "DateTime::Tiny" : "0",
+            "Exporter::Tiny" : "0",
             "HTTP::Tiny" : "0.056",
             "IO::Socket::SSL" : "2.020",
             "JSON::Tiny" : "0.54",
@@ -74,7 +76,7 @@
          "web" : "https://github.com/sanko/Finance-Robinhood"
       }
    },
-   "version" : "0.9.0_001",
+   "version" : "0.90_001",
    "x_authority" : "cpan:SANKO",
    "x_serialization_backend" : "JSON::PP version 2.27400_02"
 }

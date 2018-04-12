@@ -85,7 +85,7 @@ our %Endpoints = (
 =head1 METHODS
 
 Finance::Robinhood wraps a several APIs. There are parts of this package that
-are object oriented (because they require persistant login information) and
+are object oriented (because they require login information) and
 others which may also be used functionally (because they do not require login
 information). I've attempted to organize everything according to how and when
 they are used... Let's start at the very beginning: let's log in!

@@ -14,7 +14,7 @@ Finance::Robinhood - Trade Stocks, ETFs, Options, and Cryptocurrency without Com
 # METHODS
 
 Finance::Robinhood wraps a several APIs. There are parts of this package that
-are object oriented (because they require persistant login information) and
+are object oriented (because they require login information) and
 others which may also be used functionally (because they do not require login
 information). I've attempted to organize everything according to how and when
 they are used... Let's start at the very beginning: let's log in!
@@ -39,6 +39,18 @@ buy or sell or do almost anything else, you must [log in manually](#login).
     # Save the token somewhere
 
 Logging in allows you to buy and sell securities with your Robinhood account.
+
+    my $token = $rh->login($user, $password, \&mfa_callback);
+
+    sub mfa_callback {
+        my ($auth) = @_;
+        print "Enter MFA code: ";
+        my $code = <>; chomp $code;
+        return $code
+    }
+
+If your account has MFA enabled, you must also provide a callback which should
+return the code sent to you via SMS or in your token app.
 
 ## `logout( )`
 
@@ -71,6 +83,12 @@ application and return a list with the following data:
     my $ok = $rh->migrate_token();
 
 Convert your old skool token to an OAuth2 token.
+
+## `user( )`
+
+    my $ok = $rh->user( );
+
+Gather very basic info about your account. This is returned as a `Finance::Robinhood::User` object.
 
 ## `equity_quote( ... )`
 
@@ -143,7 +161,7 @@ Gather info about several options chains at once by id. This is returned as a `F
     my $inst = $rh->options_chains( equity_instrument_ids => ['6a17083e-2867-4a20-9b78-a0a46b422279'] );
     my $all = $inst->all;
 
-Gather  options chains related to a security by the security's  id. This is returned as a `Finance::Robinhood::Utils::Paginated` object.
+Gather options chains related to a security by the security's  id. This is returned as a `Finance::Robinhood::Utils::Paginated` object.
 
 ## `options_instruments( ... )`
 
@@ -266,6 +284,24 @@ All arguments are required. `bank_account_type` is either `'checking'` or `'savi
     my $all = $ok->all;
 
 Gather info about scheduled ACH deposits. This is returned as a `Finance::Robinhood::Utils::Paginated` object.
+
+## `dividends( )`
+
+    my $ok = $rh->dividends( );
+
+Gather info about expected dividends for positions you hold. This is returned as a `Finance::Robinhood::Utils::Paginated` object.
+
+## `dividend( )`
+
+    my $ok = $rh->dividend( '3adf982a-cd20-98af-eaea-cea294475923' );
+
+Gather info about a dividend payment by ID. This is returned as a `Finance::Robinhood::Dividend` object.
+
+## `search( ... )`
+
+    my $results = $rh->search( 'finance' );
+
+Searches for currency pairs, tags, and equity instruments. A list of each is returned as values of a hash.
 
 # LEGAL
 

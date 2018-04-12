@@ -47,7 +47,7 @@ Gather info about all supported options chains. This is returned as a C<Finance:
     my $inst = $rh->options_chains( ids =>  ['0c0959c2-eb3a-4e3b-8310-04d7eda4b35c'] );
     my $all = $inst->all;
 
-The following arguments are acepted:
+The following arguments are accepted:
 
 =over
 
