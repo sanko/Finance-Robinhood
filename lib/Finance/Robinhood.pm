@@ -40,6 +40,7 @@ use Finance::Robinhood::User;
 use Finance::Robinhood::User::Id;
 use Finance::Robinhood::User::AdditionalInfo;
 use Finance::Robinhood::User::BasicInfo;
+use Finance::Robinhood::User::Employment;
 use Finance::Robinhood::User::InvestmentProfile;
 use Finance::Robinhood::ACH;
 use Finance::Robinhood::Tag;
@@ -49,6 +50,7 @@ our %Endpoints = (
     'user'                       => 'https://api.robinhood.com/user/',
     'user/investment_profile'    => 'https://api.robinhood.com/user/investment_profile/',
     'user/additional_info'       => 'https://api.robinhood.com/user/additional_info/',
+    'user/employment'            => 'https://api.robinhood.com/user/employment/',
     'dividends'                  => 'https://api.robinhood.com/dividends/',
     'dividends/{id}'             => 'https://api.robinhood.com/dividends/%s/',
     'api-token-auth'             => 'https://api.robinhood.com/api-token-auth/',

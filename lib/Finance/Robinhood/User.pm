@@ -65,18 +65,17 @@ sub investment_profile {
     $status == 200 ? Finance::Robinhood::User::InvestmentProfile->new($data) : $data;
 }
 
-=head2 C<additional_info( )>
+=head2 C<employment( )>
 
-    my $add_info = $rh->user->additional_info( );
+    my $add_info = $rh->user->employment( );
 
-Grab additional user information. This is returned as a C<Finance::Robinhood::User::AdditionalInfo> object.
+Grab additional user information. This is returned as a C<Finance::Robinhood::User::Employment> object.
 
 =cut
 
-sub additional_info {
+sub employment {
     my ($s) = @_;
-    my ( $status, $data )
-        = Finance::Robinhood::Utils::Client->instance->get( $s->_additional_info );
-    $status == 200 ? Finance::Robinhood::User::AdditionalInfo->new($data) : $data;
+    my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get( $s->_employment );
+    $status == 200 ? Finance::Robinhood::User::Employment->new($data) : $data;
 }
 1;
