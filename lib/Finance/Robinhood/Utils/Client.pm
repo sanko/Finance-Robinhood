@@ -6,21 +6,6 @@ with 'MooX::Singleton';
 use Finance::Robinhood::Utils::Credentials;
 use Finance::Robinhood::Utils::Error;
 #
-our %Endpoints = (
-    'api-token-auth'         => 'https://api.robinhood.com/api-token-auth/',
-    'api-token-logout'       => 'https://api.robinhood.com/api-token-logout/',
-    'accounts'               => 'https://api.robinhood.com/accounts/',
-    'ach/deposit_schedules'  => 'https://api.robinhood.com/ach/deposit_schedules/',
-    'ach/relationships'      => 'https://api.robinhood.com/ach/relationships/',
-    'instruments'            => 'https://api.robinhood.com/instruments/',
-    'instruments/{id}'       => 'https://api.robinhood.com/instruments/%s/',
-    'password_reset/request' => 'https://api.robinhood.com/password_reset/request/',
-    'password_reset'         => 'https://api.robinhood.com/password_reset/',
-    'quotes/{symbol}'        => 'https://api.robinhood.com/quotes/%s/',
-    'oauth2/migrate_token'   => 'https://api.robinhood.com/oauth2/migrate_token/',
-    'options/chains'         => 'https://api.robinhood.com/options/chains/',
-    'options/instruments'    => 'https://api.robinhood.com/options/instruments/',
-);
 has 'http' => (
     is      => 'ro',
     builder => sub {
@@ -134,6 +119,11 @@ sub post {
 sub put {
     my ( $s, $url, $data ) = @_;
     return $s->_http( 'PUT', $url, { content => $data } );
+}
+
+sub options {
+    my ( $s, $url, $data ) = @_;
+    return $s->_http( 'OPTIONS', $url, { content => $data } );
 }
 
 sub patch {
