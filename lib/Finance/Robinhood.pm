@@ -34,6 +34,7 @@ use Finance::Robinhood::Options::Event;
 use Finance::Robinhood::Options::Instrument;
 use Finance::Robinhood::Options::Order;
 use Finance::Robinhood::Options::Position;
+use Finance::Robinhood::Options::Quote;
 use Finance::Robinhood::Utils 'v4_uuid' => { -as => 'uuid' };
 use Finance::Robinhood::Utils::Client;
 use Finance::Robinhood::Utils::Credentials;
@@ -433,6 +434,69 @@ sub options_instruments {
         class => 'Finance::Robinhood::Options::Instrument',
         next  => join '?',
         $Endpoints{'options/instruments'}, (
+            join '&',
+            map {
+                $_ . '=' .
+                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
+            } keys %args
+        )
+    );
+}
+
+=head2 C<options_quote( ... )>
+
+    my $msft_quote = $rh->quote('MSFT');
+
+Gather quote data as a L<Finance::Robinhood::options::Quote> object.
+
+    my $msft_quote = $rh->quote('MSFT', bounds => 'extended');
+
+An argument called C<bounds> is also supported when you want a certain range of quote data.
+This value must be C<extended>, C<regular>, or C<trading> which is the default.
+
+=cut
+
+sub options_quote {
+    my ( $s, $id, %args ) = @_;
+    my ( $status, $data )
+        = $s->get( sprintf( $Endpoints{'marketdata/options/{id}'}, $id ), \%args );
+    $status == 200 ? Finance::Robinhood::Options::Quote->new($data) : $data;
+}
+
+=head2 C<options_quotes( ... )>
+
+    my $inst = $rh->options_quotes( symbols => ['MSFT', 'X'] );
+    my $all = $inst->all;
+
+Gather info about multiple equities by symbol. This is returned as a C<Finance::Robinhood::Utils::Paginated> object.
+
+    my $inst = $rh->instruments( instruments =>  ['50810c35-d215-4866-9758-0ada4ac79ffa', 'b060f19f-0d24-4bf2-bf8c-d57ba33993e5'] );
+    my $all = $inst->all;
+
+Gather info about a several instruments by their ids; data is returned as a C<Finance::Robinhood::Utils::Paginated> object.
+
+Request either by symbol or by instrument id! Other arguments are also supported:
+
+=over
+
+=item C<bounds> - which must be C<extended>, C<regular>, or C<trading> which is the default
+
+=back
+
+=cut
+
+sub options_quotes {
+    my ( $s, %args ) = @_;
+    map {
+        $_
+            = ref $_                        ? $_->url :
+            $_ =~ $Endpoints{'instruments'} ? $_ :
+            sprintf $Endpoints{'options/instruments/{id}'}, $_
+    } @{ $args{'instruments'} } if $args{'instruments'};
+    Finance::Robinhood::Utils::Paginated->new(
+        class => 'Finance::Robinhood::Options::Quote',
+        next  => join '?',
+        $Endpoints{'marketdata/options'}, (
             join '&',
             map {
                 $_ . '=' .
