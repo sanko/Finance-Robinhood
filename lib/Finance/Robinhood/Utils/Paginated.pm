@@ -21,7 +21,7 @@ Finance::Robinhood::Utils::Paginated - Represent paginated data in an iterative 
 =cut
 
 use Moo;
-our $VERSION = '0.9.0_001';
+our $VERSION = '0.90_001';
 use Finance::Robinhood::Utils::Client;
 
 =head1 METHODS
@@ -53,7 +53,7 @@ sub next {
     my ($s) = @_;
     my $records = $s->_results();
     return shift(@$records) if $records && scalar @$records;
-    my ( $status, $data ) = $s->next_page;
+    my ( $status, $data ) = $s->next_page('with_status');
     return $data if defined $status && $status != 200;
     $records = $s->_results();
     return shift(@$records) if $records && scalar @$records;
@@ -69,7 +69,7 @@ Returns an array ref of records for the next page.
 =cut
 
 sub next_page {
-    my ($s) = @_;
+    my ( $s, $with_status ) = @_;
     return if !$s->_has_next();
     my $page = $s->_next();
     my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get($page);
@@ -82,7 +82,9 @@ sub next_page {
     $data->{results} = [ map { $_ = $_ ? $s->_class->new($_) : $_ } @{ $data->{results} } ]
         if $s->_has_class;
     $s->_results( $data->{results} );
-    return ( $status, $data->{results} );
+    $with_status ? ( $status, $data->{results} ) :
+        wantarray ? @{ $data->{results} } :
+        $data->{results};
 }
 
 =head2 C<all( )>
@@ -99,6 +101,6 @@ sub all {
     while ( my $items = $s->next_page() ) {
         push @records, @$items;
     }
-    return \@records;
+    return wantarray ? @records : \@records;
 }
 1;
