@@ -28,6 +28,8 @@ use Finance::Robinhood::Forex::CurrencyPair;
 use Finance::Robinhood::Forex::AssetCurrency;
 use Finance::Robinhood::Forex::QuoteCurrency;
 use Finance::Robinhood::Options::Chain;
+use Finance::Robinhood::Options::Chain::UnderlyingInstrument;
+use Finance::Robinhood::Options::Chain::Ticks;
 use Finance::Robinhood::Options::Event;
 use Finance::Robinhood::Options::Instrument;
 use Finance::Robinhood::Options::Order;
