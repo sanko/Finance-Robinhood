@@ -4,7 +4,8 @@ package Finance::Robinhood::Utils::Paginated;
 
 =head1 NAME
 
-Finance::Robinhood::Utils::Paginated - Represent paginated data in an iterative object
+Finance::Robinhood::Utils::Paginated - Represent paginated data in an iterative
+object
 
 =head1 SYNOPSIS
 
@@ -26,7 +27,8 @@ use Finance::Robinhood::Utils::Client;
 
 =head1 METHODS
 
-Some data returned by Robinhood's API is so exhaustive that it is broken up into pages.
+Some data returned by Robinhood's API is so exhaustive that it is broken up
+into pages.
 
 This class wraps that data in a friendly way.
 
@@ -41,9 +43,10 @@ has '_class'    => ( is => 'ro', init_arg  => 'class', predicate => 1 );
 
     while (my $record = $paginator->next()) { ... }
 
-Returns the next record in the current page. If all records have been exhausted then
-the next page will automatically be loaded. This way if you want to ignore pagination
-you can just call C<next( )> over and over again to walk through all the records.
+Returns the next record in the current page. If all records have been exhausted
+then the next page will automatically be loaded. This way if you want to ignore
+pagination you can just call C<next( )> over and over again to walk through all
+the records.
 
 When we're out of pages and items, an undefined value is returned.
 

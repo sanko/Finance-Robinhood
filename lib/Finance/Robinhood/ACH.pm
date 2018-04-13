@@ -37,7 +37,8 @@ sub unlink {
 
     my $ok = $ach->schedule_deposit( 500, 'weekly' );
 
-Create a scheduled ACH deposit. This is returned as a C<Finance::Robinhood::ACH::ScheduledDeposit> object.
+Create a scheduled ACH deposit. This is returned as a
+C<Finance::Robinhood::ACH::ScheduledDeposit> object.
 
 Expected arguments are:
 

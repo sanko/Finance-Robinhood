@@ -26,7 +26,8 @@ has ['created_at'] => (
 
     my $user_info = $rh->user->basic_info( );
 
-Grab user personal information. This is returned as a C<Finance::Robinhood::User::BasicInfo> object.
+Grab user personal information. This is returned as a
+C<Finance::Robinhood::User::BasicInfo> object.
 
 =cut
 
@@ -40,7 +41,8 @@ sub basic_info {
 
     my $id_info = $rh->user->id_info( );
 
-Grab user ID information. This is returned as a C<Finance::Robinhood::User::Id> object.
+Grab user ID information. This is returned as a C<Finance::Robinhood::User::Id>
+object.
 
 =cut
 
@@ -54,7 +56,8 @@ sub id_info {
 
     my $profile = $rh->user->investment_profile( );
 
-Grab user's investment experience information. This is returned as a C<Finance::Robinhood::User::InvestmentProfile> object.
+Grab user's investment experience information. This is returned as a
+C<Finance::Robinhood::User::InvestmentProfile> object.
 
 =cut
 
@@ -69,7 +72,8 @@ sub investment_profile {
 
     my $add_info = $rh->user->employment( );
 
-Grab additional user information. This is returned as a C<Finance::Robinhood::User::Employment> object.
+Grab additional user information. This is returned as a
+C<Finance::Robinhood::User::Employment> object.
 
 =cut
 
