@@ -25,13 +25,13 @@ has [ 'created_at', 'updated_at' ] => (
 has 'min_ticks' => (
     is     => 'ro',
     coerce => sub {
-        $_[0];    # { above_tick => "0.10", below_tick => 0.05, cutoff_price => "3.00" }
+        Finance::Robinhood::Options::Chain::Ticks->new( $_[0] )
+            ;    # { above_tick => "0.10", below_tick => 0.05, cutoff_price => "3.00" }
     }
 );
 
 sub market_data {
     my ($s) = shift;
-    warn sprintf $Finance::Robinhood::Endpoints{'marketdata/options/{id}'}, $s->id;
     my ( $status, $data )
         = Finance::Robinhood::Utils::Client->instance->get(
         sprintf $Finance::Robinhood::Endpoints{'marketdata/options/{id}'}, $s->id );
@@ -40,21 +40,21 @@ sub market_data {
 
 =head2 C<historicals( ... )>
 
-    my $ok = $options->historicals();
+    my $ok = $option->historicals( interval => 'week' );
 
-Gather info about all supported options chains. This is returned as a
-C<Finance::Robinhood::Utils::Paginated> object.
+Gather historical quote data for all supported options instrument. This is
+returned as a C<Finance::Robinhood::Options::Instrument::Historicals> object.
 
-    my $inst = $rh->options_chains( ids =>  ['0c0959c2-eb3a-4e3b-8310-04d7eda4b35c'] );
-    my $all = $inst->all;
+    my @instruments = $rh->options_instruments(tradability => 'tradable', type => 'call')->next_page;
+    my $inst = $instruments[0]->historicals(interval => 'day');
 
 The following arguments are accepted:
 
 =over
 
-=item C<interval> - C<day>, C<week>, or C<month>
+=item C<interval> - C<hour>, C<day>, C<week>, or C<month>
 
-=item C<span> - C<year>, C<5year>, or C<10year>
+=item C<span> - C<week>, C<year>, C<5year>, or C<10year>
 
 =back
 
@@ -75,5 +75,13 @@ sub historicals {
         )
     );
     $status == 200 ? Finance::Robinhood::Options::Instrument::Historicals->new($data) : $data;
+}
+
+sub equity_instrument {
+    Finance::Robinhood->equity_instruments( symbol => shift->chain_symbol )->next;
+}
+
+sub chains {
+    Finance::Robinhood->options_chains( ids => [ shift->chain_id ] );
 }
 1;

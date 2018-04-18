@@ -100,7 +100,7 @@ This rolls through every page building one giant array ref of all records.
 
 sub all {
     my ($s) = @_;
-    my @records;
+    my @records = $s->_results();
     while ( my $items = $s->next_page() ) {
         push @records, @$items;
     }

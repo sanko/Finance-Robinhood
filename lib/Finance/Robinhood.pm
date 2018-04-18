@@ -46,6 +46,7 @@ use Finance::Robinhood::User::AdditionalInfo;
 use Finance::Robinhood::User::BasicInfo;
 use Finance::Robinhood::User::Employment;
 use Finance::Robinhood::User::InvestmentProfile;
+use Finance::Robinhood::Equity::Instrument::Historicals;
 use Finance::Robinhood::ACH;
 use Finance::Robinhood::Tag;
 #
@@ -78,12 +79,16 @@ our %Endpoints = (
     'marketdata/options'         => 'https://api.robinhood.com/marketdata/options/',
     'marketdata/options/{id}'    => 'https://api.robinhood.com/marketdata/options/%s/',
     'options/orders/{id}/cancel' => 'https://api.robinhood.com/api/options/orders/%s/cancel/',
-    'marketdata/options/historicals/{id}/' =>
+    'marketdata/options/historicals/{id}' =>
         'https://api.robinhood.com/marketdata/options/historicals/%s/',
     'options/suitability'    => 'https://api.robinhood.com/options/suitability/',
     'options/events'         => 'https://api.robinhood.com/options/events/',
     'options/positions'      => 'https://api.robinhood.com/options/positions/',
     'options/positions/{id}' => 'https://api.robinhood.com/options/positions/%s/',
+    'accounts/{accountNumber}/recent_day_trades' =>
+        'https://api.robinhood.com/accounts/%s/recent_day_trades/',
+    'marketdata/historicals'          => 'https://api.robinhood.com/marketdata/historicals/',
+    'marketdata/historicals/{symbol}' => 'https://api.robinhood.com/marketdata/historicals/%s/',
 );
 
 =head1 METHODS
@@ -301,6 +306,46 @@ sub equity_quotes {
         class => 'Finance::Robinhood::Equity::Quote',
         next  => join '?',
         $Endpoints{'marketdata/quotes'}, (
+            join '&',
+            map {
+                $_ . '=' .
+                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
+            } keys %args
+        )
+    );
+}
+
+=head2 C<equity_historical( ... )>
+
+    my $inst = $rh->equity_quotes( symbols => ['MSFT', 'X'], interval => 'week' );
+    my $all = $inst->all;
+
+Gather historical info about multiple equities by symbol. This is returned as a
+C<Finance::Robinhood::Utils::Paginated> object.
+
+Expected arguments:
+
+=over
+
+=item C<symbols> - required list of ticker symbols to look for
+
+=item C<interval> - required argument which must be C<hour>, C<day>, C<week>, or C<month>
+
+=item C<span> - which must be C<week>, C<year>, C<5year>, or C<10year> and is optional
+
+=item C<bounds> - which must be C<extended>, C<regular>, or C<trading> which is the default
+
+=back
+
+=cut
+
+sub equity_historicals {
+    my ( $s, %args ) = @_;
+    map { $_ = ref $_ ? $_->symbol : $_ } @{ $args{'symbols'} } if $args{'symbols'};
+    Finance::Robinhood::Utils::Paginated->new(
+        class => 'Finance::Robinhood::Equity::Instrument::Historicals',
+        next  => join '?',
+        $Endpoints{'marketdata/historicals'}, (
             join '&',
             map {
                 $_ . '=' .
