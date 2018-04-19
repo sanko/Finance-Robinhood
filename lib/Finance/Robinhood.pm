@@ -81,10 +81,11 @@ our %Endpoints = (
     'options/orders/{id}/cancel' => 'https://api.robinhood.com/api/options/orders/%s/cancel/',
     'marketdata/options/historicals/{id}' =>
         'https://api.robinhood.com/marketdata/options/historicals/%s/',
-    'options/suitability'    => 'https://api.robinhood.com/options/suitability/',
-    'options/events'         => 'https://api.robinhood.com/options/events/',
-    'options/positions'      => 'https://api.robinhood.com/options/positions/',
-    'options/positions/{id}' => 'https://api.robinhood.com/options/positions/%s/',
+    'marketdata/options/historicals' => 'https://api.robinhood.com/marketdata/options/historicals/',
+    'options/suitability'            => 'https://api.robinhood.com/options/suitability/',
+    'options/events'                 => 'https://api.robinhood.com/options/events/',
+    'options/positions'              => 'https://api.robinhood.com/options/positions/',
+    'options/positions/{id}'         => 'https://api.robinhood.com/options/positions/%s/',
     'accounts/{accountNumber}/recent_day_trades' =>
         'https://api.robinhood.com/accounts/%s/recent_day_trades/',
     'marketdata/historicals'          => 'https://api.robinhood.com/marketdata/historicals/',
@@ -479,9 +480,13 @@ Gather info about several options chains at once but only those that are
 currently 'active', 'inactive', or 'expired'. This is returned as a
 C<Finance::Robinhood::Utils::Paginated> object.
 
-Other supported arguments include:
+Supported arguments include:
 
 =over
+
+=item C<tradability> - 'tradable' or 'untradable'
+
+=item C<state> - 'active', 'inactive', or 'expired'
 
 =item C<type> - 'call' or 'put'
 
@@ -566,6 +571,46 @@ sub options_quotes {
         class => 'Finance::Robinhood::Options::Quote',
         next  => join '?',
         $Endpoints{'marketdata/options'}, (
+            join '&',
+            map {
+                $_ . '=' .
+                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
+            } keys %args
+        )
+    );
+}
+
+=head2 C<optioins_historical( ... )>
+
+    my $inst = $rh->equity_quotes( instruments => [''], interval => 'week' );
+    my $all = $inst->all;
+
+Gather historical info about multiple options chains by ID. This is returned as a
+C<Finance::Robinhood::Utils::Paginated> object.
+
+Expected arguments:
+
+=over
+
+=item C<instruments> - required list of UUIDs to look for
+
+=item C<interval> - required argument which must be C<hour>, C<day>, C<week>, or C<month>
+
+=item C<span> - which must be C<week>, C<year>, C<5year>, or C<10year> and is optional
+
+=item C<bounds> - which must be C<extended>, C<regular>, or C<trading> which is the default
+
+=back
+
+=cut
+
+sub options_historicals {
+    my ( $s, %args ) = @_;
+    map { $_ = ref $_ ? $_->id : $_ } @{ $args{'instruments'} } if $args{'instruments'};
+    Finance::Robinhood::Utils::Paginated->new(
+        class => 'Finance::Robinhood::Options::Instrument::Historicals',
+        next  => join '?',
+        $Endpoints{'marketdata/options/historicals'}, (
             join '&',
             map {
                 $_ . '=' .
