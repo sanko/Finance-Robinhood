@@ -12,7 +12,7 @@ use Date::Tiny;
 has [
     qw[type margin_initial_ratio tradability bloomberg_unique
         name symbol state country day_trade_ratio
-        tradeable maintenance_ratio id simple_name min_tick_size]
+        tradeable maintenance_ratio id simple_name min_tick_size url]
 ] => ( is => 'ro' );
 has 'list_date' => (
     is     => 'ro',
@@ -58,5 +58,11 @@ sub historicals {
         )
     );
     $status == 200 ? Finance::Robinhood::Equity::Instrument::Historicals->new($data) : $data;
+}
+
+sub options_chains {
+    my ( $s, %args ) = @_;
+    $args{equity_instrument_ids} = [ $s->id ];
+    Finance::Robinhood->options_chains(%args);
 }
 1;
