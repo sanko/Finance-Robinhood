@@ -10,10 +10,16 @@ has 'expiration_dates' => (
 );
 has 'min_ticks' =>
     ( is => 'ro', coerce => sub { Finance::Robinhood::Options::Chain::Ticks->new( $_[0] ) } );
-has 'underlying_instruments' => (
+has 'underlying_instruments' => (    # Equity
     is     => 'ro',
     coerce => sub {
         [ map { Finance::Robinhood::Options::Chain::UnderlyingInstrument->new($_) } @{ $_[0] } ]
     }
 );
+
+sub options_instruments {
+    my ( $s, %args ) = @_;
+    $args{chain_id} = [ $s->id ];
+    Finance::Robinhood->options_instruments(%args);
+}
 1;
