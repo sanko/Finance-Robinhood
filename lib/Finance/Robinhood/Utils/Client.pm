@@ -36,19 +36,17 @@ has 'account' => (
 
 sub _http {
     my ( $s, $method, $url, $args, $headers ) = @_;
+    $args    //= {};
+    $headers //= {};
 ###
     #warn $url;
-    use Data::Dump;
+    #use Data::Dump;
 
     #ddx [caller(1)];
-    ddx [ $method, $url, $args, $headers ];
-    %$headers = ( %{ $s->headers // () }, $headers ? %$headers : () );
-
-    #@$headers{keys %$args} = values %$args;
-    delete $headers->{'Authorization'} if $args->{'skip_authorization'};
+    #ddx [ $method, $url, $args, $headers ];
+    %$headers = ( %{ $s->headers($headers) // () }, $headers ? %$headers : () );
     if ( $method ne 'GET' && $args->{content} ) {
-        if (0) {
-            $headers->{'Content-Type'} = 'application/x-www-form-urlencoded';
+        if ( $headers->{'Content-Type'} // '' eq 'application/x-www-form-urlencoded' ) {
             $args->{content} = __urlencode( $args->{content} );
         }
         else {
@@ -56,8 +54,8 @@ sub _http {
             $args->{content} = encode_json( $args->{content} );
         }
     }
-
-    #ddx [ $method, $url, { %$args, headers => ($headers) }];
+    #use Data::Dump;
+    #ddx [ $method, $url, { %$args, headers => ($headers) } ];
     my $response = $s->http->request( $method, $url, { %$args, headers => ($headers) } );
     if ( $response->{status} == 429 && $method eq 'GET' && !$headers->{'BOUNCER-FORCE'} ) {
         $headers->{'X-BOUNCER-FORCE'} = 'true';
@@ -71,7 +69,7 @@ sub _http {
     #        print "$k: $_\n";
     #    }
     #}
-    #ddx$response;
+    #ddx $response;
     my $content = length $response->{content} ? decode_json( $response->{content} ) : ();
 
     #warn $response->{content} if length $response->{content};
@@ -106,33 +104,33 @@ sub __urlencode {
 }
 
 sub get {
-    my ( $s, $url, $args ) = @_;
+    my ( $s, $url, $args, $headers ) = @_;
     $url = $url . ( $url =~ m[\?] ? '&' : '?' ) . __urlencode($args) if keys %$args;
-    return $s->_http( 'GET', $url );
+    return $s->_http( 'GET', $url, (), $headers );
 }
 
 sub post {
-    my ( $s, $url, $data ) = @_;
-    return $s->_http( 'POST', $url, { content => $data } );
+    my ( $s, $url, $data, $headers ) = @_;
+    return $s->_http( 'POST', $url, { content => $data }, $headers );
 }
 
 sub put {
-    my ( $s, $url, $data ) = @_;
-    return $s->_http( 'PUT', $url, { content => $data } );
+    my ( $s, $url, $data, $headers ) = @_;
+    return $s->_http( 'PUT', $url, { content => $data }, $headers );
 }
 
 sub options {
-    my ( $s, $url, $data ) = @_;
-    return $s->_http( 'OPTIONS', $url, { content => $data } );
+    my ( $s, $url, $data, $headers ) = @_;
+    return $s->_http( 'OPTIONS', $url, { content => $data }, $headers );
 }
 
 sub patch {
-    my ( $s, $url, $data ) = @_;
-    return $s->_http( 'PATCH', $url, { content => $data } );
+    my ( $s, $url, $data, $headers ) = @_;
+    return $s->_http( 'PATCH', $url, { content => $data }, $headers );
 }
 
 sub delete {
-    my ( $s, $url ) = @_;
-    return $s->_http( 'DELETE', $url );
+    my ( $s, $url, $headers ) = @_;
+    return $s->_http( 'DELETE', $url, (), $headers );
 }
 1;

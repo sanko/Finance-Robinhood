@@ -60,6 +60,7 @@ our %Endpoints = (
     'dividends/{id}'             => 'https://api.robinhood.com/dividends/%s/',
     'api-token-auth'             => 'https://api.robinhood.com/api-token-auth/',
     'api-token-logout'           => 'https://api.robinhood.com/api-token-logout/',
+    'oauth2/token'               => 'https://api.robinhood.com/oauth2/token/',
     'accounts'                   => 'https://api.robinhood.com/accounts/',
     'ach/deposit_schedules'      => 'https://api.robinhood.com/ach/deposit_schedules/',
     'ach/relationships'          => 'https://api.robinhood.com/ach/relationships/',
