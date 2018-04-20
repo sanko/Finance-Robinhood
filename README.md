@@ -124,6 +124,21 @@ supported:
 
 - `bounds` - which must be `extended`, `regular`, or `trading` which is the default
 
+## `equity_historical( ... )`
+
+    my $inst = $rh->equity_quotes( symbols => ['MSFT', 'X'], interval => 'week' );
+    my $all = $inst->all;
+
+Gather historical info about multiple equities by symbol. This is returned as a
+`Finance::Robinhood::Utils::Paginated` object.
+
+Expected arguments:
+
+- `symbols` - required list of ticker symbols to look for
+- `interval` - required argument which must be `hour`, `day`, `week`, or `month`
+- `span` - which must be `week`, `year`, `5year`, or `10year` and is optional
+- `bounds` - which must be `extended`, `regular`, or `trading` which is the default
+
 ## `equity_instruments( ... )`
 
     my $ok = $rh->equity_instruments();
@@ -205,8 +220,10 @@ Gather info about several options chains at once but only those that are
 currently 'active', 'inactive', or 'expired'. This is returned as a
 `Finance::Robinhood::Utils::Paginated` object.
 
-Other supported arguments include:
+Supported arguments include:
 
+- `tradability` - 'tradable' or 'untradable'
+- `state` - 'active', 'inactive', or 'expired'
 - `type` - 'call' or 'put'
 - `expiration_dates` - an array ref of dates in the form 'YYYY-MM-DD'
 - `chain_id` - options chain's UUID
@@ -240,6 +257,21 @@ Gather info about a several instruments by their ids; data is returned as a
 Request either by symbol or by instrument id! Other arguments are also
 supported:
 
+- `bounds` - which must be `extended`, `regular`, or `trading` which is the default
+
+## `optioins_historical( ... )`
+
+    my $inst = $rh->equity_quotes( instruments => [''], interval => 'week' );
+    my $all = $inst->all;
+
+Gather historical info about multiple options chains by ID. This is returned as a
+`Finance::Robinhood::Utils::Paginated` object.
+
+Expected arguments:
+
+- `instruments` - required list of UUIDs to look for
+- `interval` - required argument which must be `hour`, `day`, `week`, or `month`
+- `span` - which must be `week`, `year`, `5year`, or `10year` and is optional
 - `bounds` - which must be `extended`, `regular`, or `trading` which is the default
 
 ## `options_suitability( ... )`
