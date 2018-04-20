@@ -49,7 +49,8 @@ sub historicals {
     my ( $s,      %args ) = @_;
     my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get(
         join '?',
-        sprintf( $Finance::Robinhood::Endpoints{'marketdata/historicals/{symbol}'}, $s->id ), (
+        grep {length}
+            sprintf( $Finance::Robinhood::Endpoints{'marketdata/historicals/{symbol}'}, $s->id ), (
             join '&',
             map {
                 $_ . '=' .

@@ -308,7 +308,7 @@ sub equity_quotes {
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Equity::Quote',
         next  => join '?',
-        $Endpoints{'marketdata/quotes'}, (
+        grep {length} $Endpoints{'marketdata/quotes'}, (
             join '&',
             map {
                 $_ . '=' .
@@ -348,7 +348,7 @@ sub equity_historicals {
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Equity::Instrument::Historicals',
         next  => join '?',
-        $Endpoints{'marketdata/historicals'}, (
+        grep {length} $Endpoints{'marketdata/historicals'}, (
             join '&',
             map {
                 $_ . '=' .
@@ -394,7 +394,7 @@ sub equity_instruments {
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Equity::Instrument',
         next  => join '?',
-        $Endpoints{'instruments'}, (
+        grep {length} $Endpoints{'instruments'}, (
             join '&',
             map {
                 $_ . '=' .
@@ -445,7 +445,7 @@ sub options_chains {
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Chain',
         next  => join '?',
-        $Endpoints{'options/chains'}, (
+        grep {length} $Endpoints{'options/chains'}, (
             join '&',
             map {
                 $_ . '=' .
@@ -505,7 +505,7 @@ sub options_instruments {
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Instrument',
         next  => join '?',
-        $Endpoints{'options/instruments'}, (
+        grep {length} $Endpoints{'options/instruments'}, (
             join '&',
             map {
                 $_ . '=' .
@@ -572,7 +572,7 @@ sub options_quotes {
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Quote',
         next  => join '?',
-        $Endpoints{'marketdata/options'}, (
+        grep {length} $Endpoints{'marketdata/options'}, (
             join '&',
             map {
                 $_ . '=' .
@@ -612,7 +612,7 @@ sub options_historicals {
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Instrument::Historicals',
         next  => join '?',
-        $Endpoints{'marketdata/options/historicals'}, (
+        grep {length} $Endpoints{'marketdata/options/historicals'}, (
             join '&',
             map {
                 $_ . '=' .
@@ -717,7 +717,7 @@ sub options_orders {
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Order',
         next  => join '?',
-        $Endpoints{'options/orders'}, (
+        grep {length} $Endpoints{'options/orders'}, (
             join '&',
             map {
                 $_ . '=' .
@@ -751,7 +751,7 @@ sub options_positions {
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Position',
         next  => join '?',
-        $Endpoints{'options/positions'}, (
+        grep {length} $Endpoints{'options/positions'}, (
             join '&',
             map {
                 $_ . '=' .
