@@ -59,7 +59,7 @@ sub _http {
     my $response = $s->http->request( $method, $url, { %$args, headers => ($headers) } );
     if ( $response->{status} == 429 && $method eq 'GET' && !$headers->{'BOUNCER-FORCE'} ) {
         $headers->{'X-BOUNCER-FORCE'} = 'true';
-        return shift->_http(@_);
+        return shift->_http( $method, $url, $_[3], $headers );
     }
 
     #die "Failed!\n" unless $response->{success};
