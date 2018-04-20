@@ -21,34 +21,35 @@ use strict;
 use warnings;
 use Moo;
 our $VERSION = '0.90_001';
+#
 use Finance::Robinhood::Account;
+use Finance::Robinhood::ACH;
 use Finance::Robinhood::Dividend;
+use Finance::Robinhood::Equity::Instrument::Historicals;
 use Finance::Robinhood::Equity::Instrument;
 use Finance::Robinhood::Equity::Quote;
-use Finance::Robinhood::Forex::CurrencyPair;
 use Finance::Robinhood::Forex::AssetCurrency;
+use Finance::Robinhood::Forex::CurrencyPair;
 use Finance::Robinhood::Forex::QuoteCurrency;
-use Finance::Robinhood::Options::Chain;
-use Finance::Robinhood::Options::Chain::UnderlyingInstrument;
 use Finance::Robinhood::Options::Chain::Ticks;
+use Finance::Robinhood::Options::Chain::UnderlyingInstrument;
+use Finance::Robinhood::Options::Chain;
 use Finance::Robinhood::Options::Event;
 use Finance::Robinhood::Options::Instrument;
 use Finance::Robinhood::Options::Order;
 use Finance::Robinhood::Options::Position;
 use Finance::Robinhood::Options::Quote;
+use Finance::Robinhood::Tag;
+use Finance::Robinhood::User::AdditionalInfo;
+use Finance::Robinhood::User::BasicInfo;
+use Finance::Robinhood::User::Employment;
+use Finance::Robinhood::User::Id;
+use Finance::Robinhood::User::InvestmentProfile;
+use Finance::Robinhood::User;
 use Finance::Robinhood::Utils 'v4_uuid' => { -as => 'uuid' };
 use Finance::Robinhood::Utils::Client;
 use Finance::Robinhood::Utils::Credentials;
 use Finance::Robinhood::Utils::Paginated;
-use Finance::Robinhood::User;
-use Finance::Robinhood::User::Id;
-use Finance::Robinhood::User::AdditionalInfo;
-use Finance::Robinhood::User::BasicInfo;
-use Finance::Robinhood::User::Employment;
-use Finance::Robinhood::User::InvestmentProfile;
-use Finance::Robinhood::Equity::Instrument::Historicals;
-use Finance::Robinhood::ACH;
-use Finance::Robinhood::Tag;
 #
 our %Endpoints = (
     'midlands/search'            => 'https://midlands.robinhood.com/search/',
