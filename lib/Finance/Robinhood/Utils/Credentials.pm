@@ -21,8 +21,6 @@ sub headers {
         delete $headers->{'X-Skip-Authorization'};
     }
     elsif ( $s->has_oauth ) {
-        use Data::Dump;
-        ddx $s->oauth;
         if ( $s->oauth->{_birth} + $s->oauth->{expires_in} <= time ) {
             my ( $ok, $token ) = Finance::Robinhood::Utils::Client->instance->post(
                 $Finance::Robinhood::Endpoints{'oauth2/token'},

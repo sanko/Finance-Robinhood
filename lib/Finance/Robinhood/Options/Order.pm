@@ -47,13 +47,8 @@ sub day_trade_checks {
     #ddx( Finance::Robinhood::Utils::Client->instance->account );
     Finance::Robinhood::Utils::Client->instance->get(
         $Finance::Robinhood::Endpoints{'options/orders/day_trade_checks'},
-
-        #'?orders='. $s->id .
         {   'account' => '/accounts/' .
                 Finance::Robinhood::Utils::Client->instance->account->account_number,
-            'quantity' => 3,
-            type       => 'long',
-            direction  => 'sell'
         }
     );
 }
