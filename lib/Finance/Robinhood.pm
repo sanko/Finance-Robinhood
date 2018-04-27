@@ -11,9 +11,10 @@ Commission
 
     use Finance::Robinhood;
 
-    my $rh = Finance::Robinhood->new();
-
-    $rh->login($user, $password); # Store it for later
+    my $rh = Finance::Robinhood->new(
+      username => $user,
+      password => $password
+    );
 
 =cut
 
@@ -94,6 +95,23 @@ our %Endpoints = (
     'marketdata/historicals/{symbol}' => 'https://api.robinhood.com/marketdata/historicals/%s/',
 );
 
+sub BUILD {
+    my ( $s, $args ) = @_;
+    if ( $args->{username} && $args->{password} ) {
+        if ( $args->{client_id} ) {    #OAuth2
+            $s->login_oauth2(
+
+                #my ($s, $username, $password, $mfa_cb, $client_id, $scope) = @_;
+                $args->{username}, $args->{password}, $args->{mfa_callback}, $args->{client_id},
+                $args->{scope}
+            );
+        }
+        else {                         # Old skool
+            $s->login( $args->{username}, $args->{password}, $args->{mfa_callback} );
+        }
+    }
+}
+
 =head1 METHODS
 
 Finance::Robinhood wraps a several APIs. There are parts of this package that
@@ -110,8 +128,15 @@ your username and password.
 
 =head2 C<new( )>
 
+    # Login on object creation :)
+    my $rh = Finance::Robinhood->new(
+      username => 'mark98009',
+      password => 'Om39mfsdah93m'
+    );
+
     # Requires ->login(...) call :(
     my $rh = Finance::Robinhood->new( );
+    $rh->login('mark98009', 'Om39mfsdah93m');
 
 A new Finance::Robinhood object is created without credentials. Before you can
 buy or sell or do almost anything else, you must L<log in manually|/"login( ...
@@ -156,15 +181,50 @@ return the code sent to you via SMS or in your token app.
 
 #
 sub login {
-    my ( $s, $user, $password, $mfa_cb ) = @_;
+    my ( $s, $username, $password, $mfa_cb ) = @_;
     my ( $status, $auth )
-        = $s->post( $Endpoints{'api-token-auth'}, { username => $user, password => $password } );
+        = $s->post( $Endpoints{'api-token-auth'},
+        { username => $username, password => $password } );
     if ( $auth->{mfa_required} ) {
         return !warn 'Login requires a MFA callback.' if !$mfa_cb;
-        ( $status, $auth ) = $s->post( $Endpoints{'api-token-auth'},
-            { username => $user, password => $password, mfa_code => $mfa_cb->($auth) } );
+        ( $status, $auth ) = $s->post(
+            $Endpoints{'api-token-auth'},
+            { username => $username, password => $password, mfa_code => $mfa_cb->($auth) }
+
+            #backup_code =>
+        );
     }
     $status == 200 ? !!$s->credentials->old_skool( $auth->{token} ) : 0;
+}
+
+sub login_oauth2 {
+    my ( $s, $username, $password, $mfa_cb, $client_id, $scope ) = @_;
+    $scope //= 'internal';
+    my ( $status, $auth ) = $s->post(
+        $Endpoints{'oauth2/token'},
+        {   username   => $username,
+            password   => $password,
+            grant_type => 'password',
+            scope      => $scope,
+            client_id  => $client_id,
+        }
+    );
+    if ( $auth->{mfa_required} ) {
+        return !warn 'Login requires a MFA callback.' if !$mfa_cb;
+        ( $status, $auth ) = $s->post(
+            $Endpoints{'oauth2/token'},
+            {   username   => $username,
+                password   => $password,
+                grant_type => 'password',
+                scope      => $scope,
+                client_id  => $client_id,
+                mfa_code   => $mfa_cb->($auth),
+
+                #backup_code =>
+            }
+        );
+    }
+    $status == 200 ? !!$s->credentials->oauth( $auth, client_id => $client_id ) : 0;
 }
 
 =head2 C<logout( )>

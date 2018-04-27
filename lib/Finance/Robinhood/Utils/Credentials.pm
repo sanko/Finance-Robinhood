@@ -22,19 +22,24 @@ sub headers {
     }
     elsif ( $s->has_oauth ) {
         if ( $s->oauth->{_birth} + $s->oauth->{expires_in} <= time ) {
-            my ( $ok, $token ) = Finance::Robinhood::Utils::Client->instance->post(
-                $Finance::Robinhood::Endpoints{'oauth2/token'},
-                {   refresh_token => $s->oauth->{refresh_token},
-                    grant_type    => 'refresh_token',
-                    scope         => $s->oauth->{scope},
-                    client_id     => 'c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS'
-                },
-                {   'Content-Type'         => 'application/x-www-form-urlencoded',
-                    'X-Skip-Authorization' => 1
-                }
-            );
-            $token->{_birth} = time;
-            $s->oauth($token) if $ok == 200;
+            if ( $s->oauth->{client_id} ) {
+                my ( $ok, $token ) = Finance::Robinhood::Utils::Client->instance->post(
+                    $Finance::Robinhood::Endpoints{'oauth2/token'},
+                    {   refresh_token => $s->oauth->{refresh_token},
+                        grant_type    => 'refresh_token',
+                        scope         => $s->oauth->{scope},
+                        client_id     => $s->oauth->{client_id},
+                    },
+                    {   'Content-Type'         => 'application/x-www-form-urlencoded',
+                        'X-Skip-Authorization' => 1
+                    }
+                );
+                $token->{_birth} = time;
+                $s->oauth($token) if $ok == 200;
+            }
+            else {
+                ...    # TODO: store the token, login old skool, then migrate?
+            }
         }
         $headers->{Authorization} = 'Bearer ' . $s->oauth->{access_token};
     }

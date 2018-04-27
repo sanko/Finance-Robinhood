@@ -8,9 +8,10 @@ Commission
 
     use Finance::Robinhood;
 
-    my $rh = Finance::Robinhood->new();
-
-    $rh->login($user, $password); # Store it for later
+    my $rh = Finance::Robinhood->new(
+      username => $user,
+      password => $password
+    );
 
 # METHODS
 
@@ -28,8 +29,20 @@ your username and password.
 
 ## `new( )`
 
+    # Login on object creation :)
+    my $rh = Finance::Robinhood->new(
+      username => 'mark98009',
+      password => 'Om39mfsdah93m'
+    );
+
+    # Restore credentials from previous login :D
+    my $rh = Finance::Robinhood->new(
+      credentials => $creds
+    );
+
     # Requires ->login(...) call :(
     my $rh = Finance::Robinhood->new( );
+    $rh->login('mark98009', 'Om39mfsdah93m');
 
 A new Finance::Robinhood object is created without credentials. Before you can
 buy or sell or do almost anything else, you must [log in manually](#login).
