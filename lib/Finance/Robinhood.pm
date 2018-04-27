@@ -29,6 +29,7 @@ use Finance::Robinhood::Dividend;
 use Finance::Robinhood::Equity::Instrument::Historicals;
 use Finance::Robinhood::Equity::Instrument;
 use Finance::Robinhood::Equity::Quote;
+use Finance::Robinhood::Equity::Position;
 use Finance::Robinhood::Forex::AssetCurrency;
 use Finance::Robinhood::Forex::CurrencyPair;
 use Finance::Robinhood::Forex::QuoteCurrency;
@@ -53,6 +54,8 @@ use Finance::Robinhood::Utils::Credentials;
 use Finance::Robinhood::Utils::Paginated;
 #
 our %Endpoints = (
+    'positions'                  => 'https://api.robinhood.com/positions/',
+    'positions/{accountID}/{id}' => 'https://api.robinhood.com/positions/%s/%s/',
     'midlands/search'            => 'https://midlands.robinhood.com/search/',
     'user'                       => 'https://api.robinhood.com/user/',
     'user/investment_profile'    => 'https://api.robinhood.com/user/investment_profile/',
@@ -418,6 +421,34 @@ sub equity_historicals {
             } keys %args
         )
     );
+}
+
+=head2 C<equity_positions( )>
+
+
+=cut
+
+sub equity_positions {
+    my ( $s, %args ) = @_;
+
+#@GET("/positions/?nonzero=true")    Completable reorderPositions(@Query("ordering") String str);
+#@GET("/positions/?nonzero=true")    Single<PaginatedResult<ApiPosition>> getPositions(@Query("cursor") String str);
+    Finance::Robinhood::Utils::Paginated->new(
+        class => 'Finance::Robinhood::Equity::Position',
+        next => Finance::Robinhood::Utils::Client::__url_and_args( $Endpoints{'positions'}, \%args )
+    );
+}
+
+=head2 C<equity_position( )>
+
+
+=cut
+
+sub equity_position {
+    my ( $s,      $id )   = @_;
+    my ( $status, $data ) = $s->get( sprintf $Endpoints{'positions/{accountID}/{id}'},
+        $s->account->account_number, $id );
+    $status == 200 ? Finance::Robinhood::Equity::Position->new($data) : $data;
 }
 
 =head2 C<equity_instruments( ... )>
