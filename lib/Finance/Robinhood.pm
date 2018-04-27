@@ -224,7 +224,9 @@ sub login_oauth2 {
             }
         );
     }
-    $status == 200 ? !!$s->credentials->oauth( $auth, client_id => $client_id ) : 0;
+    $status == 200 ?
+        !!$s->credentials->oauth( { %$auth, client_id => $client_id, _birth => time } ) :
+        0;
 }
 
 =head2 C<logout( )>
