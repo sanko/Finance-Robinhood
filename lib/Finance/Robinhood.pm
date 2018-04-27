@@ -372,13 +372,8 @@ sub equity_quotes {
     } @{ $args{'instruments'} } if $args{'instruments'};
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Equity::Quote',
-        next  => join '?',
-        grep {length} $Endpoints{'marketdata/quotes'}, (
-            join '&',
-            map {
-                $_ . '=' .
-                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
-            } keys %args
+        next  => Finance::Robinhood::Utils::Client::__url_and_args(
+            $Endpoints{'marketdata/quotes'}, \%args
         )
     );
 }
@@ -412,13 +407,8 @@ sub equity_historicals {
     map { $_ = ref $_ ? $_->symbol : $_ } @{ $args{'symbols'} } if $args{'symbols'};
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Equity::Instrument::Historicals',
-        next  => join '?',
-        grep {length} $Endpoints{'marketdata/historicals'}, (
-            join '&',
-            map {
-                $_ . '=' .
-                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
-            } keys %args
+        next  => Finance::Robinhood::Utils::Client::__url_and_args(
+            $Endpoints{'marketdata/historicals'}, \%args
         )
     );
 }
@@ -486,14 +476,8 @@ sub equity_instruments {
     my ( $s, %args ) = @_;
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Equity::Instrument',
-        next  => join '?',
-        grep {length} $Endpoints{'instruments'}, (
-            join '&',
-            map {
-                $_ . '=' .
-                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
-            } keys %args
-        )
+        next =>
+            Finance::Robinhood::Utils::Client::__url_and_args( $Endpoints{'instruments'}, \%args )
     );
 }
 
@@ -537,13 +521,8 @@ sub options_chains {
     my ( $s, %args ) = @_;
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Chain',
-        next  => join '?',
-        grep {length} $Endpoints{'options/chains'}, (
-            join '&',
-            map {
-                $_ . '=' .
-                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
-            } keys %args
+        next  => Finance::Robinhood::Utils::Client::__url_and_args(
+            $Endpoints{'options/chains'}, \%args
         )
     );
 }
@@ -597,13 +576,8 @@ sub options_instruments {
     my ( $s, %args ) = @_;
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Instrument',
-        next  => join '?',
-        grep {length} $Endpoints{'options/instruments'}, (
-            join '&',
-            map {
-                $_ . '=' .
-                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
-            } keys %args
+        next  => Finance::Robinhood::Utils::Client::__url_and_args(
+            $Endpoints{'options/instruments'}, \%args
         )
     );
 }
@@ -664,13 +638,8 @@ sub options_quotes {
     } @{ $args{'instruments'} } if $args{'instruments'};
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Quote',
-        next  => join '?',
-        grep {length} $Endpoints{'marketdata/options'}, (
-            join '&',
-            map {
-                $_ . '=' .
-                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
-            } keys %args
+        next  => Finance::Robinhood::Utils::Client::__url_and_args(
+            $Endpoints{'marketdata/options'}, \%args
         )
     );
 }
@@ -704,13 +673,8 @@ sub options_historicals {
     map { $_ = ref $_ ? $_->id : $_ } @{ $args{'instruments'} } if $args{'instruments'};
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Instrument::Historicals',
-        next  => join '?',
-        grep {length} $Endpoints{'marketdata/options/historicals'}, (
-            join '&',
-            map {
-                $_ . '=' .
-                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
-            } keys %args
+        next  => Finance::Robinhood::Utils::Client::__url_and_args(
+            $Endpoints{'marketdata/options/historicals'}, \%args
         )
     );
 }
@@ -809,13 +773,8 @@ sub options_orders {
     $args{'updated_at[lte]'} = delete $args{'before'} if defined $args{'before'};
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Order',
-        next  => join '?',
-        grep {length} $Endpoints{'options/orders'}, (
-            join '&',
-            map {
-                $_ . '=' .
-                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
-            } keys %args
+        next  => Finance::Robinhood::Utils::Client::__url_and_args(
+            $Endpoints{'options/orders'}, \%args
         )
     );
 }
@@ -843,13 +802,8 @@ sub options_positions {
     my ( $s, %args ) = @_;
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Position',
-        next  => join '?',
-        grep {length} $Endpoints{'options/positions'}, (
-            join '&',
-            map {
-                $_ . '=' .
-                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
-            } keys %args
+        next  => Finance::Robinhood::Utils::Client::__url_and_args(
+            $Endpoints{'options/positions'}, \%args
         )
     );
 }

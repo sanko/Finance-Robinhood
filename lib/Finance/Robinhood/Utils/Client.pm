@@ -89,6 +89,15 @@ sub _http {
     wantarray ? ( $response->{status}, $content ) : $content;
 }
 
+sub __url_and_args {
+    my ( $url, $args ) = @_;
+    join '?', grep {length} $url, join '&', map {
+        __urlencode($_) . '=' . (
+            ref $args->{$_} eq 'ARRAY' ? ( join ',', map { __urlencode($_) } @{ $args->{$_} } ) :
+                __urlencode( $args->{$_} ) )
+    } keys %$args;
+}
+
 sub __urlencode {
     my $data = shift;
     if ( ref $data eq 'HASH' ) {
