@@ -6,5 +6,5 @@ authority="cpan:SANKO"
 
 [release]
 hook=[
-    'perltidy `git ls-tree -r HEAD --name-only | grep -E "(lib|t|eg)/.+\.(pm|pl|t)$"'
+    'perltidy `git ls-tree -r HEAD --name-only | grep -E "(lib|t|eg)/.+\.(pm|pl|t)$"`'
 ]
