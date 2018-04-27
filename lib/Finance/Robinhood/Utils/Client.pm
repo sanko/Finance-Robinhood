@@ -98,6 +98,9 @@ sub __urlencode {
                 @{ ref $data->{$_} eq 'ARRAY' ? $data->{$_} : [ $data->{$_} ] }
         } keys %$data;
     }
+    elsif ( ref $data eq 'SCALAR' ) {
+        $data = $data ? 'true' : 'false';
+    }
     $data =~ s/([^A-Za-z0-9\+-])/sprintf("%%%02X", ord($1))/seg;
     $data =~ s/ /+/g;
     return $data;
