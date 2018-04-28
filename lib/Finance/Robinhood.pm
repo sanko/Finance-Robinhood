@@ -30,6 +30,8 @@ use Finance::Robinhood::Equity::Instrument::Historicals;
 use Finance::Robinhood::Equity::Instrument;
 use Finance::Robinhood::Equity::Quote;
 use Finance::Robinhood::Equity::Position;
+use Finance::Robinhood::Equity::Order;
+use Finance::Robinhood::Equity::Order::Execution;
 use Finance::Robinhood::Forex::AssetCurrency;
 use Finance::Robinhood::Forex::CurrencyPair;
 use Finance::Robinhood::Forex::QuoteCurrency;
@@ -54,6 +56,8 @@ use Finance::Robinhood::Utils::Credentials;
 use Finance::Robinhood::Utils::Paginated;
 #
 our %Endpoints = (
+    'orders'                     => 'https://api.robinhood.com/orders/',
+    'orders/{id}'                => 'https://api.robinhood.com/orders/%s/',
     'positions'                  => 'https://api.robinhood.com/positions/',
     'positions/{accountID}/{id}' => 'https://api.robinhood.com/positions/%s/%s/',
     'midlands/search'            => 'https://midlands.robinhood.com/search/',
@@ -439,6 +443,38 @@ sub equity_position {
     my ( $status, $data ) = $s->get( sprintf $Endpoints{'positions/{accountID}/{id}'},
         $s->account->account_number, $id );
     $status == 200 ? Finance::Robinhood::Equity::Position->new($data) : $data;
+}
+
+=head2 C<equity_orders( )>
+
+
+=cut
+
+sub equity_orders {
+    my ( $s, %args ) = @_;
+    $args{'updated_at[gte]'} = delete $args{'since'}  if defined $args{'since'};
+    $args{'updated_at[lte]'} = delete $args{'before'} if defined $args{'before'};
+    $args{'instrument'}
+        = ref $args{'instrument'}                        ? $args{'instrument'}->url :
+        $args{'instrument'} =~ $Endpoints{'instruments'} ? $args{'instrument'} :
+        sprintf $Endpoints{'instruments/{id}'}, $args{'instrument'}
+        if $args{'instrument'};
+    Finance::Robinhood::Utils::Paginated->new(
+        class => 'Finance::Robinhood::Equity::Order',
+        next  => Finance::Robinhood::Utils::Client::__url_and_args( $Endpoints{'orders'}, \%args )
+    );
+}
+
+=head2 C<equity_order( )>
+
+
+=cut
+
+sub equity_order {   
+    my ( $s, $id ) = @_;
+    warn $id;
+    my ( $status, $data ) = $s->get( sprintf $Endpoints{'orders/{id}'}, $id );
+    $status == 200 ? Finance::Robinhood::Equity::Order->new($data) : $data;
 }
 
 =head2 C<equity_instruments( ... )>
