@@ -84,6 +84,7 @@ sub place_order {
     $args{symbol}     = $s->symbol;
     $args{account} //= Finance::Robinhood::Utils::Client->instance->account();
     $args{account} = $args{account}->url if ref $args{account};
+    $args{ref_id} //= Finance::Robinhood::Utils::v4_uuid();
     my ( $status, $data )
         = Finance::Robinhood::Utils::Client->instance->post(
         $Finance::Robinhood::Endpoints{'orders'}, \%args );
