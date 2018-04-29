@@ -13,15 +13,16 @@ has 'previous_close_date' => (
         Date::Tiny->from_string( $_[0] );
     }
 );
-has '_instrument' => ( is => 'ro', init_arg => 'instrument' );
+has '_instrument_url' => ( is => 'ro', init_arg => 'instrument' );
 has 'instrument' => (
     is       => 'ro',
     init_arg => undef,
     lazy     => 1,
     builder  => sub {
         my $s = shift;
-        my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get( $_->_instrument );
-        $status == 200 ? Finance::Robinhood::Equity::Instrument->new($data) : $data;
+        my ( $status, $data )
+            = Finance::Robinhood::Utils::Client->instance->get( $_->_instrument_url );
+        $status == 200 ? Finance::Robinhood::Options::Instrument->new($data) : $data;
     }
 );
 1;

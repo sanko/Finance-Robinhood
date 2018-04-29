@@ -24,9 +24,9 @@ has 'credentials' => (
     lazy    => 1
 );
 has 'account' => (
-    is      => 'rw',
+    is      => 'ro',
     builder => sub {
-        my $acct = Finance::Robinhood::Utils::Paginated->new(
+        Finance::Robinhood::Utils::Paginated->new(
             class => 'Finance::Robinhood::Account',
             next  => $Finance::Robinhood::Endpoints{'accounts'}
         )->next;

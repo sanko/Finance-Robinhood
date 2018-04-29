@@ -925,9 +925,9 @@ sub ach_relationships {
 =head2 C<create_ach_relationship( ... )>
 
     my $ok = $rh->create_ach_relationship(
-        bank_routing_number => '026009593', 
+        bank_routing_number => '026009593',
         bank_account_number => '009872784317963',
-        bank_account_type => 'checking', 
+        bank_account_type => 'checking',
         bank_account_holder_name => 'John Smith
     );
 
