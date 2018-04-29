@@ -66,4 +66,16 @@ sub options_chains {
     $args{equity_instrument_ids} = [ $s->id ];
     Finance::Robinhood->options_chains(%args);
 }
+
+sub place_order {
+    my ( $s, %args ) = @_;
+    $args{instrument} = $s->url;
+    $args{symbol}     = $s->symbol;
+    $args{account} //= Finance::Robinhood::Utils::Client->instance->account();
+    $args{account} = $args{account}->url if ref $args{account};
+    my ( $status, $data )
+        = Finance::Robinhood::Utils::Client->instance->post(
+        $Finance::Robinhood::Endpoints{'orders'}, \%args );
+    $status == 201 ? Finance::Robinhood::Equity::Order->new($data) : $data;
+}
 1;

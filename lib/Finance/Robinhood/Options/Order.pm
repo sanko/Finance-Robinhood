@@ -37,7 +37,11 @@ has 'legs' => (
 sub cancel {
     my ($s) = @_;
     return if !$s->cancel_url;
-    Finance::Robinhood::Utils::Client->instance->post( $s->cancel_url );
+    my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->post( $s->cancel_url );
+    $status == 200 ?
+        $_[0]
+        = __PACKAGE__->new( scalar Finance::Robinhood::Utils::Client->instance->get( $s->url ) ) :
+        $data;
 }
 
 sub day_trade_checks {
