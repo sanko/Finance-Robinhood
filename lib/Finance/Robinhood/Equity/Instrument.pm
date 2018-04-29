@@ -67,6 +67,18 @@ sub options_chains {
     Finance::Robinhood->options_chains(%args);
 }
 
+
+sub quote {
+    my ( $s,      %args ) = @_;
+    my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get(
+        Finance::Robinhood::Utils::Client::__url_and_args(
+            sprintf( $Finance::Robinhood::Endpoints{'marketdata/quotes/{symbol}'}, $s->symbol ),
+            %args
+        )
+    );
+    $status == 200 ? Finance::Robinhood::Equity::Quote->new($data) : $data;
+}
+
 sub place_order {
     my ( $s, %args ) = @_;
     $args{instrument} = $s->url;
