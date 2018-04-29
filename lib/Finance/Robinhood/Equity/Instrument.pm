@@ -48,14 +48,9 @@ C<interval> is required.
 sub historicals {
     my ( $s,      %args ) = @_;
     my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get(
-        join '?',
-        grep {length}
-            sprintf( $Finance::Robinhood::Endpoints{'marketdata/historicals/{symbol}'}, $s->id ), (
-            join '&',
-            map {
-                $_ . '=' .
-                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
-            } keys %args
+        Finance::Robinhood::Utils::Client::__url_and_args(
+            sprintf( $Finance::Robinhood::Endpoints{'marketdata/historicals/{symbol}'}, $s->id ),
+            %args
         )
     );
     $status == 200 ? Finance::Robinhood::Equity::Instrument::Historicals->new($data) : $data;
@@ -67,6 +62,10 @@ sub options_chains {
     Finance::Robinhood->options_chains(%args);
 }
 
+sub orders {
+    my $s = @_;
+    Finance::Robinhood->equity_orders( instrument => $s, @_ );
+}
 
 sub quote {
     my ( $s,      %args ) = @_;
