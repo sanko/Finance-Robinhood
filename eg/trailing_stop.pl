@@ -60,7 +60,7 @@ while (1) {
                 * POSIX::floor(
                 ( $target_price + .05 * $position->instrument->min_tick_size ) / $target_price );
         }
-        $target_price = sprintf '%.04f', $target_price;
+        $target_price = sprintf( ( $last_price >= 1 ? '%.02f' : '%.04f' ), $target_price );
         my $quantity = $position->quantity - $position->shares_held_for_sells;
         map { $quantity += $_->cancel->quantity }
             grep { $_->price < $target_price } @orders_outstanding;
