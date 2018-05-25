@@ -314,11 +314,27 @@ Gather a single order by id. This is returned as a new
 Gather info about all options orders. This is returned as a
 `Finance::Robinhood::Utils::Paginated` object.
 
-    my $inst = $rh->options_chains( 'since' =>  '2018-10-01' );
+    my $inst = $rh->options_orders( before =>  '2018-10-01' );
     my $all = $inst->all;
 
-Gather info about options orders after a certain date. This is returned as a
+    #
+
+    my $orders = grep {$_->state eq ''} $rh->optoins_orders(since => '2018-04-15T14:47:07' )->all;
+
+    # or
+
+    use DateTime;
+    my @recent = $rh->options_orders(
+        since => DateTime->now->subtract( weeks => 1 )->ymd
+    )->all;
+
+Gather info about options orders before or after a certain date. This is returned as a
 `Finance::Robinhood::Utils::Paginated` object.
+
+Expected arguments include:
+
+- `before` - MDY (optional)
+- `since` - MDY (optional)
 
 ## `options_positions( ... )`
 
