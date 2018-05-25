@@ -54,8 +54,10 @@ use Finance::Robinhood::Utils 'v4_uuid' => { -as => 'uuid' };
 use Finance::Robinhood::Utils::Client;
 use Finance::Robinhood::Utils::Credentials;
 use Finance::Robinhood::Utils::Paginated;
+use Finance::Robinhood::Watchlist;
 #
 our %Endpoints = (
+    'watchlists'                 => 'https://api.robinhood.com/watchlists/',
     'orders'                     => 'https://api.robinhood.com/orders/',
     'orders/{id}'                => 'https://api.robinhood.com/orders/%s/',
     'positions'                  => 'https://api.robinhood.com/positions/',
@@ -318,6 +320,23 @@ sub user {
     my ($s) = @_;
     my ( $status, $data ) = $s->get( $Endpoints{'user'} );
     $status == 200 ? Finance::Robinhood::User->new($data) : $data;
+}
+
+=head2 C<watchlists( )>
+
+    my @watchlists = $rh->watchlists->all;
+
+Gather the list of watchlists connected to this account. This is returned
+as a C<Finance::Robinhood::Utils::Paginated> object.
+
+=cut
+
+sub watchlists {
+    my ($s) = @_;
+    Finance::Robinhood::Utils::Paginated->new(
+        class => 'Finance::Robinhood::Watchlist',
+        next  => $Endpoints{'watchlists'}
+    );
 }
 
 =head2 C<equity_quote( ... )>
