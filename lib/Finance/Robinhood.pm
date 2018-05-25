@@ -401,9 +401,9 @@ sub equity_quotes {
     );
 }
 
-=head2 C<equity_historical( ... )>
+=head2 C<equity_historicals( ... )>
 
-    my $inst = $rh->equity_quotes( symbols => ['MSFT', 'X'], interval => 'week' );
+    my $inst = $rh->equity_historicals( symbols => ['MSFT', 'X'], interval => 'week' );
     my $all = $inst->all;
 
 Gather historical info about multiple equities by symbol. This is returned as a
@@ -415,7 +415,7 @@ Expected arguments:
 
 =item C<symbols> - required list of ticker symbols to look for
 
-=item C<interval> - required argument which must be C<hour>, C<day>, C<week>, or C<month>
+=item C<interval> - required argument which must be C<5minute>, C<10minute>, C<hour>, C<day>, C<week>, or C<month>
 
 =item C<span> - which must be C<week>, C<year>, C<5year>, or C<10year> and is optional
 
@@ -677,6 +677,8 @@ supported:
 
 =over
 
+=item C<instruments> - array ref of options instrument objects or urls
+
 =item C<bounds> - which must be C<extended>, C<regular>, or C<trading> which is the default
 
 =back
@@ -814,11 +816,32 @@ sub options_order {
 Gather info about all options orders. This is returned as a
 C<Finance::Robinhood::Utils::Paginated> object.
 
-    my $inst = $rh->options_chains( 'since' =>  '2018-10-01' );
+    my $inst = $rh->options_orders( before =>  '2018-10-01' );
     my $all = $inst->all;
 
-Gather info about options orders after a certain date. This is returned as a
+    #
+
+    my $orders = grep {$_->state eq ''} $rh->optoins_orders(since => '2018-04-15T14:47:07' )->all;
+
+    # or
+
+    use DateTime;
+    my @recent = $rh->options_orders(
+        since => DateTime->now->subtract( weeks => 1 )->ymd
+    )->all;
+
+Gather info about options orders before or after a certain date. This is returned as a
 C<Finance::Robinhood::Utils::Paginated> object.
+
+Expected arguments include:
+
+=over
+
+=item C<before> - MDY (optional)
+
+=item C<since> - MDY (optional)
+
+=back
 
 =cut
 
