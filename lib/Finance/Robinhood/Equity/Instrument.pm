@@ -35,9 +35,11 @@ The following arguments are accepted:
 
 =over
 
-=item C<interval> - C<hour>, C<day>, C<week>, or C<month>
+=item C<interval> - C<5minute>, C<10minute>, C<hour>, C<day>, C<week>, or C<month>
 
 =item C<span> - C<week>, C<year>, C<5year>, or C<10year>
+
+=item C<bounds> - C<extended>, C<regular>, C<trading>
 
 =back
 
