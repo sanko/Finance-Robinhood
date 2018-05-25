@@ -3,10 +3,10 @@ use Moo;
 use DateTime::Tiny;
 use Date::Tiny;
 has [
-    qw[adjusted_previous_close ask_price ask_size bid_price bid_size
+    qw[adjusted_previous_close  previous_close
+        ask_price ask_size bid_price bid_size
         has_traded
         last_extended_hours_trade_price last_trade_price last_trade_price_source
-        previous_close
         symbol
         trading_halted
         ]
