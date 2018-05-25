@@ -50,7 +50,7 @@ sub historicals {
     my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get(
         Finance::Robinhood::Utils::Client::__url_and_args(
             sprintf( $Finance::Robinhood::Endpoints{'marketdata/historicals/{symbol}'}, $s->id ),
-            %args
+            \%args
         )
     );
     $status == 200 ? Finance::Robinhood::Equity::Instrument::Historicals->new($data) : $data;
@@ -72,7 +72,7 @@ sub quote {
     my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get(
         Finance::Robinhood::Utils::Client::__url_and_args(
             sprintf( $Finance::Robinhood::Endpoints{'marketdata/quotes/{symbol}'}, $s->symbol ),
-            %args
+            \%args
         )
     );
     $status == 200 ? Finance::Robinhood::Equity::Quote->new($data) : $data;
