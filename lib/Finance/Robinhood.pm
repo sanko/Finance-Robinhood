@@ -59,6 +59,7 @@ use Finance::Robinhood::Watchlist::Item;
 #
 our %Endpoints = (
     'watchlists'                 => 'https://api.robinhood.com/watchlists/',
+    'watchlists/{name}'          => 'https://api.robinhood.com/watchlists/%s/',
     'orders'                     => 'https://api.robinhood.com/orders/',
     'orders/{id}'                => 'https://api.robinhood.com/orders/%s/',
     'positions'                  => 'https://api.robinhood.com/positions/',
@@ -164,7 +165,7 @@ has 'credentials' => (
 has 'client' => (
     is      => 'ro',
     builder => sub { Finance::Robinhood::Utils::Client->instance },
-    handles => [qw[get post account]],
+    handles => [qw[get post options account]],
     lazy    => 1
 );
 
@@ -323,17 +324,29 @@ sub user {
     $status == 200 ? Finance::Robinhood::User->new($data) : $data;
 }
 
-=head2 C<watchlists( )>
+=head2 C<watchlists( [...] )>
 
     my @watchlists = $rh->watchlists->all;
 
 Gather the list of watchlists connected to this account. This is returned
 as a C<Finance::Robinhood::Utils::Paginated> object.
 
+    my @instruments = $rh->watchlists(name => 'Default')->all;
+
+Gather the list of instruments in a watchlist. This is returned
+as a C<Finance::Robinhood::Utils::Paginated> object.
+
 =cut
 
 sub watchlists {
-    my ($s) = @_;
+    my ( $s, %args ) = @_;
+    if ( $args{name} ) {
+        return Finance::Robinhood::Watchlist->new(
+
+            #$data
+            %args
+        );
+    }
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Watchlist',
         next  => $Endpoints{'watchlists'}
@@ -490,7 +503,7 @@ sub equity_orders {
 
 =cut
 
-sub equity_order {   
+sub equity_order {
     my ( $s, $id ) = @_;
     warn $id;
     my ( $status, $data ) = $s->get( sprintf $Endpoints{'orders/{id}'}, $id );

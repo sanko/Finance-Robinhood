@@ -1,8 +1,17 @@
 package Finance::Robinhood::Watchlist;
 use Moo;
 use Finance::Robinhood::Watchlist::Item;
-has [qw[name user]] => ( is => 'ro' );
-has '_url' => ( is => 'ro', init_arg => 'url' );
+has 'name' => ( is => 'ro', required => 1 );
+has 'user' => ( is => 'ro', lazy => 1, builder => sub { $Finance::Robinhood::Endpoints{'user'} } );
+has '_url' => (
+    is       => 'ro',
+    init_arg => 'url',
+    lazy     => 1,
+    builder  => sub {
+        my $s = shift;
+        sprintf $Finance::Robinhood::Endpoints{'watchlists/{name}'}, $s->name;
+    }
+);
 has 'items' => (
     is       => 'ro',
     lazy     => 1,
@@ -23,10 +32,8 @@ has 'instruments' => (
             class => 'Finance::Robinhood::Watchlist::Item',
             next  => [ $_[0]->_url ]
         )->all;
-        warn scalar @ids;
         my @groups;
         push @groups, [ splice @ids, 0, 75 ] while @ids;
-        warn scalar @$_ for @groups;
         Finance::Robinhood::Utils::Paginated->new(
             class => 'Finance::Robinhood::Equity::Instrument',
             next  => [
