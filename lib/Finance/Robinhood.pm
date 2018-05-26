@@ -55,6 +55,7 @@ use Finance::Robinhood::Utils::Client;
 use Finance::Robinhood::Utils::Credentials;
 use Finance::Robinhood::Utils::Paginated;
 use Finance::Robinhood::Watchlist;
+use Finance::Robinhood::Watchlist::Item;
 #
 our %Endpoints = (
     'watchlists'                 => 'https://api.robinhood.com/watchlists/',
