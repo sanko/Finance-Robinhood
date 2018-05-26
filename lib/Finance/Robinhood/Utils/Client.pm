@@ -41,7 +41,6 @@ sub _http {
 ###
     #warn $url;
     #use Data::Dump;
-
     #ddx [caller(1)];
     #ddx [ $method, $url, $args, $headers ];
     %$headers = ( %{ $s->headers($headers) // () }, $headers ? %$headers : () );
@@ -54,6 +53,7 @@ sub _http {
             $args->{content} = encode_json( $args->{content} );
         }
     }
+
     #use Data::Dump;
     #ddx [ $method, $url, { %$args, headers => ($headers) } ];
     my $response = $s->http->request( $method, $url, { %$args, headers => ($headers) } );

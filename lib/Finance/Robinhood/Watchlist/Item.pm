@@ -2,7 +2,7 @@ package Finance::Robinhood::Watchlist::Item;
 use Moo;
 use DateTime::Tiny;
 has [qw[url]] => ( is => 'ro' );
-has [ 'created_at' ] => (
+has ['created_at'] => (
     is     => 'ro',
     coerce => sub {
         $_[0] =~ s'Z$'';
@@ -12,10 +12,6 @@ has [ 'created_at' ] => (
         DateTime::Tiny->from_string( $_[0] );
     }
 );
-
-
-
-
 has '_instrument_url' => ( is => 'ro', init_arg => 'instrument' );
 has 'instrument' => (
     is       => 'ro',
@@ -27,7 +23,6 @@ has 'instrument' => (
         $status == 200 ? Finance::Robinhood::Equity::Instrument->new($data) : $data;
     }
 );
-
 has '_watchlist_url' => ( is => 'ro', init_arg => 'watchlist' );
 has 'watchlist' => (
     is       => 'ro',
@@ -39,5 +34,4 @@ has 'watchlist' => (
         $status == 200 ? Finance::Robinhood::Watchlist->new($data) : $data;
     }
 );
-
 1;

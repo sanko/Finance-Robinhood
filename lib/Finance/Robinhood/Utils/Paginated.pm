@@ -22,6 +22,7 @@ object
 =cut
 
 use Moo;
+use MooX::HandlesVia;
 our $VERSION = '0.90_001';
 use Finance::Robinhood::Utils::Client;
 
@@ -33,11 +34,26 @@ into pages.
 This class wraps that data in a friendly way.
 
 =cut
-
-has '_results'  => ( is => 'rw', predicate => 1 );
-has '_next'     => ( is => 'rw', init_arg  => 'next', predicate => 1, clearer => 1 );
-has '_previous' => ( is => 'rw', init_arg  => 'previous', predicate => 1, clearer => 1 );
-has '_class'    => ( is => 'ro', init_arg  => 'class', predicate => 1 );
+use diagnostics;
+has '_results' => ( is => 'rw', predicate => 1 );
+has '_next' => (
+    is       => 'rw',
+    init_arg => 'next',
+    coerce   => sub {
+        ref $_[0] ? $_[0] : [ $_[0] ];
+    },
+    handles_via => 'Array',
+    handles     => {
+        mixup_next  => 'shuffle',
+        unique_next => 'uniq',
+        all_next    => 'elements',
+        _next_page  => 'shift',
+        _has_next   => 'count',
+        _queue_next => 'push'
+    }
+);
+has '_previous' => ( is => 'rw', init_arg => 'previous', predicate => 1, clearer => 1 );
+has '_class' => ( is => 'ro', init_arg => 'class', predicate => 1 );
 
 =head2 C<next( )>
 
@@ -74,14 +90,15 @@ Returns an array ref of records for the next page.
 sub next_page {
     my ( $s, $with_status ) = @_;
     return if !$s->_has_next();
-    my $page = $s->_next();
+    my $page = $s->_next_page();
     my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get($page);
 
     #warn $data->{next} // 'No next!';
     if ( !$data || !$data->{next} || $data->{next} eq $page ) {
-        $s->_clear_next;
+
+        #warn 'NEXT is current!';
     }
-    else { $s->_next( $data->{next} ); $s->_previous( $data->{previous} ) }
+    else { $s->_queue_next( $data->{next} ); $s->_previous( $data->{previous} ) }
     $data->{results} = [ map { $_ = $_ ? $s->_class->new($_) : $_ } @{ $data->{results} } ]
         if $s->_has_class;
     $s->_results( $data->{results} );
