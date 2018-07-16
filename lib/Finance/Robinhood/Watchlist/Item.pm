@@ -1,15 +1,11 @@
 package Finance::Robinhood::Watchlist::Item;
 use Moo;
-use DateTime::Tiny;
+use Time::Moment;
 has [qw[url]] => ( is => 'ro' );
 has ['created_at'] => (
     is     => 'ro',
     coerce => sub {
-        $_[0] =~ s'Z$'';
-
-        # BUG: DateTime::Tiny cannot handle sub-second values.
-        $_[0] =~ s'\..+$'';
-        DateTime::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] );
     }
 );
 has '_instrument_url' => ( is => 'ro', init_arg => 'instrument' );

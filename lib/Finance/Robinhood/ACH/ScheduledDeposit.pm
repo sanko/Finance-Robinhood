@@ -1,7 +1,6 @@
 package Finance::Robinhood::ACH::ScheduledDeposit;
 use Moo;
-use DateTime::Tiny;
-use Date::Tiny;
+use Time::Moment;
 has 'client' => (
     is      => 'rw',
     default => sub { Finance::Robinhood::Client->instance },
@@ -12,18 +11,14 @@ has [ 'next_deposit_date', 'last_attempt_date' ] => (
     is     => 'ro',
     coerce => sub {
         $_[0] // return;
-        Date::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] );
     }
 );
 has [ 'created_at', 'updated_at' ] => (
     is     => 'ro',
     coerce => sub {
         $_[0] // return;
-        $_[0] =~ s'Z$'';
-
-        # BUG: DateTime::Tiny cannot handle sub-second values.
-        $_[0] =~ s'\..+$'';
-        DateTime::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] );
     }
 );
 

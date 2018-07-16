@@ -1,6 +1,6 @@
 package Finance::Robinhood::Account::MarginBalances;
 use Moo;
-use DateTime::Tiny;
+use Time::Moment;
 has [
     qw[cash
         cash_available_for_withdrawal cash_held_for_options_collateral cash_held_for_orders
@@ -16,11 +16,7 @@ has [qw[created_at updated_at]] => (
     is     => 'ro',
     coerce => sub {
         $_[0] // return;
-        $_[0] =~ s'Z$'';
-
-        # BUG: DateTime::Tiny cannot handle sub-second values.
-        $_[0] =~ s'\..+$'';
-        DateTime::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] );
     }
 );
 1;

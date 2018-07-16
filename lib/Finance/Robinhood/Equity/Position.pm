@@ -1,6 +1,6 @@
 package Finance::Robinhood::Equity::Position;
 use Moo;
-use DateTime::Tiny;
+use Time::Moment;
 #
 has [
     qw[shares_held_for_buys shares_held_for_sells
@@ -14,11 +14,7 @@ has [
 has [ 'created_at', 'updated_at' ] => (
     is     => 'ro',
     coerce => sub {
-        $_[0] =~ s'Z$'';
-
-        # BUG: DateTime::Tiny cannot handle sub-second values.
-        $_[0] =~ s'\..+$'';
-        DateTime::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] );
     }
 );
 has '_account_url' => (

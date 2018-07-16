@@ -9,8 +9,7 @@ requires 'JSON::Tiny', '0.54';
 requires 'strictures', '2';
 requires 'namespace::clean', '0.26';
 requires 'IO::Socket::SSL', '2.020';
-requires 'DateTime::Tiny';
-requires 'Date::Tiny';
+requires 'Time::Moment';
 requires 'Try::Tiny', '0.24';
 requires 'Exporter::Tiny';
 

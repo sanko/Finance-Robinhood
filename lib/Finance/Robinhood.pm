@@ -839,9 +839,9 @@ C<Finance::Robinhood::Utils::Paginated> object.
 
     # or
 
-    use DateTime;
+    use Time::Moment;
     my @recent = $rh->options_orders(
-        since => DateTime->now->subtract( weeks => 1 )->ymd
+        since => Time::Moment->now->minus_weeks(1)->to_string()
     )->all;
 
 Gather info about options orders before or after a certain date. This is returned as a

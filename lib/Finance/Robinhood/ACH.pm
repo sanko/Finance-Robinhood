@@ -1,6 +1,6 @@
 package Finance::Robinhood::ACH;
 use Moo;
-use DateTime::Tiny;
+use Time::Moment;
 use Finance::Robinhood::Utils::Client;
 has 'client' => (
     is      => 'rw',
@@ -19,11 +19,7 @@ has [
 has [ 'created_at', 'updated_at' ] => (
     is     => 'ro',
     coerce => sub {
-        $_[0] =~ s'Z$'';
-
-        # BUG: DateTime::Tiny cannot handle sub-second values.
-        $_[0] =~ s'\..+$'';
-        DateTime::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] );
     }
 );
 has "_unlink" => ( is => 'ro', init_arg => 'unlink' );

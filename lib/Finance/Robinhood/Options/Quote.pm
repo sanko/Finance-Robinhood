@@ -1,6 +1,6 @@
 package Finance::Robinhood::Options::Quote;
 use Moo;
-use Date::Tiny;
+use Time::Moment;
 has [
     qw[adjusted_mark_price ask_price ask_size bid_price bid_size break_even_price high_price
         last_trade_price last_trade_size low_price mark_price open_interest
@@ -10,7 +10,7 @@ has [
 has 'previous_close_date' => (
     is     => 'ro',
     coerce => sub {
-        Date::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] . 'T00:00:00Z' );
     }
 );
 has '_instrument_url' => ( is => 'ro', init_arg => 'instrument' );

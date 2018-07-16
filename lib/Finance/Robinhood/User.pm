@@ -1,7 +1,7 @@
 package Finance::Robinhood::User;
 use Moo;
 with 'MooX::Singleton';
-use DateTime::Tiny;
+use Time::Moment;
 #
 has [
     qw[email email_verified id first_name last_name username url
@@ -14,11 +14,7 @@ has '_' . $_ => ( is => 'ro', init_arg => $_ )
 has ['created_at'] => (
     is     => 'ro',
     coerce => sub {
-        $_[0] =~ s'Z$'';
-
-        # BUG: DateTime::Tiny cannot handle sub-second values.
-        $_[0] =~ s'\..+$'';
-        DateTime::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] );
     }
 );
 

@@ -1,6 +1,6 @@
 package Finance::Robinhood::Options::Order;
 use Moo;
-use DateTime::Tiny;
+use Time::Moment;
 use Finance::Robinhood::Options::Order::Leg;
 use Finance::Robinhood::Account;
 #
@@ -20,11 +20,7 @@ has [
 has [ 'created_at', 'updated_at' ] => (
     is     => 'ro',
     coerce => sub {
-        $_[0] =~ s'Z$'';
-
-        # BUG: DateTime::Tiny cannot handle sub-second values.
-        $_[0] =~ s'\..+$'';
-        DateTime::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] );
     }
 );
 has 'legs' => (

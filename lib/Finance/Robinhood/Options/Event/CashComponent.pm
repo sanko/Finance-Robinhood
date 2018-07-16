@@ -1,7 +1,5 @@
 package Finance::Robinhood::Options::Event::CashComponent;
 use Moo;
-use DateTime::Tiny;
-use Date::Tiny;
 use Finance::Robinhood::Utils::Client;
 has 'client' => (
     is      => 'rw',

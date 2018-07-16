@@ -2,6 +2,7 @@ package Finance::Robinhood::Utils::Client;
 use Moo;
 use HTTP::Tiny;
 use JSON::Tiny qw[decode_json encode_json];
+use Try::Tiny;
 with 'MooX::Singleton';
 use Finance::Robinhood::Utils::Credentials;
 use Finance::Robinhood::Utils::Error;
@@ -69,6 +70,7 @@ sub _http {
     #        print "$k: $_\n";
     #    }
     #}
+    #use Data::Dump;
     #ddx $response;
     my $content = length $response->{content} ? decode_json( $response->{content} ) : ();
 

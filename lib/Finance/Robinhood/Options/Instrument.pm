@@ -1,25 +1,20 @@
 package Finance::Robinhood::Options::Instrument;
 use v5.10;
 use Moo;
-use DateTime::Tiny;
-use Date::Tiny;
+use Time::Moment;
 use Finance::Robinhood::Options::MarketData;
 use Finance::Robinhood::Options::Instrument::Historicals;
 has [qw[tradability strike_price chain_id state type chain_symbol id url]] => ( is => 'ro' );
 has 'expiration_date' => (
     is     => 'ro',
     coerce => sub {
-        Date::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] . 'T00:00:00Z' );
     }
 );
 has [ 'created_at', 'updated_at' ] => (
     is     => 'ro',
     coerce => sub {
-        $_[0] =~ s'Z$'';
-
-        # BUG: DateTime::Tiny cannot handle sub-second values.
-        $_[0] =~ s'\..+$'';
-        DateTime::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] );
     }
 );
 has 'min_ticks' => (

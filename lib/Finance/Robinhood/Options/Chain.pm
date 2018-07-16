@@ -1,11 +1,11 @@
 package Finance::Robinhood::Options::Chain;
 use Moo;
-use Date::Tiny;
+use Time::Moment;
 has [qw[can_open_position cash_component id symbol trade_value_multiplier]] => ( is => 'ro' );
 has 'expiration_dates' => (
     is     => 'ro',
     coerce => sub {
-        [ map { Date::Tiny->from_string($_) } @{ $_[0] } ];
+        [ map { Time::Moment->from_string( $_ . 'T00:00:00Z' ) } @{ $_[0] } ];
     }
 );
 has 'min_ticks' =>

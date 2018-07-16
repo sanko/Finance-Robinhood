@@ -1,6 +1,6 @@
 package Finance::Robinhood::Options::MarketData;
 use Moo;
-use Date::Tiny;
+use Time::Moment;
 #
 has [
     qw[adjusted_mark_price  ask_price ask_size bid_price bid_size
@@ -13,7 +13,7 @@ has [
 has 'previous_close_date' => (
     is     => 'ro',
     coerce => sub {
-        Date::Tiny->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] );
     }
 );
 1;

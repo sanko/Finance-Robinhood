@@ -1,6 +1,6 @@
 package Finance::Robinhood::Equity::Instrument;
 use Moo;
-use Date::Tiny;
+use Time::Moment;
 
 # TODO:
 #  "splits": "https://api.robinhood.com/instruments/ad5fc8ab-c9e1-41ba-ab38-37253577bcba/splits/",
@@ -17,7 +17,7 @@ has [
 has 'list_date' => (
     is     => 'ro',
     coerce => sub {
-        $_[0] ? Date::Tiny->from_string( $_[0] ) : ();
+        $_[0] ? Time::Moment->from_string( $_[0] . 'T00:00:00Z' ) : ();
     }
 );
 

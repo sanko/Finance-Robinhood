@@ -34,7 +34,6 @@ into pages.
 This class wraps that data in a friendly way.
 
 =cut
-use diagnostics;
 has '_results' => ( is => 'rw', predicate => 1 );
 has '_next' => (
     is       => 'rw',
