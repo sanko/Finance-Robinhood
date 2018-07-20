@@ -26,6 +26,7 @@ our $VERSION = '0.90_001';
 use Finance::Robinhood::Account;
 use Finance::Robinhood::ACH;
 use Finance::Robinhood::Dividend;
+use Finance::Robinhood::Equity::Fundamentals;
 use Finance::Robinhood::Equity::Instrument::Historicals;
 use Finance::Robinhood::Equity::Instrument;
 use Finance::Robinhood::Equity::Quote;
@@ -58,6 +59,8 @@ use Finance::Robinhood::Watchlist;
 use Finance::Robinhood::Watchlist::Item;
 #
 our %Endpoints = (
+    'fundamentals'               => 'https://api.robinhood.com/fundamentals/',
+    'fundamentals/{symbol}'      => 'https://api.robinhood.com/fundamentals/%s/',
     'watchlists'                 => 'https://api.robinhood.com/watchlists/',
     'watchlists/{name}'          => 'https://api.robinhood.com/watchlists/%s/',
     'orders'                     => 'https://api.robinhood.com/orders/',
@@ -401,17 +404,56 @@ supported:
 
 sub equity_quotes {
     my ( $s, %args ) = @_;
-    map {
-        $_
-            = ref $_                        ? $_->url :
-            $_ =~ $Endpoints{'instruments'} ? $_ :
-            sprintf $Endpoints{'instruments/{id}'}, $_
-    } @{ $args{'instruments'} } if $args{'instruments'};
+    my @instruments = @{ delete $args{instruments} };
+    @instruments = map { $_ = ref $_ ? $_->url : $_ } @instruments;
+    my @groups;
+    push @groups, [ splice @instruments, 0, 75 ] while @instruments;
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Equity::Quote',
-        next  => Finance::Robinhood::Utils::Client::__url_and_args(
-            $Endpoints{'marketdata/quotes'}, \%args
-        )
+        next  => [
+            map {
+                Finance::Robinhood::Utils::Client::__url_and_args(
+                    $Finance::Robinhood::Endpoints{'marketdata/quotes'},
+                    { %args, ( $_ ? ( instruments => $_ ) : () ) }
+                    )
+            } @groups
+        ]
+    );
+}
+
+=head2 C<fundamentals( ... )>
+
+    my $inst = $rh->fundamentals( symbols => ['MSFT', 'X'] );
+    my $all = $inst->all;
+
+Gather info about multiple equities by symbol, by instrument object, by
+instrument id, or by instrument url. This is returned as a
+C<Finance::Robinhood::Utils::Paginated> object.
+
+    my $inst = $rh->fundamentals( ids =>  ['50810c35-d215-4866-9758-0ada4ac79ffa', 'b060f19f-0d24-4bf2-bf8c-d57ba33993e5'] );
+    my $all = $inst->all;
+
+Gather info about a several instruments by their ids; data is returned as a
+C<Finance::Robinhood::Utils::Paginated> object.
+
+=cut
+
+sub fundamentals {
+    my ( $s, %args ) = @_;
+    my @instruments = @{ delete $args{instruments} };
+    @instruments = map { $_ = ref $_ ? $_->url : $_ } @instruments;
+    my @groups;
+    push @groups, [ splice @instruments, 0, 75 ] while @instruments;
+    Finance::Robinhood::Utils::Paginated->new(
+        class => 'Finance::Robinhood::Equity::Quote',
+        next  => [
+            map {
+                Finance::Robinhood::Utils::Client::__url_and_args(
+                    $Finance::Robinhood::Endpoints{'fundamentals'},
+                    { %args, ( $_ ? ( instruments => $_ ) : () ) }
+                    )
+            } @groups
+        ]
     );
 }
 
@@ -441,12 +483,19 @@ Expected arguments:
 
 sub equity_historicals {
     my ( $s, %args ) = @_;
-    map { $_ = ref $_ ? $_->symbol : $_ } @{ $args{'symbols'} } if $args{'symbols'};
+    my @symbols = @{ delete $args{symbols} };
+    @symbols = map { $_ = ref $_ ? $_->symbol : $_ } @symbols;
+    my @groups;
+    push @groups, [ splice @symbols, 0, 75 ] while @symbols;
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Equity::Instrument::Historicals',
-        next  => Finance::Robinhood::Utils::Client::__url_and_args(
-            $Endpoints{'marketdata/historicals'}, \%args
-        )
+        next  => [
+            map {
+                Finance::Robinhood::Utils::Client::__url_and_args(
+                    $Finance::Robinhood::Endpoints{'marketdata/historicals'},
+                    { %args, ( $_ ? ( symbols => $_ ) : () ) } )
+            } @groups
+        ]
     );
 }
 
@@ -653,11 +702,11 @@ sub options_instruments {
 
 =head2 C<options_quote( ... )>
 
-    my $msft_quote = $rh->quote('MSFT');
+    my $msft_quote = $rh->options_quote('...');
 
-Gather quote data as a L<Finance::Robinhood::options::Quote> object.
+Gather quote data as a L<Finance::Robinhood::Options::Quote> object.
 
-    my $msft_quote = $rh->quote('MSFT', bounds => 'extended');
+    my $msft_quote = $rh->options_quote('...', bounds => 'extended');
 
 An argument called C<bounds> is also supported when you want a certain range of
 quote data. This value must be C<extended>, C<regular>, or C<trading> which is

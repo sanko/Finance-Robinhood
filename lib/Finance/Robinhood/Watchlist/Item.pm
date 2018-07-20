@@ -19,6 +19,13 @@ has 'instrument' => (
         $status == 200 ? Finance::Robinhood::Equity::Instrument->new($data) : $data;
     }
 );
+
+sub instrument_id {
+    my $s = shift;
+    $s->_instrument_url
+        =~ m[^.*?/([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})/$]i;
+    $1;
+}
 has '_watchlist_url' => ( is => 'ro', init_arg => 'watchlist' );
 has 'watchlist' => (
     is       => 'ro',

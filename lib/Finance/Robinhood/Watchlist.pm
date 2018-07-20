@@ -46,4 +46,19 @@ has 'instruments' => (
         );
     }
 );
+
+sub equity_quotes {
+    my ( $s, %args ) = @_;
+    Finance::Robinhood::equity_quotes(
+        undef,
+        instruments => [ map { $_->_instrument_url } $s->items->all ],
+        %args
+    );
+}
+
+sub fundamentals {
+    my ( $s, %args ) = @_;
+    Finance::Robinhood::fundamentals( undef,
+        instruments => [ map { $_->_instrument_url } $s->items->all ] );
+}
 1;

@@ -80,6 +80,16 @@ sub quote {
     $status == 200 ? Finance::Robinhood::Equity::Quote->new($data) : $data;
 }
 
+sub fundamentals {
+    my ($s) = @_;
+    my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get(
+        Finance::Robinhood::Utils::Client::__url_and_args(
+            sprintf( $Finance::Robinhood::Endpoints{'fundamentals/{symbol}'}, $s->symbol ),
+        )
+    );
+    $status == 200 ? Finance::Robinhood::Equity::Fundamentals->new($data) : $data;
+}
+
 sub place_order {
     my ( $s, %args ) = @_;
     $args{instrument} = $s->url;
