@@ -3,18 +3,17 @@ use Moo;
 use Time::Moment;
 has [
     qw[open high low volume average_volume_2_weeks average_volume
-    high_52_weeks low_52_weeks
-    dividend_yield market_cap
-    pe_ratio
-    shares_outstanding
-    description
-    ceo headquarters_city
-    headquarters_state
-    num_employees
-    year_founded
+        high_52_weeks low_52_weeks
+        dividend_yield market_cap
+        pe_ratio
+        shares_outstanding
+        description
+        ceo headquarters_city
+        headquarters_state
+        num_employees
+        year_founded
         ]
 ] => ( is => 'ro' );
-
 has '_instrument_url' => (
     is       => 'ro',
     init_arg => 'instrument',
