@@ -49,6 +49,7 @@
             "IO::Socket::SSL" : "2.020",
             "JSON::Tiny" : "0.54",
             "Moo" : "2.003004",
+            "MooX::HandlesVia" : "0",
             "MooX::Singleton" : "0",
             "Time::Moment" : "0",
             "Try::Tiny" : "0.24",

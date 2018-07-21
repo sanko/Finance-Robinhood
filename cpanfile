@@ -5,6 +5,7 @@ requires 'Carp', '1.36';
 requires 'Data::Dump';
 requires 'Moo', '2.003004';
 requires 'MooX::Singleton';
+requires 'MooX::HandlesVia';
 requires 'JSON::Tiny', '0.54';
 requires 'strictures', '2';
 requires 'namespace::clean', '0.26';
@@ -16,4 +17,3 @@ requires 'Exporter::Tiny';
 on 'test' => sub {
     requires 'Test::More', '0.98';
 };
-
