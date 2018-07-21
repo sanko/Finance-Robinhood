@@ -84,13 +84,15 @@ sub portfolio_historicals {
     my ( $s,      %args ) = @_;
     my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get(
         Finance::Robinhood::Utils::Client::__url_and_args(
-            sprintf( $Finance::Robinhood::Endpoints{'portfolios/historicals/{accountNumber}'}, $s->account_number ),
+            sprintf(
+                $Finance::Robinhood::Endpoints{'portfolios/historicals/{accountNumber}'},
+                $s->account_number
+            ),
             \%args
         )
     );
     $status == 200 ? Finance::Robinhood::Account::Portfolio::Historicals->new($data) : $data;
 }
-
 has 'can_downgrade_to_cash' => (
     is       => 'ro',
     lazy     => 1,
