@@ -106,6 +106,25 @@ Convert your old skool token to an OAuth2 token.
 Gather very basic info about your account. This is returned as a
 `Finance::Robinhood::User` object.
 
+## `watchlists( [...] )`
+
+    my @watchlists = $rh->watchlists->all;
+
+Gather the list of watchlists connected to this account. This is returned
+as a `Finance::Robinhood::Utils::Paginated` object.
+
+        my $watchlist = $rh->watchlists(name => 'Default');
+
+Grab a specific watchlist by name. This is returned as a
+`Finance::Robinhood::Watchlist` object.
+
+Use this like so:
+
+    my @instruments = $rh->watchlists(name => 'Default')->instruments->all;
+
+... to gather the list of instruments in a watchlist. This is returned
+as a `Finance::Robinhood::Utils::Paginated` object.
+
 ## `equity_quote( ... )`
 
     my $msft_quote = $rh->quote('MSFT');
@@ -126,7 +145,7 @@ the default.
 Gather info about multiple equities by symbol. This is returned as a
 `Finance::Robinhood::Utils::Paginated` object.
 
-    my $inst = $rh->instruments( instruments =>  ['50810c35-d215-4866-9758-0ada4ac79ffa', 'b060f19f-0d24-4bf2-bf8c-d57ba33993e5'] );
+    my $inst = $rh->equity_quotes( instruments =>  ['50810c35-d215-4866-9758-0ada4ac79ffa', 'b060f19f-0d24-4bf2-bf8c-d57ba33993e5'] );
     my $all = $inst->all;
 
 Gather info about a several instruments by their ids; data is returned as a
@@ -137,9 +156,24 @@ supported:
 
 - `bounds` - which must be `extended`, `regular`, or `trading` which is the default
 
-## `equity_historical( ... )`
+## `fundamentals( ... )`
 
-    my $inst = $rh->equity_quotes( symbols => ['MSFT', 'X'], interval => 'week' );
+    my $inst = $rh->fundamentals( symbols => ['MSFT', 'X'] );
+    my $all = $inst->all;
+
+Gather info about multiple equities by symbol, by instrument object, by
+instrument id, or by instrument url. This is returned as a
+`Finance::Robinhood::Utils::Paginated` object.
+
+    my $inst = $rh->fundamentals( ids =>  ['50810c35-d215-4866-9758-0ada4ac79ffa', 'b060f19f-0d24-4bf2-bf8c-d57ba33993e5'] );
+    my $all = $inst->all;
+
+Gather info about a several instruments by their ids; data is returned as a
+`Finance::Robinhood::Utils::Paginated` object.
+
+## `equity_historicals( ... )`
+
+    my $inst = $rh->equity_historicals( symbols => ['MSFT', 'X'], interval => 'week' );
     my $all = $inst->all;
 
 Gather historical info about multiple equities by symbol. This is returned as a
@@ -148,9 +182,17 @@ Gather historical info about multiple equities by symbol. This is returned as a
 Expected arguments:
 
 - `symbols` - required list of ticker symbols to look for
-- `interval` - required argument which must be `hour`, `day`, `week`, or `month`
+- `interval` - required argument which must be `5minute`, `10minute`, `hour`, `day`, `week`, or `month`
 - `span` - which must be `week`, `year`, `5year`, or `10year` and is optional
 - `bounds` - which must be `extended`, `regular`, or `trading` which is the default
+
+## `equity_positions( )`
+
+## `equity_position( )`
+
+## `equity_orders( )`
+
+## `equity_order( )`
 
 ## `equity_instruments( ... )`
 
@@ -243,11 +285,11 @@ Supported arguments include:
 
 ## `options_quote( ... )`
 
-    my $msft_quote = $rh->quote('MSFT');
+    my $msft_quote = $rh->options_quote('...');
 
-Gather quote data as a [Finance::Robinhood::options::Quote](https://metacpan.org/pod/Finance::Robinhood::options::Quote) object.
+Gather quote data as a [Finance::Robinhood::Options::Quote](https://metacpan.org/pod/Finance::Robinhood::Options::Quote) object.
 
-    my $msft_quote = $rh->quote('MSFT', bounds => 'extended');
+    my $msft_quote = $rh->options_quote('...', bounds => 'extended');
 
 An argument called `bounds` is also supported when you want a certain range of
 quote data. This value must be `extended`, `regular`, or `trading` which is
@@ -261,7 +303,7 @@ the default.
 Gather info about multiple equities by symbol. This is returned as a
 `Finance::Robinhood::Utils::Paginated` object.
 
-    my $inst = $rh->instruments( instruments =>  ['50810c35-d215-4866-9758-0ada4ac79ffa', 'b060f19f-0d24-4bf2-bf8c-d57ba33993e5'] );
+    my $inst = $rh->options_quotes( instruments =>  ['50810c35-d215-4866-9758-0ada4ac79ffa', 'b060f19f-0d24-4bf2-bf8c-d57ba33993e5'] );
     my $all = $inst->all;
 
 Gather info about a several instruments by their ids; data is returned as a
@@ -270,7 +312,7 @@ Gather info about a several instruments by their ids; data is returned as a
 Request either by symbol or by instrument id! Other arguments are also
 supported:
 
-- `bounds` - which must be `extended`, `regular`, or `trading` which is the default
+- `instruments` - array ref of options instrument objects or urls
 
 ## `optioins_historical( ... )`
 
@@ -323,9 +365,9 @@ Gather info about all options orders. This is returned as a
 
     # or
 
-    use DateTime;
+    use Time::Moment;
     my @recent = $rh->options_orders(
-        since => DateTime->now->subtract( weeks => 1 )->ymd
+        since => Time::Moment->now->minus_weeks(1)->to_string()
     )->all;
 
 Gather info about options orders before or after a certain date. This is returned as a
@@ -390,9 +432,9 @@ Gather info about all attached bank accounts. This is returned as a
 ## `create_ach_relationship( ... )`
 
     my $ok = $rh->create_ach_relationship(
-        bank_routing_number => '026009593', 
+        bank_routing_number => '026009593',
         bank_account_number => '009872784317963',
-        bank_account_type => 'checking', 
+        bank_account_type => 'checking',
         bank_account_holder_name => 'John Smith
     );
 

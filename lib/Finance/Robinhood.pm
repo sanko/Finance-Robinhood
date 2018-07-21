@@ -2,6 +2,8 @@ package Finance::Robinhood;
 
 =encoding utf-8
 
+=for stopwords watchlist watchlists untradable urls
+
 =head1 NAME
 
 Finance::Robinhood - Trade Stocks, ETFs, Options, and Cryptocurrency without
@@ -334,9 +336,16 @@ sub user {
 Gather the list of watchlists connected to this account. This is returned
 as a C<Finance::Robinhood::Utils::Paginated> object.
 
-    my @instruments = $rh->watchlists(name => 'Default')->all;
+	my $watchlist = $rh->watchlists(name => 'Default');
 
-Gather the list of instruments in a watchlist. This is returned
+Grab a specific watchlist by name. This is returned as a
+C<Finance::Robinhood::Watchlist> object.
+
+Use this like so:
+
+    my @instruments = $rh->watchlists(name => 'Default')->instruments->all;
+
+... to gather the list of instruments in a watchlist. This is returned
 as a C<Finance::Robinhood::Utils::Paginated> object.
 
 =cut
@@ -385,7 +394,7 @@ sub equity_quote {
 Gather info about multiple equities by symbol. This is returned as a
 C<Finance::Robinhood::Utils::Paginated> object.
 
-    my $inst = $rh->instruments( instruments =>  ['50810c35-d215-4866-9758-0ada4ac79ffa', 'b060f19f-0d24-4bf2-bf8c-d57ba33993e5'] );
+    my $inst = $rh->equity_quotes( instruments =>  ['50810c35-d215-4866-9758-0ada4ac79ffa', 'b060f19f-0d24-4bf2-bf8c-d57ba33993e5'] );
     my $all = $inst->all;
 
 Gather info about a several instruments by their ids; data is returned as a
@@ -404,19 +413,28 @@ supported:
 
 sub equity_quotes {
     my ( $s, %args ) = @_;
-    my @instruments = @{ delete $args{instruments} };
-    @instruments = map { $_ = ref $_ ? $_->url : $_ } @instruments;
-    my @groups;
-    push @groups, [ splice @instruments, 0, 75 ] while @instruments;
+    my ( @instruments, @groups );
+    if ( $args{instruments} ) {
+        @instruments = @{ delete $args{instruments} };
+        @instruments = map {
+            $_ =~ $Finance::Robinhood::Endpoints{'instruments'} ? $_ :
+                sprintf $Finance::Robinhood::Endpoints{'instruments/{id}'}, $_
+        } map { $_ = ref $_ ? $_->url : $_ } @instruments;
+        push @groups, [ splice @instruments, 0, 75 ] while @instruments;
+    }
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Equity::Quote',
         next  => [
-            map {
+            @groups ?
+                map {
                 Finance::Robinhood::Utils::Client::__url_and_args(
                     $Finance::Robinhood::Endpoints{'marketdata/quotes'},
                     { %args, ( $_ ? ( instruments => $_ ) : () ) }
                     )
-            } @groups
+                } @groups :
+                Finance::Robinhood::Utils::Client::__url_and_args(
+                $Finance::Robinhood::Endpoints{'marketdata/quotes'}, {%args}
+                )
         ]
     );
 }
@@ -440,19 +458,28 @@ C<Finance::Robinhood::Utils::Paginated> object.
 
 sub fundamentals {
     my ( $s, %args ) = @_;
-    my @instruments = @{ delete $args{instruments} };
-    @instruments = map { $_ = ref $_ ? $_->url : $_ } @instruments;
-    my @groups;
-    push @groups, [ splice @instruments, 0, 75 ] while @instruments;
+    my ( @instruments, @groups );
+    if ( $args{instruments} ) {
+        @instruments = @{ delete $args{instruments} };
+        @instruments = @instruments = map {
+            $_ =~ $Finance::Robinhood::Endpoints{'instruments'} ? $_ :
+                sprintf $Finance::Robinhood::Endpoints{'instruments/{id}'}, $_
+        } map { $_ = ref $_ ? $_->url : $_ } @instruments;
+        push @groups, [ splice @instruments, 0, 75 ] while @instruments;
+    }
     Finance::Robinhood::Utils::Paginated->new(
-        class => 'Finance::Robinhood::Equity::Quote',
+        class => 'Finance::Robinhood::Equity::Fundamentals',
         next  => [
-            map {
+            @groups ?
+                map {
                 Finance::Robinhood::Utils::Client::__url_and_args(
                     $Finance::Robinhood::Endpoints{'fundamentals'},
                     { %args, ( $_ ? ( instruments => $_ ) : () ) }
                     )
-            } @groups
+                } @groups :
+                Finance::Robinhood::Utils::Client::__url_and_args(
+                $Finance::Robinhood::Endpoints{'fundamentals'}, {%args}
+                )
         ]
     );
 }
@@ -729,7 +756,7 @@ sub options_quote {
 Gather info about multiple equities by symbol. This is returned as a
 C<Finance::Robinhood::Utils::Paginated> object.
 
-    my $inst = $rh->instruments( instruments =>  ['50810c35-d215-4866-9758-0ada4ac79ffa', 'b060f19f-0d24-4bf2-bf8c-d57ba33993e5'] );
+    my $inst = $rh->options_quotes( instruments =>  ['50810c35-d215-4866-9758-0ada4ac79ffa', 'b060f19f-0d24-4bf2-bf8c-d57ba33993e5'] );
     my $all = $inst->all;
 
 Gather info about a several instruments by their ids; data is returned as a
@@ -742,25 +769,28 @@ supported:
 
 =item C<instruments> - array ref of options instrument objects or urls
 
-=item C<bounds> - which must be C<extended>, C<regular>, or C<trading> which is the default
-
 =back
 
 =cut
 
 sub options_quotes {
     my ( $s, %args ) = @_;
-    map {
-        $_
-            = ref $_                        ? $_->url :
-            $_ =~ $Endpoints{'instruments'} ? $_ :
+    my @instruments = map {
+        ref $_                                      ? $_->url :
+            $_ =~ $Endpoints{'options/instruments'} ? $_ :
             sprintf $Endpoints{'options/instruments/{id}'}, $_
-    } @{ $args{'instruments'} } if $args{'instruments'};
+    } @{ $args{'instruments'} };
+    delete $args{'instruments'};
+    my @groups;
+    push @groups, [ splice @instruments, 0, 25 ] while @instruments;
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Options::Quote',
-        next  => Finance::Robinhood::Utils::Client::__url_and_args(
-            $Endpoints{'marketdata/options'}, \%args
-        )
+        next  => [
+            map {
+                Finance::Robinhood::Utils::Client::__url_and_args( $Endpoints{'marketdata/options'},
+                    { %args, ( $_ ? ( instruments => $_ ) : () ) } )
+            } @groups
+        ]
     );
 }
 
