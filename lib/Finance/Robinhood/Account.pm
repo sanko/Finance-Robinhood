@@ -7,6 +7,7 @@ use Finance::Robinhood::Equity::Position;
 use Finance::Robinhood::Account::InstantEligibility;
 use Finance::Robinhood::Account::MarginBalances;
 use Finance::Robinhood::Account::Portfolio;
+use Finance::Robinhood::Account::Portfolio::Historicals;
 has [
     qw[account_number buying_power
         cash cash_available_for_withdrawl cash_balances cash_held_for_orders
@@ -55,6 +56,41 @@ has 'positions' => (
         );
     }
 );
+
+=head2 C<portfolio_historicals( ... )>
+
+    my $ok = $account->portfolio_historicals( interval => 'week' );
+
+Gather historical quote data for all supported options instrument. This is
+returned as a C<Finance::Robinhood::Account::Portfolio::Historicals> object.
+
+The following arguments are accepted:
+
+=over
+
+=item C<interval> - C<5minute>, C<10minute>, C<hour>, C<day>, C<week>, or C<month>
+
+=item C<span> - C<week>, C<year>, C<5year>, or C<10year>
+
+=item C<bounds> - C<extended>, C<regular>, C<trading>
+
+=back
+
+C<interval> is required.
+
+=cut
+
+sub portfolio_historicals {
+    my ( $s,      %args ) = @_;
+    my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get(
+        Finance::Robinhood::Utils::Client::__url_and_args(
+            sprintf( $Finance::Robinhood::Endpoints{'portfolios/historicals/{accountNumber}'}, $s->account_number ),
+            \%args
+        )
+    );
+    $status == 200 ? Finance::Robinhood::Account::Portfolio::Historicals->new($data) : $data;
+}
+
 has 'can_downgrade_to_cash' => (
     is       => 'ro',
     lazy     => 1,

@@ -109,6 +109,7 @@ our %Endpoints = (
         'https://api.robinhood.com/accounts/%s/recent_day_trades/',
     'marketdata/historicals'          => 'https://api.robinhood.com/marketdata/historicals/',
     'marketdata/historicals/{symbol}' => 'https://api.robinhood.com/marketdata/historicals/%s/',
+	'portfolios/historicals/{accountNumber}' => 'https://api.robinhood.com/portfolios/historicals/%s/'
 );
 
 sub BUILD {
