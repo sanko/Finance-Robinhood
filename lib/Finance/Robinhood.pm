@@ -332,28 +332,28 @@ sub user {
     $status == 200 ? Finance::Robinhood::User->new($data) : $data;
 }
 
-=head2 C<watchlists( [...] )>
+=head2 C<equity_watchlists_q( [...] )>
 
-    my @watchlists = $rh->watchlists->all;
+    my @watchlists = $rh->equity_watchlists->all;
 
 Gather the list of watchlists connected to this account. This is returned
 as a C<Finance::Robinhood::Utils::Paginated> object.
 
-	my $watchlist = $rh->watchlists(name => 'Default');
+	my $watchlist = $rh->equity_watchlists(name => 'Default');
 
 Grab a specific watchlist by name. This is returned as a
 C<Finance::Robinhood::Watchlist> object.
 
 Use this like so:
 
-    my @instruments = $rh->watchlists(name => 'Default')->instruments->all;
+    my @instruments = $rh->equity_watchlists(name => 'Default')->instruments->all;
 
 ... to gather the list of instruments in a watchlist. This is returned
 as a C<Finance::Robinhood::Utils::Paginated> object.
 
 =cut
 
-sub watchlists {
+sub equity_watchlists {
     my ( $s, %args ) = @_;
     if ( $args{name} ) {
         return Finance::Robinhood::Watchlist->new(
@@ -638,6 +638,7 @@ Gather data as a L<Finance::Robinhood::Instrument> object.
 =cut
 
 sub equity_instrument {
+    ...;    # This is not right. Replace it with $rh->equity_instruments(id => ...) or something
     my ( $s, $id ) = @_;
     warn $id;
     my ( $status, $data ) = $s->get( sprintf $Endpoints{'instruments/{id}'}, $id );

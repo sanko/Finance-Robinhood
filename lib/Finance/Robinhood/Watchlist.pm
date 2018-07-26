@@ -61,4 +61,12 @@ sub fundamentals {
     Finance::Robinhood::fundamentals( undef,
         instruments => [ map { $_->_instrument_url } $s->items->all ] );
 }
+
+sub add_equity_instrument {
+    my ( $s, $instrument ) = @_;
+    my ( $status, $data )
+        = Finance::Robinhood::Utils::Client->instance->post( $s->_url,
+        { instrument => $instrument->url } );
+    $data ? Finance::Robinhood::Watchlist::Item->new($data) : $data;
+}
 1;
