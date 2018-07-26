@@ -106,7 +106,8 @@ my %_api = (
     'accounts/{accountNumber}/recent_day_trades' => 'accounts/%s/recent_day_trades/',
     'marketdata/historicals'                     => 'marketdata/historicals/',
     'marketdata/historicals/{symbol}'            => 'marketdata/historicals/%s/',
-    'portfolios/historicals/{accountNumber}'     => 'portfolios/historicals/%s/'
+    'portfolios/historicals/{accountNumber}'     => 'portfolios/historicals/%s/',
+    'watchlists'                                 => 'watchlists/'
 );
 my %_midlands = ( 'midlands/search' => '/search/', );
 our %Endpoints = (
@@ -356,16 +357,18 @@ as a C<Finance::Robinhood::Utils::Paginated> object.
 sub equity_watchlists {
     my ( $s, %args ) = @_;
     if ( $args{name} ) {
-        return Finance::Robinhood::Watchlist->new(
-
-            #$data
-            %args
-        );
+        return Finance::Robinhood::Watchlist->new(%args);
     }
     Finance::Robinhood::Utils::Paginated->new(
         class => 'Finance::Robinhood::Watchlist',
         next  => $Endpoints{'watchlists'}
     );
+}
+
+sub new_equity_watchlist {
+    my ( $s, $name ) = @_;
+    my ( $status, $data ) = $s->post( $Endpoints{'watchlists'}, { name => $name } );
+    $data ? Finance::Robinhood::Watchlist->new($data) : $data;
 }
 
 =head2 C<equity_quote( ... )>
