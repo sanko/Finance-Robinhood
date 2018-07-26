@@ -4,8 +4,8 @@ use Moo;
 use Time::Moment;
 use Finance::Robinhood::Options::MarketData;
 use Finance::Robinhood::Options::Instrument::Historicals;
-has [qw[tradability strike_price chain_id state type chain_symbol id url]] => ( is => 'ro' );
-has 'expiration_date' => (
+has [qw[tradability rhs_tradability strike_price chain_id state type chain_symbol id url]] => ( is => 'ro' );
+has [ 'expiration_date', 'issue_date' ] => (
     is     => 'ro',
     coerce => sub {
         Time::Moment->from_string( $_[0] . 'T00:00:00Z' );
@@ -20,8 +20,7 @@ has [ 'created_at', 'updated_at' ] => (
 has 'min_ticks' => (
     is     => 'ro',
     coerce => sub {
-        Finance::Robinhood::Options::Chain::Ticks->new( $_[0] )
-            ;    # { above_tick => "0.10", below_tick => 0.05, cutoff_price => "3.00" }
+        Finance::Robinhood::Options::Chain::Ticks->new( $_[0] );
     }
 );
 

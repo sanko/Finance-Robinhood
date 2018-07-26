@@ -13,7 +13,7 @@ has [
 has 'previous_close_date' => (
     is     => 'ro',
     coerce => sub {
-        Time::Moment->from_string( $_[0] );
+        Time::Moment->from_string( $_[0] . 'T00:00:00Z' );
     }
 );
 1;
