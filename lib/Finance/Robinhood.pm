@@ -492,10 +492,15 @@ sub fundamentals {
 
 =head2 C<equity_historicals( ... )>
 
-    my $inst = $rh->equity_historicals( symbols => ['MSFT', 'X'], interval => 'week' );
-    my $all = $inst->all;
+    my $hist = $rh->equity_historicals( symbols => ['MSFT', 'X'], interval => 'week' );
+    my $all = $hist->all;
 
-Gather historical info about multiple equities by symbol. This is returned as a
+Grab historical data for a list of ticker symbols.
+
+    my $hist = $rh->equity_historicals( instruments => [$rh->equity_watchlists(name => 'Default')->instruments], interval => '5minute' );
+	my $all = $hist->all;
+
+Gather historical info about multiple equity instruments. This is returned as a
 C<Finance::Robinhood::Utils::Paginated> object.
 
 Expected arguments:
@@ -516,8 +521,11 @@ Expected arguments:
 
 sub equity_historicals {
     my ( $s, %args ) = @_;
-    my @symbols = @{ delete $args{symbols} };
-    @symbols = map { $_ = ref $_ ? $_->symbol : $_ } @symbols;
+    my @symbols
+        = defined $args{symbols} ? @{ delete $args{symbols} } :
+        defined $args{instruments} ?
+        map { ref $_ ? $_->symbol : $_ } @{ delete $args{instruments} } :
+        ();
     my @groups;
     push @groups, [ splice @symbols, 0, 75 ] while @symbols;
     Finance::Robinhood::Utils::Paginated->new(
