@@ -2,7 +2,7 @@ package Finance::Robinhood::Options::Instrument;
 use v5.10;
 use Moo;
 use Time::Moment;
-use Finance::Robinhood::Options::MarketData;
+use Finance::Robinhood::Options::Quote;
 use Finance::Robinhood::Options::Instrument::Historicals;
 has [qw[tradability rhs_tradability strike_price chain_id state type chain_symbol id url]] => ( is => 'ro' );
 has [ 'expiration_date', 'issue_date' ] => (
@@ -24,12 +24,12 @@ has 'min_ticks' => (
     }
 );
 
-sub market_data {
+sub quote {
     my ($s) = shift;
     my ( $status, $data )
         = Finance::Robinhood::Utils::Client->instance->get(
         sprintf $Finance::Robinhood::Endpoints{'marketdata/options/{id}'}, $s->id );
-    $status == 200 ? Finance::Robinhood::Options::MarketData->new($data) : $data;
+    $status == 200 ? Finance::Robinhood::Options::Quote->new($data) : $data;
 }
 
 =head2 C<historicals( ... )>
