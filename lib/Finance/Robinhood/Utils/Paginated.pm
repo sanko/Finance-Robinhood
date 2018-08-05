@@ -34,7 +34,7 @@ into pages.
 This class wraps that data in a friendly way.
 
 =cut
-has '_count'   => ( is => 'rw', predicate => 1, init_arg => 'count' );
+has '_count'   => ( is => 'rw', predicate => 1 );
 has '_results' => ( is => 'rw', predicate => 1 );
 has '_next'    => (
     is       => 'rw',
@@ -99,6 +99,7 @@ sub next_page {
         #warn 'NEXT is current!';
     }
     else { $s->_queue_next( $data->{next} ); $s->_previous( $data->{previous} ) }
+    $s->_count( $data->{count} ) if $data->{count};
     $data->{results} = [ map { $_ = $_ ? $s->_class->new($_) : $_ } @{ $data->{results} } ]
         if $s->_has_class;
     $s->_results( $data->{results} );

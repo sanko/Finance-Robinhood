@@ -72,7 +72,11 @@ sub _http {
     #}
     #use Data::Dump;
     #ddx $response;
-    my $content = length $response->{content} ? decode_json( $response->{content} ) : ();
+    #warn $response->{content};
+    my $content = length $response->{content} ?
+        try { decode_json( $response->{content} ) }
+    catch { warn $_; use Data::Dump; ddx $response; } :
+        ();
 
     #warn $response->{content} if length $response->{content};
     #use Path::Tiny;
@@ -94,7 +98,7 @@ sub _http {
 sub __url_and_args {
     my ( $url, $args ) = @_;
     join '?', grep {length} $url, join '&', map {
-        __urlencode($_) . '=' . (
+        $_ . '=' . (
             ref $args->{$_} eq 'ARRAY' ? ( join ',', map { __urlencode($_) } @{ $args->{$_} } ) :
                 __urlencode( $args->{$_} ) )
     } keys %$args;

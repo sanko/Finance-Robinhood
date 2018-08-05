@@ -109,8 +109,12 @@ my %_api = (
     'portfolios/historicals/{accountNumber}'     => 'portfolios/historicals/%s/',
     'watchlists'                                 => 'watchlists/',
 );
-my %_midlands
-    = ( 'midlands/search' => '/search/', 'news/{symbol}' => 'news/%s/', 'news' => 'news/' );
+my %_midlands = (
+    'midlands/search' => '/search/',
+    'news/{symbol}'   => 'news/%s/',
+    'news'            => 'news/',
+    'feed'            => 'feed/'
+);
 our %Endpoints = (
     ( map { $_ => 'https://api.robinhood.com/' . $_api{$_} } keys %_api ),
     map { $_ => 'https://midlands.robinhood.com/' . $_midlands{$_} } keys %_midlands,
@@ -175,7 +179,7 @@ has 'credentials' => (
 has 'client' => (
     is      => 'ro',
     builder => sub { Finance::Robinhood::Utils::Client->instance },
-    handles => [qw[get post options account]],
+    handles => [qw[get post put options account]],
     lazy    => 1
 );
 
@@ -1171,13 +1175,7 @@ sub search {
 
 =head2 C<news( ... )>
 
-    my $results = $rh->news( symbol => 'MSFT' );
-
-Returns a paginated list of C<Finance::Robinhood::News> objects.
-
-
-    my $inst = $rh->equity_quotes( instruments => [''], interval => 'week' );
-    my $all = $inst->all;
+    my @news = $rh->news( symbol => 'MSFT' )->all;
 
 Gather news related an equity instrument or crypto currency id. This is returned as a
 C<Finance::Robinhood::Utils::Paginated> object.
@@ -1203,6 +1201,25 @@ sub news {
         )
     );
 }
+
+=head2 C<feed( ... )>
+
+    my @news = $rh->feed->all;
+
+Gather news related an equity and crypto instruments you follow. This is returned as a
+C<Finance::Robinhood::Utils::Paginated> object.
+
+=cut
+
+sub feed {
+    Finance::Robinhood::Utils::Paginated->new(
+        class => 'Finance::Robinhood::News',
+        next  => Finance::Robinhood::Utils::Client::__url_and_args(
+            $Finance::Robinhood::Endpoints{'feed'}
+        )
+    );
+}
+
 =head1 LEGAL
 
 This is a simple wrapper around the API used in the official apps. The author

@@ -4,7 +4,8 @@ use Moo;
 use Time::Moment;
 use Finance::Robinhood::Options::Quote;
 use Finance::Robinhood::Options::Instrument::Historicals;
-has [qw[tradability rhs_tradability strike_price chain_id state type chain_symbol id url]] => ( is => 'ro' );
+has [qw[tradability rhs_tradability strike_price chain_id state type chain_symbol id url]] =>
+    ( is => 'ro' );
 has [ 'expiration_date', 'issue_date' ] => (
     is     => 'ro',
     coerce => sub {

@@ -2,6 +2,7 @@ package Finance::Robinhood::Equity::Instrument;
 use Moo;
 use Time::Moment;
 use Finance::Robinhood::News;
+
 # TODO:
 #  "splits": "https://api.robinhood.com/instruments/ad5fc8ab-c9e1-41ba-ab38-37253577bcba/splits/",
 #      "url": "https://api.robinhood.com/instruments/ad5fc8ab-c9e1-41ba-ab38-37253577bcba/",
