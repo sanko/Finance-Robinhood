@@ -107,9 +107,10 @@ my %_api = (
     'marketdata/historicals'                     => 'marketdata/historicals/',
     'marketdata/historicals/{symbol}'            => 'marketdata/historicals/%s/',
     'portfolios/historicals/{accountNumber}'     => 'portfolios/historicals/%s/',
-    'watchlists'                                 => 'watchlists/'
+    'watchlists'                                 => 'watchlists/',
 );
-my %_midlands = ( 'midlands/search' => '/search/', );
+my %_midlands
+    = ( 'midlands/search' => '/search/', 'news/{symbol}' => 'news/%s/', 'news' => 'news/' );
 our %Endpoints = (
     ( map { $_ => 'https://api.robinhood.com/' . $_api{$_} } keys %_api ),
     map { $_ => 'https://midlands.robinhood.com/' . $_midlands{$_} } keys %_midlands,
@@ -1168,6 +1169,40 @@ sub search {
     $data;
 }
 
+=head2 C<news( ... )>
+
+    my $results = $rh->news( symbol => 'MSFT' );
+
+Returns a paginated list of C<Finance::Robinhood::News> objects.
+
+
+    my $inst = $rh->equity_quotes( instruments => [''], interval => 'week' );
+    my $all = $inst->all;
+
+Gather news related an equity instrument or crypto currency id. This is returned as a
+C<Finance::Robinhood::Utils::Paginated> object.
+
+Expected arguments (either one or the other; not both):
+
+=over
+
+=item C<symbol> - equity instrument's ticker symbol
+
+=item C<currency_id> - crypto currency id
+
+=back
+
+=cut
+
+sub news {
+    my ( $s, %args ) = @_;
+    Finance::Robinhood::Utils::Paginated->new(
+        class => 'Finance::Robinhood::News',
+        next  => Finance::Robinhood::Utils::Client::__url_and_args(
+            $Finance::Robinhood::Endpoints{'news'}, {%args}
+        )
+    );
+}
 =head1 LEGAL
 
 This is a simple wrapper around the API used in the official apps. The author

@@ -34,8 +34,9 @@ into pages.
 This class wraps that data in a friendly way.
 
 =cut
+has '_count'   => ( is => 'rw', predicate => 1, init_arg => 'count' );
 has '_results' => ( is => 'rw', predicate => 1 );
-has '_next' => (
+has '_next'    => (
     is       => 'rw',
     init_arg => 'next',
     coerce   => sub {
