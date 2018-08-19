@@ -76,7 +76,7 @@ sub next {
     return $data if defined $status && $status != 200;
     $records = $s->_results();
     return shift(@$records) if $records && scalar @$records;
-    return $data;
+    return wantarray ? $data : @$data;
 }
 
 =head2 C<next_page( )>
