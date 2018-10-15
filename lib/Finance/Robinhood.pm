@@ -159,6 +159,11 @@ your username and password.
       password => 'Om39mfsdah93m'
     );
 
+    # Restore credentials from previous login :D
+    my $rh = Finance::Robinhood->new(
+      credentials => $creds
+    );
+
     # Requires ->login(...) call :(
     my $rh = Finance::Robinhood->new( );
     $rh->login('mark98009', 'Om39mfsdah93m');
@@ -338,14 +343,14 @@ sub user {
     $status == 200 ? Finance::Robinhood::User->new($data) : $data;
 }
 
-=head2 C<equity_watchlists_q( [...] )>
+=head2 C<equity_watchlists( [...] )>
 
     my @watchlists = $rh->equity_watchlists->all;
 
 Gather the list of watchlists connected to this account. This is returned
 as a C<Finance::Robinhood::Utils::Paginated> object.
 
-	my $watchlist = $rh->equity_watchlists(name => 'Default');
+    my $watchlist = $rh->equity_watchlists(name => 'Default');
 
 Grab a specific watchlist by name. This is returned as a
 C<Finance::Robinhood::Watchlist> object.
@@ -503,7 +508,7 @@ sub fundamentals {
 Grab historical data for a list of ticker symbols.
 
     my $hist = $rh->equity_historicals( instruments => [$rh->equity_watchlists(name => 'Default')->instruments], interval => '5minute' );
-	my $all = $hist->all;
+    my $all = $hist->all;
 
 Gather historical info about multiple equity instruments. This is returned as a
 C<Finance::Robinhood::Utils::Paginated> object.

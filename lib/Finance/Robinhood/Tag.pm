@@ -1,22 +1,26 @@
 package Finance::Robinhood::Tag;
 use Moo;
-has [
-    qw[
-        description name slug
-        ]
-] => ( is => 'ro' );
+has [qw[description name slug]] => ( is => 'ro' );
 has '_instruments' => ( is => 'ro', init_arg => 'instruments' );
+
 has 'instruments' => (
     is       => 'ro',
-    init_arg => undef,
     lazy     => 1,
+    init_arg => undef,
     builder  => sub {
-        my $s = shift;
-        [   map {
-                my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get($_);
-                $status == 200 ? Finance::Robinhood::Equity::Instrument->new($data) : $data;
-            } @{ $s->_instruments }
-        ];
+        my @ids = map { m[/([a-f\d\-]*)/$] } @{shift->_instruments};
+        my @groups;
+        push @groups, [ splice @ids, 0, 75 ] while @ids;
+        Finance::Robinhood::Utils::Paginated->new(
+            class => 'Finance::Robinhood::Equity::Instrument',
+            next  => [
+                map {
+                    Finance::Robinhood::Utils::Client::__url_and_args(
+                        $Finance::Robinhood::Endpoints{'instruments'},
+                        { ids => $_ } )
+                } @groups
+            ]
+        );
     }
 );
 1;

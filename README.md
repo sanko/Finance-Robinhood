@@ -106,21 +106,21 @@ Convert your old skool token to an OAuth2 token.
 Gather very basic info about your account. This is returned as a
 `Finance::Robinhood::User` object.
 
-## `watchlists( [...] )`
+## `equity_watchlists( [...] )`
 
-    my @watchlists = $rh->watchlists->all;
+    my @watchlists = $rh->equity_watchlists->all;
 
 Gather the list of watchlists connected to this account. This is returned
 as a `Finance::Robinhood::Utils::Paginated` object.
 
-        my $watchlist = $rh->watchlists(name => 'Default');
+        my $watchlist = $rh->equity_watchlists(name => 'Default');
 
 Grab a specific watchlist by name. This is returned as a
 `Finance::Robinhood::Watchlist` object.
 
 Use this like so:
 
-    my @instruments = $rh->watchlists(name => 'Default')->instruments->all;
+    my @instruments = $rh->equity_watchlists(name => 'Default')->instruments->all;
 
 ... to gather the list of instruments in a watchlist. This is returned
 as a `Finance::Robinhood::Utils::Paginated` object.
@@ -173,10 +173,15 @@ Gather info about a several instruments by their ids; data is returned as a
 
 ## `equity_historicals( ... )`
 
-    my $inst = $rh->equity_historicals( symbols => ['MSFT', 'X'], interval => 'week' );
-    my $all = $inst->all;
+    my $hist = $rh->equity_historicals( symbols => ['MSFT', 'X'], interval => 'week' );
+    my $all = $hist->all;
 
-Gather historical info about multiple equities by symbol. This is returned as a
+Grab historical data for a list of ticker symbols.
+
+    my $hist = $rh->equity_historicals( instruments => [$rh->equity_watchlists(name => 'Default')->instruments], interval => '5minute' );
+        my $all = $hist->all;
+
+Gather historical info about multiple equity instruments. This is returned as a
 `Finance::Robinhood::Utils::Paginated` object.
 
 Expected arguments:
@@ -472,6 +477,25 @@ Gather info about a dividend payment by ID. This is returned as a
 
 Searches for currency pairs, tags, and equity instruments. A list of each is
 returned as values of a hash.
+
+## `news( ... )`
+
+    my @news = $rh->news( symbol => 'MSFT' )->all;
+
+Gather news related an equity instrument or crypto currency id. This is returned as a
+`Finance::Robinhood::Utils::Paginated` object.
+
+Expected arguments (either one or the other; not both):
+
+- `symbol` - equity instrument's ticker symbol
+- `currency_id` - crypto currency id
+
+## `feed( ... )`
+
+    my @news = $rh->feed->all;
+
+Gather news related an equity and crypto instruments you follow. This is returned as a
+`Finance::Robinhood::Utils::Paginated` object.
 
 # LEGAL
 
