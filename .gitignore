@@ -50,3 +50,8 @@ eg/old/
 *.tmp
 
 eg/
+
+old-*/
+
+/.tidyall.d/
+git/

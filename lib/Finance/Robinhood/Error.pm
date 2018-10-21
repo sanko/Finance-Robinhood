@@ -1,4 +1,4 @@
-package Finance::Robinhood::Tag;
+package Finance::Robinhood::Error;
 
 =encoding utf-8
 
@@ -6,23 +6,20 @@ package Finance::Robinhood::Tag;
 
 =head1 NAME
 
-Finance::Robinhood::Tag - Represents a Single Categorized List of Equity
-Instruments
+Finance::Robinhood::Error - What You Find When Things Go Wrong
 
 =head1 SYNOPSIS
 
-    use Text::Wrap qw[wrap];
-    use Finance::Robinhood;
-    my $rh = Finance::Robinhood->new;
     # TODO
 
 =cut
 
 use Mojo::Base-base;
 use Mojo::URL;
+use overload 'bool' => sub {0};    # Always be false
 #
 has _rh => undef => weak => 1;
-has [ 'canonical_examples', 'description', 'instruments', 'membership_count', 'name', 'slug' ];
+has ['detail'];
 
 =head1 LEGAL
 

@@ -1,0 +1,13 @@
+ignore = **/*.bak
+ 
+[PerlTidy]
+select = **/*.{pl,pm,t}
+argv = -noll -it=2
+ 
+;[PerlCritic]
+;select = lib/**/*.pm
+;ignore = lib/UtterHack.pm lib/OneTime/*.pm
+;argv = -severity 3
+ 
+[PodTidy]
+select = lib/**/*.{pm,pod}

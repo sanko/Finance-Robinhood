@@ -1,4 +1,4 @@
-package Finance::Robinhood::Tag;
+package Finance::Robinhood::Options::Chain::Underlying;
 
 =encoding utf-8
 
@@ -6,23 +6,32 @@ package Finance::Robinhood::Tag;
 
 =head1 NAME
 
-Finance::Robinhood::Tag - Represents a Single Categorized List of Equity
-Instruments
+Finance::Robinhood::Options::Chain::Underlying - Represents a Single Options
+Chain's Underlying Equity Instrument
 
 =head1 SYNOPSIS
 
-    use Text::Wrap qw[wrap];
     use Finance::Robinhood;
-    my $rh = Finance::Robinhood->new;
+    my $rh = Finance::Robinhood->new->login('user', 'pass');
+    my $account = $rh->accounts->current();
+
     # TODO
 
 =cut
 
-use Mojo::Base-base;
+use Mojo::Base-base, -signatures;
 use Mojo::URL;
+use overload '""' => sub ($s) { $s->{instrument} };
 #
 has _rh => undef => weak => 1;
-has [ 'canonical_examples', 'description', 'instruments', 'membership_count', 'name', 'slug' ];
+has [ 'id', 'quantity' ];
+
+sub instrument($s) {
+    Finance::Robinhood::Equity::Instrument->new(
+        _rh => $s->_rh,
+        %{ $s->_rh->_get( $s->{instrument} )->json }
+    );
+}
 
 =head1 LEGAL
 

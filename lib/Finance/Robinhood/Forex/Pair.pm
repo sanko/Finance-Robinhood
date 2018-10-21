@@ -1,4 +1,4 @@
-package Finance::Robinhood::Tag;
+package Finance::Robinhood::Forex::Pair;
 
 =encoding utf-8
 
@@ -6,14 +6,10 @@ package Finance::Robinhood::Tag;
 
 =head1 NAME
 
-Finance::Robinhood::Tag - Represents a Single Categorized List of Equity
-Instruments
+Finance::Robinhood::Forex::Pair - Represents a Single Currency Pair
 
 =head1 SYNOPSIS
 
-    use Text::Wrap qw[wrap];
-    use Finance::Robinhood;
-    my $rh = Finance::Robinhood->new;
     # TODO
 
 =cut
@@ -22,7 +18,7 @@ use Mojo::Base-base;
 use Mojo::URL;
 #
 has _rh => undef => weak => 1;
-has [ 'canonical_examples', 'description', 'instruments', 'membership_count', 'name', 'slug' ];
+has [ 'id', 'symbol', 'tradability' ];
 
 =head1 LEGAL
 

@@ -5,10 +5,11 @@ Revision history for Perl extension Finance-Robinhood
 0.9.0_001 2018-04-09T00:44:59Z
 
     - Redesigned from the ground up now that Crypto, Options, and OAuth2 are rolled in
+    - Use Mojo::Base, Mojo::UserAgent, etc. for uniformity
 
 0.21 2017-12-28T22:14:10Z
 
-	- Require Moo 2.003004 due to an upstream bug in 2.003003
+    - Require Moo 2.003004 due to an upstream bug in 2.003003
 
 0.20 2017-12-27T15:09:49Z
 
@@ -54,7 +55,7 @@ Revision history for Perl extension Finance-Robinhood
 
 0.13 2016-12-25T19:41:16Z
 
-	- Fix adding single instrument to watchlist
+    - Fix adding single instrument to watchlist
 
 0.12 2016-12-02T21:42:01Z
 
@@ -90,9 +91,9 @@ Revision history for Perl extension Finance-Robinhood
 
 0.07 2016-05-29T20:46:30Z
 
-	- Historical quotes correctly request a defined span
-	- Example script found at eg/export_orders.pl only exports executed orders by default
-	    - Override this with --all
+    - Historical quotes correctly request a defined span
+    - Example script found at eg/export_orders.pl only exports executed orders by default
+        - Override this with --all
 
 0.06 2016-04-29T22:05:28Z
 

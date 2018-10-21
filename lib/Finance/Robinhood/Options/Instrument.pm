@@ -1,84 +1,118 @@
 package Finance::Robinhood::Options::Instrument;
-use v5.10;
-use Moo;
-use Time::Moment;
-use Finance::Robinhood::Options::Quote;
-use Finance::Robinhood::Options::Instrument::Historicals;
-has [qw[tradability rhs_tradability strike_price chain_id state type chain_symbol id url]] =>
-    ( is => 'ro' );
-has [ 'expiration_date', 'issue_date' ] => (
-    is     => 'ro',
-    coerce => sub {
-        Time::Moment->from_string( $_[0] . 'T00:00:00Z' );
+
+=encoding utf-8
+
+=for stopwords watchlist watchlists untradable urls
+
+=head1 NAME
+
+Finance::Robinhood::Options::Instrument - Represents a Single Options
+Instrument
+
+=head1 SYNOPSIS
+
+    use Finance::Robinhood;
+    my $rh = Finance::Robinhood->new;
+    my $instruments = $rh->options_instruments();
+
+    for my $instrument ($instruments->all) {
+        CORE::say $instrument->chain_symbol;
     }
-);
-has [ 'created_at', 'updated_at' ] => (
-    is     => 'ro',
-    coerce => sub {
-        Time::Moment->from_string( $_[0] );
-    }
-);
-has 'min_ticks' => (
-    is     => 'ro',
-    coerce => sub {
-        Finance::Robinhood::Options::Chain::Ticks->new( $_[0] );
-    }
-);
-
-sub quote {
-    my ($s) = shift;
-    my ( $status, $data )
-        = Finance::Robinhood::Utils::Client->instance->get(
-        sprintf $Finance::Robinhood::Endpoints{'marketdata/options/{id}'}, $s->id );
-    $status == 200 ? Finance::Robinhood::Options::Quote->new($data) : $data;
-}
-
-=head2 C<historicals( ... )>
-
-    my $ok = $option->historicals( interval => 'week' );
-
-Gather historical quote data for all supported options instrument. This is
-returned as a C<Finance::Robinhood::Options::Instrument::Historicals> object.
-
-    my @instruments = $rh->options_instruments(tradability => 'tradable', type => 'call')->next_page;
-    my $inst = $instruments[0]->historicals(interval => 'day');
-
-The following arguments are accepted:
-
-=over
-
-=item C<interval> - C<hour>, C<day>, C<week>, or C<month>
-
-=item C<span> - C<week>, C<year>, C<5year>, or C<10year>
-
-=back
-
-C<interval> is required.
 
 =cut
 
-sub historicals {
-    my ( $s,      %args ) = @_;
-    my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->get(
-        join '?',
-        grep {length} sprintf(
-            $Finance::Robinhood::Endpoints{'marketdata/options/historicals/{id}'}, $s->id
-        ), (
-            join '&',
-            map {
-                $_ . '=' .
-                    ( ref $args{$_} eq 'ARRAY' ? ( join ',', @{ $args{$_} } ) : $args{$_} )
-            } keys %args
-        )
+use Mojo::Base-base, -signatures;
+use Mojo::URL;
+use overload '""' => sub ($s) { $s->{url} };
+#
+has _rh => undef => weak => 1;
+
+=head1 METHODS
+
+
+
+=head2 C<id( )>
+
+
+
+=head2 C<state( )>
+
+
+
+=head2 C<symbol( )>
+
+
+
+=head2 C<tradability( )>
+
+
+
+=head2 C<type( )>
+
+
+
+=cut
+
+has [
+    'chain_id', 'chain_symbol', 'created_at',  'expiration_date',
+    'id',       'issue_date',   'min_ticks',   'rhs_tradability',
+    'state',    'strike_price', 'tradability', 'type',
+    'updated_att'
+];
+
+=head2 C<fundamentals( )>
+
+    my $fundamentals = $instrument->fundamentals();
+
+Builds a Finance::Robinhood::Equity::Fundamentals object with this instrument's
+data.
+
+You do not need to be logged in for this to work.
+
+=cut
+
+sub fundamentals($s) {
+    my $res = $s->_rh->_get( $s->{fundamentals} );
+    $res->is_success ?
+        Finance::Robinhood::Equity::Fundamentals->new( _rh => $s->_rh, %{ $res->json } ) :
+        Finance::Robinhood::Error->new( $res->json );
+}
+
+sub _test_fundamentals {
+    plan( tests => 2 );
+    my $rh         = new_ok('Finance::Robinhood');
+    my $instrument = $rh->search('MSFT')->{instruments}[0];
+    isa_ok(
+        $instrument->fundamentals(),
+        'Finance::Robinhood::Equity::Fundamentals',
+        '...->fundamentals() works',
     );
-    $status == 200 ? Finance::Robinhood::Options::Instrument::Historicals->new($data) : $data;
+    done_testing();
 }
 
-sub equity_instrument {
-    Finance::Robinhood->equity_instruments( symbol => shift->chain_symbol )->next;
-}
+=head1 LEGAL
 
-sub chains {
-    Finance::Robinhood->options_chains( ids => [ shift->chain_id ] );
-}
+This is a simple wrapper around the API used in the official apps. The author
+provides no investment, legal, or tax advice and is not responsible for any
+damages incurred while using this software. This software is not affiliated
+with Robinhood Financial LLC in any way.
+
+For Robinhood's terms and disclosures, please see their website at
+https://robinhood.com/legal/
+
+=head1 LICENSE
+
+Copyright (C) Sanko Robinson.
+
+This library is free software; you can redistribute it and/or modify it under
+the terms found in the Artistic License 2. Other copyrights, terms, and
+conditions may apply to data transmitted through this module. Please refer to
+the L<LEGAL> section.
+
+=head1 AUTHOR
+
+Sanko Robinson E<lt>sanko@cpan.orgE<gt>
+
+=cut
+
 1;

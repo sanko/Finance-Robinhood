@@ -1,102 +1,54 @@
 package Finance::Robinhood::Equity::Order;
-use Moo;
-use Time::Moment;
-#
-has [
-    qw[
-        ref_id
-        time_in_force
-        fees
-        response_category
-        id
-        cumulative_quantity
-        stop_price
-        reject_reason
-        state
-        trigger
-        override_dtbp_checks
-        type
-        price
-        extended_hours
-        url
-        side
-        override_day_trade_checks
-        average_price
-        quantity
-        ]
-] => ( is => 'ro' );
-has [ 'created_at', 'last_transaction_at' ] => (
-    is     => 'ro',
-    coerce => sub {
-        Time::Moment->from_string( $_[0] );
-    }
-);
-has 'executions' => (
-    is     => 'ro',
-    coerce => sub {
-        [ map { Finance::Robinhood::Equity::Order::Execution->new($_) } @{ $_[0] } ];
-    }
-);
-has 'cancel_url' => ( is => 'ro', predicate => 1, init_arg => 'cancel' );
 
-sub cancel {
-    my ($s) = @_;
-    return if !$s->cancel_url;
-    my ( $status, $data ) = Finance::Robinhood::Utils::Client->instance->post( $s->cancel_url );
-    $status == 200 ?
-        $_[0]
-        = __PACKAGE__->new( scalar Finance::Robinhood::Utils::Client->instance->get( $s->url ) ) :
-        $data;
-}
-has '_account_url' => (
-    is       => 'ro',
-    init_arg => 'account',
-    coerce   => sub {
-        ref $_[0] ? $_[0]->url : $_[0];
+=encoding utf-8
+
+=for stopwords watchlist watchlists untradable urls
+
+=head1 NAME
+
+Finance::Robinhood::Equity::Order - Represents a Single Equity Order
+
+=head1 SYNOPSIS
+
+    use Finance::Robinhood;
+    my $rh = Finance::Robinhood->new->login('user', 'pass');
+    my $orders = $rh->orders();
+
+    for my $order ($orders->all) {
+        $order->cancel unless $order->state eq 'cancelled';
     }
-);
-has 'account' => (
-    is       => 'ro',
-    lazy     => 1,
-    init_arg => undef,
-    builder  => sub {
-        my ( $status, $data )
-            = Finance::Robinhood::Utils::Client->instance->get( shift->_account_url );
-        $status == 200 ? Finance::Robinhood::Account->new($data) : ();
-    }
-);
-has '_instrument_url' => (
-    is       => 'ro',
-    init_arg => 'instrument',
-    coerce   => sub {
-        ref $_[0] ? $_[0]->url : $_[0];
-    }
-);
-has 'instrument' => (
-    is       => 'ro',
-    lazy     => 1,
-    init_arg => undef,
-    builder  => sub {
-        my ( $status, $data )
-            = Finance::Robinhood::Utils::Client->instance->get( shift->_instrument_url );
-        $status == 200 ? Finance::Robinhood::Equity::Instrument->new($data) : ();
-    }
-);
-has '_position_url' => (
-    is       => 'ro',
-    init_arg => 'position',
-    coerce   => sub {
-        ref $_[0] ? $_[0]->url : $_[0];
-    }
-);
-has 'position' => (
-    is       => 'ro',
-    lazy     => 1,
-    init_arg => undef,
-    builder  => sub {
-        my ( $status, $data )
-            = Finance::Robinhood::Utils::Client->instance->get( shift->_position_url );
-        $status == 200 ? Finance::Robinhood::Equity::Position->new($data) : ();
-    }
-);
+
+=cut
+
+use Mojo::Base-base;
+use Mojo::URL;
+#
+has _rh => undef => weak => 1;
+has [ 'id', 'state' ];
+
+=head1 LEGAL
+
+This is a simple wrapper around the API used in the official apps. The author
+provides no investment, legal, or tax advice and is not responsible for any
+damages incurred while using this software. This software is not affiliated
+with Robinhood Financial LLC in any way.
+
+For Robinhood's terms and disclosures, please see their website at
+https://robinhood.com/legal/
+
+=head1 LICENSE
+
+Copyright (C) Sanko Robinson.
+
+This library is free software; you can redistribute it and/or modify it under
+the terms found in the Artistic License 2. Other copyrights, terms, and
+conditions may apply to data transmitted through this module. Please refer to
+the L<LEGAL> section.
+
+=head1 AUTHOR
+
+Sanko Robinson E<lt>sanko@cpan.orgE<gt>
+
+=cut
+
 1;

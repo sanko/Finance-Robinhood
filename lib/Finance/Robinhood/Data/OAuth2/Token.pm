@@ -1,4 +1,4 @@
-package Finance::Robinhood::Tag;
+package Finance::Robinhood::Data::OAuth2::Token;
 
 =encoding utf-8
 
@@ -6,23 +6,21 @@ package Finance::Robinhood::Tag;
 
 =head1 NAME
 
-Finance::Robinhood::Tag - Represents a Single Categorized List of Equity
-Instruments
+Finance::Robinhood::Data::OAuth2::Token - Private Authorization Data
 
 =head1 SYNOPSIS
 
-    use Text::Wrap qw[wrap];
-    use Finance::Robinhood;
-    my $rh = Finance::Robinhood->new;
-    # TODO
+    # Don't use this directly
 
 =cut
 
 use Mojo::Base-base;
-use Mojo::URL;
 #
 has _rh => undef => weak => 1;
-has [ 'canonical_examples', 'description', 'instruments', 'membership_count', 'name', 'slug' ];
+has [
+    'access_token',  'backup_code', 'expires_in', 'mfa_code',
+    'refresh_token', 'scope',       'token_type'
+];
 
 =head1 LEGAL
 
