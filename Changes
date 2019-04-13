@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.92_002 2019-04-13T17:22:42Z
+
     - Fix Role::Tiny prereq for smokers
 
 0.92_001 2019-04-13T03:59:46Z

@@ -50,6 +50,7 @@
             "Mojo::Base" : "0",
             "Mojo::URL" : "0",
             "Mojo::UserAgent" : "0",
+            "Role::Tiny" : "2.000001",
             "Time::Moment" : "0",
             "Try::Tiny" : "0.24",
             "perl" : "5.020",
@@ -74,7 +75,7 @@
          "web" : "https://github.com/sanko/Finance-Robinhood"
       }
    },
-   "version" : "0.92_001",
+   "version" : "0.92_002",
    "x_authority" : "cpan:SANKO",
    "x_serialization_backend" : "JSON::PP version 4.02",
    "x_static_install" : 1

@@ -18,7 +18,7 @@ Account
 
 =cut
 
-our $VERSION = '0.92_001';
+our $VERSION = '0.92_002';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 use Time::Moment;

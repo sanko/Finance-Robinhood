@@ -41,7 +41,7 @@ types such as stop limits that are held up to 90 days:
 
 =cut
 
-our $VERSION = '0.92_001';
+our $VERSION = '0.92_002';
 use Mojo::Base-base, -signatures;
 use Finance::Robinhood::Forex::Order;
 

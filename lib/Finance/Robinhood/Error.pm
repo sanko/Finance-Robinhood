@@ -27,7 +27,7 @@ Error objects stringify to the contents of C<detail( )> or 'Unknown error.'
 
 =cut
 
-our $VERSION = '0.92_001';
+our $VERSION = '0.92_002';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 use overload 'bool' => sub ( $s, @ ) {0},

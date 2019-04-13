@@ -20,7 +20,7 @@ Finance::Robinhood::User::BasicInfo - Access Basic Data About the Current User
 
 =cut
 
-our $VERSION = '0.92_001';
+our $VERSION = '0.92_002';
 
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
