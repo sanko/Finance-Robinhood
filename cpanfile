@@ -4,6 +4,7 @@ requires 'Mojo::Base';
 requires 'Mojo::URL';
 requires 'Mojo::UserAgent';
 requires 'strictures', '2';
+requires 'Role::Tiny', '2.000001';
 
 requires 'Time::Moment';
 requires 'Try::Tiny', '0.24';
