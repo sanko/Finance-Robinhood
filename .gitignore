@@ -39,3 +39,19 @@ eg/trailing_stop.*
 
 
 SciTE.session
+
+/lib/Finance/Robinhood/old/
+/t/old/
+.vscode/
+.vstags
+eg/devel.pl
+eg/old/
+
+*.tmp
+
+eg/
+
+old-*/
+
+/.tidyall.d/
+git/

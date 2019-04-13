@@ -1,17 +1,25 @@
-requires 'perl', '5.012';
-
-requires 'HTTP::Tiny', '0.056';
-requires 'Carp', '1.36';
-#requires 'Data::Dump';
-requires 'Moo', '2.003004';
-requires 'JSON::Tiny', '0.54';
+requires 'perl', '5.020';
+requires 'IO::Socket::SSL', '2.060';
+requires 'Mojo::Base';
+requires 'Mojo::URL';
+requires 'Mojo::UserAgent';
 requires 'strictures', '2';
-requires 'namespace::clean', '0.26';
-requires 'IO::Socket::SSL', '2.020';
-requires 'DateTime', '1.26';
+
+requires 'Time::Moment';
 requires 'Try::Tiny', '0.24';
+requires 'Exporter::Tiny';
 
 on 'test' => sub {
-    requires 'Test::More', '0.98';
+    requires 'Test2::V0';
 };
 
+on 'develop' => sub {
+    requires 'Software::License::Artistic_2_0';
+    requires 'Data::Dump';
+    requires 'Perl::Tidy';
+    requires 'Test::CPAN::Meta';
+    requires 'Test::MinimumVersion::Fast';
+    requires 'Test::PAUSE::Permissions';
+    requires 'Test::Pod', '1.41';
+    requires 'Test::Spellunker';
+}

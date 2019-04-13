@@ -1,10 +1,10 @@
 {
-   "abstract" : "Trade Stocks and ETFs with Commission Free Brokerage Robinhood",
+   "abstract" : "Trade Stocks, ETFs, Options, and Cryptocurrency without Commission",
    "author" : [
       "Sanko Robinson <sanko@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v3.0.14, CPAN::Meta::Converter version 2.150010",
+   "generated_by" : "Minilla/v3.1.4, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "artistic_2"
    ],
@@ -33,6 +33,9 @@
       },
       "develop" : {
          "requires" : {
+            "Data::Dump" : "0",
+            "Perl::Tidy" : "0",
+            "Software::License::Artistic_2_0" : "0",
             "Test::CPAN::Meta" : "0",
             "Test::MinimumVersion::Fast" : "0.04",
             "Test::PAUSE::Permissions" : "0.04",
@@ -42,21 +45,20 @@
       },
       "runtime" : {
          "requires" : {
-            "Carp" : "1.36",
-            "DateTime" : "1.26",
-            "HTTP::Tiny" : "0.056",
-            "IO::Socket::SSL" : "2.020",
-            "JSON::Tiny" : "0.54",
-            "Moo" : "2.003004",
+            "Exporter::Tiny" : "0",
+            "IO::Socket::SSL" : "2.060",
+            "Mojo::Base" : "0",
+            "Mojo::URL" : "0",
+            "Mojo::UserAgent" : "0",
+            "Time::Moment" : "0",
             "Try::Tiny" : "0.24",
-            "namespace::clean" : "0.26",
-            "perl" : "5.012",
+            "perl" : "5.020",
             "strictures" : "2"
          }
       },
       "test" : {
          "requires" : {
-            "Test::More" : "0.98"
+            "Test2::V0" : "0"
          }
       }
    },
@@ -72,6 +74,8 @@
          "web" : "https://github.com/sanko/Finance-Robinhood"
       }
    },
-   "version" : "0.21",
-   "x_serialization_backend" : "JSON::PP version 2.97001"
+   "version" : "0.92_001",
+   "x_authority" : "cpan:SANKO",
+   "x_serialization_backend" : "JSON::PP version 4.02",
+   "x_static_install" : 1
 }

@@ -1,1199 +1,1825 @@
 package Finance::Robinhood;
-use 5.012;
-use strict;
-use warnings;
-use Carp;
-our $VERSION = "0.21";
-use Moo;
-use HTTP::Tiny '0.056';
-use JSON::Tiny qw[decode_json];
-use Try::Tiny;
-use strictures 2;
-use namespace::clean;
-our $DEBUG = !1;
-require Data::Dump if $DEBUG;
-our $DEV = !1;
-#
-use lib '../../lib';
-use Finance::Robinhood::Account;
-use Finance::Robinhood::Instrument;
-use Finance::Robinhood::Fundamentals;
-use Finance::Robinhood::Order;
-use Finance::Robinhood::Position;
-use Finance::Robinhood::Quote;
-use Finance::Robinhood::Watchlist;
-use Finance::Robinhood::Portfolio;
-#
-has token => (is => 'ro', writer => '_set_token');
-#
-my $base = 'https://api.robinhood.com/';
-
-# Different endpoints we can call for the API
-my %endpoints = (
-                'accounts'               => 'accounts/',
-                'accounts/positions'     => 'accounts/%s/positions/',
-                'portfolios'             => 'portfolios/',
-                'portfolios/historicals' => 'portfolios/historicals/',
-                'ach_deposit_schedules'  => 'ach/deposit_schedules/',
-                'ach_iav_auth'           => 'ach/iav/auth/',
-                'ach_relationships'      => 'ach/relationships/',
-                'ach_transfers'          => 'ach/transfers/',
-                'applications'           => 'applications/',
-                'dividends'              => 'dividends/',
-                'document_requests'      => 'upload/document_requests/',
-                'documents'              => 'documents/',
-                'documents/download' => 'documents/%s/download/?redirect=%s',
-                'fundamentals'       => 'fundamentals/',
-                'instruments'        => 'instruments/',
-                'login'              => 'api-token-auth/',
-                'logout'             => 'api-token-logout/',
-                'margin_upgrades'    => 'margin/upgrades/',
-                'markets'            => 'markets/',
-                'notifications'      => 'notifications/',
-                'notifications/devices' => 'notifications/devices/',
-                'cards'                 => 'midlands/notifications/stack/',
-                'cards/dismiss' => 'midlands/notifications/stack/%s/dismiss/',
-                'orders'        => 'orders/',
-                'password_reset'          => 'password_reset/',
-                'password_reset/request'  => 'password_reset/request/',
-                'quote'                   => 'quote/',
-                'quotes'                  => 'quotes/',
-                'quotes/historicals'      => 'quotes/historicals/',
-                'user'                    => 'user/',
-                'user/id'                 => 'user/id/',
-                'user/additional_info'    => 'user/additional_info/',
-                'user/basic_info'         => 'user/basic_info/',
-                'user/employment'         => 'user/employment/',
-                'user/investment_profile' => 'user/investment_profile/',
-                'user/identity_mismatch'  => 'user/identity_mismatch',
-                'watchlists'              => 'watchlists/',
-                'watchlists/bulk_add'     => 'watchlists/%s/bulk_add/'
-);
-
-sub endpoint {
-    $endpoints{$_[0]} ?
-        ($DEV > 10 ?
-             'http://brokeback.dev.robinhood.com/'
-         : 'https://api.robinhood.com/'
-        )
-        . $endpoints{+shift}
-        : ();
-}
-#
-# Send a username and password to Robinhood to get back a token.
-#
-my ($client, $res);
-my %headers = (
-         'Accept' => '*/*',
-         'Accept-Language' =>
-             'en;q=1, fr;q=0.9, de;q=0.8, ja;q=0.7, nl;q=0.6, it;q=0.5',
-         'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
-         'X-Robinhood-API-Version' => '1.120.0',
-         'User-Agent'              => 'Robinhood/2357 (Android/2.19.0)'
-);
-sub errors { shift; carp shift; }
-
-sub login {
-    my ($self, $username, $password) = @_;
-
-    # Make API Call
-    my ($status, $data, $raw)
-        = _send_request(undef, 'POST',
-                        Finance::Robinhood::endpoint('login'),
-                        {username => $username,
-                         password => $password
-                        }
-        );
-
-    # Make sure we have a token.
-    if ($status != 200 || !defined($data->{token})) {
-        $self->errors(join ' ', @{$data->{non_field_errors}});
-        return !1;
-    }
-
-    # Set the token we just received.
-    return $self->_set_token($data->{token});
-}
-
-sub logout {
-    my ($self) = @_;
-
-    # Make API Call
-    my ($status, $rt, $raw)
-        = $self->_send_request('POST',
-                               Finance::Robinhood::endpoint('logout'));
-    return $status == 200 ?
-
-        # The old token is now invalid, so we might as well delete it
-        $self->_set_token(())
-        : ();
-}
-
-sub forgot_password {
-    my $self = shift if ref $_[0] && ref $_[0] eq __PACKAGE__;
-    my ($email) = @_;
-
-    # Make API Call
-    my ($status, $rt, $raw)
-        = _send_request(undef, 'POST',
-                       Finance::Robinhood::endpoint('password_reset/request'),
-                       {email => $email});
-    return $status == 200;
-}
-
-sub change_password {
-    my $self = shift if ref $_[0] && ref $_[0] eq __PACKAGE__;
-    my ($user, $password, $token) = @_;
-
-    # Make API Call
-    my ($status, $rt, $raw)
-        = _send_request(undef, 'POST',
-                        Finance::Robinhood::endpoint('password_reset'),
-                        {username => $user,
-                         password => $password,
-                         token    => $token
-                        }
-        );
-    return $status == 200;
-}
-
-sub user_info {
-    my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET', Finance::Robinhood::endpoint('user'));
-    return $status == 200 ?
-        map { $_ => $data->{$_} } qw[email id last_name first_name username]
-        : ();
-}
-
-sub user_id {
-    my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                               Finance::Robinhood::endpoint('user/id'));
-    return $status == 200 ? $data->{id} : ();
-}
-
-sub basic_info {
-    my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                             Finance::Robinhood::endpoint('user/basic_info'));
-    return $status != 200 ?
-        ()
-        : ((map { $_ => _2_datetime(delete $data->{$_}) }
-                qw[date_of_birth updated_at]
-           ),
-           map { m[url] ? () : ($_ => $data->{$_}) } keys %$data
-        );
-}
-
-sub additional_info {
-    my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                               Finance::Robinhood::endpoint(
-                                                       'user/additional_info')
-        );
-    return $status != 200 ?
-        ()
-        : ((map { $_ => _2_datetime(delete $data->{$_}) } qw[updated_at]),
-           map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
-}
-
-sub employment_info {
-    my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                             Finance::Robinhood::endpoint('user/employment'));
-    return $status != 200 ?
-        ()
-        : ((map { $_ => _2_datetime(delete $data->{$_}) } qw[updated_at]),
-           map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
-}
-
-sub investment_profile {
-    my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                               Finance::Robinhood::endpoint(
-                                                    'user/investment_profile')
-        );
-    return $status != 200 ?
-        ()
-        : ((map { $_ => _2_datetime(delete $data->{$_}) } qw[updated_at]),
-           map { m[user] ? () : ($_ => $data->{$_}) } keys %$data);
-}
-
-sub identity_mismatch {
-    my ($self) = @_;
-    my ($status, $data, $raw)
-        = $self->_send_request('GET',
-                               Finance::Robinhood::endpoint(
-                                                     'user/identity_mismatch')
-        );
-    return $status == 200 ? $self->_paginate($data) : ();
-}
-
-sub accounts {
-    my ($self) = @_;
-
-    # TODO: Deal with next and previous results? Multiple accounts?
-    my $return = $self->_send_request('GET',
-                                      Finance::Robinhood::endpoint('accounts')
-    );
-    return $self->_paginate($return, 'Finance::Robinhood::Account');
-}
-#
-# Returns the porfillo summery of an account by url.
-#
-sub portfolios {
-    my ($self) = @_;
-
-    # TODO: Deal with next and previous results? Multiple portfolios?
-    my $return =
-        $self->_send_request('GET',
-                             Finance::Robinhood::endpoint('portfolios'));
-    return $self->_paginate($return, 'Finance::Robinhood::Portfolio');
-}
-
-sub instrument {
-
-#my $msft      = Finance::Robinhood::instrument('MSFT');
-#my $msft      = $rh->instrument('MSFT');
-#my ($results) = $rh->instrument({query  => 'FREE'});
-#my ($results) = $rh->instrument({cursor => 'cD04NjQ5'});
-#my $msft      = $rh->instrument({id     => '50810c35-d215-4866-9758-0ada4ac79ffa'});
-    my $self = shift if ref $_[0] && ref $_[0] eq __PACKAGE__;
-    my ($type) = @_;
-    my $result = _send_request($self, 'GET',
-                               Finance::Robinhood::endpoint('instruments')
-                                   . (  !defined $type ? ''
-                                      : !ref $type     ? '?query=' . $type
-                                      : ref $type eq 'HASH'
-                                          && defined $type->{cursor}
-                                      ? '?cursor=' . $type->{cursor}
-                                      : ref $type eq 'HASH'
-                                          && defined $type->{query}
-                                      ? '?query=' . $type->{query}
-                                      : ref $type eq 'HASH'
-                                          && defined $type->{id}
-                                      ? $type->{id} . '/'
-                                      : ''
-                                   )
-    );
-    $result // return !1;
-
-    #ddx $result;
-    my $retval = ();
-    if (defined $type && !ref $type) {
-        ($retval) = map { Finance::Robinhood::Instrument->new($_) }
-            grep { $_->{symbol} eq $type } @{$result->{results}};
-    }
-    elsif (defined $type && ref $type eq 'HASH' && defined $type->{id}) {
-        $retval = Finance::Robinhood::Instrument->new($result);
-    }
-    else {
-        my ($prev, $next);
-        {
-            $result->{previous} =~ m[\?cursor=(.+)]
-                if defined $result->{previous};
-            $prev = $1 // ();
-        }
-        {
-            $result->{next} =~ m[\?cursor=(.+)] if defined $result->{next};
-            $next = $1 // ();
-        }
-        $retval = {results => [map { Finance::Robinhood::Instrument->new($_) }
-                                   @{$result->{results}}
-                   ],
-                   previous => $prev,
-                   next     => $next
-        };
-    }
-    return $retval;
-}
-
-sub quote {
-    my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
-                                          #if (scalar @_ > 1 or wantarray) {
-    my $return =
-        _send_request($self, 'GET',
-              Finance::Robinhood::endpoint('quotes') . '?symbols=' . join ',',
-              @_);
-    return _paginate($self, $return, 'Finance::Robinhood::Quote');
-
-    #}
-    #my $quote =
-    #    _send_request($self, 'GET',
-    #                  Finance::Robinhood::endpoint('quotes') . shift . '/');
-    #return $quote ?
-    #    Finance::Robinhood::Quote->new($quote)
-    #    : ();
-}
-
-sub fundamentals {
-    my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
-                                          #if (scalar @_ > 1 or wantarray) {
-    my $return =
-        _send_request($self,
-                      'GET',
-                      Finance::Robinhood::endpoint('fundamentals')
-                          . '?symbols='
-                          . join ',',
-                      @_
-        );
-    return _paginate($self, $return, 'Finance::Robinhood::Fundamentals');
-
-    #}
-    #my $quote =
-    #    _send_request($self, 'GET',
-    #                  Finance::Robinhood::endpoint('quotes') . shift . '/');
-    #return $quote ?
-    #    Finance::Robinhood::Quote->new($quote)
-    #    : ();
-}
-
-sub historicals {
-    my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
-    my ($symbol, $interval, $span, $bounds) = @_;
-    my %fields = (interval => $interval,
-                  span     => $span,
-                  bounds   => $bounds
-    );
-    my $fields = join '&', map { $_ . '=' . $fields{$_} }
-        grep { defined $fields{$_} } keys %fields;
-    my ($status, $data, $raw)
-        = _send_request($self,
-                        'GET',
-                        Finance::Robinhood::endpoint('quotes/historicals')
-                            . "$symbol/"
-                            . ($fields ? "?$fields" : '')
-        );
-    return if $status != 200;
-    for (@{$data->{historicals}}) {
-        $_->{begins_at} = _2_datetime($_->{begins_at});
-    }
-    return $data->{historicals};
-}
-
-sub locate_order {
-    my ($self, $order_id) = @_;
-    my $result = $self->_send_request('GET',
-                    Finance::Robinhood::endpoint('orders') . $order_id . '/');
-    return $result ?
-        Finance::Robinhood::Order->new(rh => $self, %$result)
-        : ();
-}
-
-sub list_orders {
-    my ($self, $type) = @_;
-    my $result = $self->_send_request(
-            'GET',
-            Finance::Robinhood::endpoint('orders')
-                . (
-                ref $type
-                    && ref $type eq 'HASH'
-                    && defined $type->{cursor} ? '?cursor=' . $type->{cursor}
-                : ref $type && ref $type eq 'HASH' && defined $type->{'since'}
-                ? '?updated_at[gte]=' . $type->{'since'}
-                : ref $type
-                    && ref $type eq 'HASH'
-                    && defined $type->{'instrument'}
-                    && 'Finance::Robinhood::Instrument' eq
-                    ref $type->{'instrument'}
-                ? '?instrument=' . $type->{'instrument'}->url
-                : ''
-                )
-    );
-    $result // return !1;
-    return () if !$result;
-    return $self->_paginate($result, 'Finance::Robinhood::Order');
-}
-
-# Methods under construction
-sub cards {
-    return shift->_send_request('GET', Finance::Robinhood::endpoint('cards'));
-}
-
-sub dividends {
-    return
-        shift->_send_request('GET',
-                             Finance::Robinhood::endpoint('dividends'));
-}
-
-sub notifications {
-    return
-        shift->_send_request('GET',
-                             Finance::Robinhood::endpoint('notifications'));
-}
-
-sub notifications_devices {
-    return
-        shift->_send_request('GET',
-                             Finance::Robinhood::endpoint(
-                                                      'notifications/devices')
-        );
-}
-
-sub create_watchlist {
-    my ($self, $name) = @_;
-    my ($status, $result)
-        = $self->_send_request('POST',
-                               Finance::Robinhood::endpoint('watchlists'),
-                               {name => $name});
-    return $status == 201
-        ?
-        Finance::Robinhood::Watchlist->new(rh => $self, %$result)
-        : ();
-}
-
-sub delete_watchlist {
-    my ($self, $watchlist) = @_;
-    my ($status, $result, $response)
-        = $self->_send_request('DELETE',
-                               Finance::Robinhood::endpoint('watchlists')
-                                   . (ref $watchlist ?
-                                          $watchlist->name()
-                                      : $watchlist
-                                   )
-                                   . '/'
-        );
-    return $status == 204;
-}
-
-sub watchlists {
-    my ($self, $cursor) = @_;
-    my $result = $self->_send_request('GET',
-                                      Finance::Robinhood::endpoint(
-                                                                 'watchlists')
-                                          . (
-                                            ref $cursor
-                                                && ref $cursor eq 'HASH'
-                                                && defined $cursor->{cursor}
-                                            ?
-                                                '?cursor=' . $cursor->{cursor}
-                                            : ''
-                                          )
-    );
-    $result // return !1;
-    return () if !$result;
-    return $self->_paginate($result, 'Finance::Robinhood::Watchlist');
-}
-
-sub watchlist {
-    my ($self, $name) = @_;
-    my ($status, $result)
-        = $self->_send_request('GET',
-                       Finance::Robinhood::endpoint('watchlists') . "$name/");
-    return $status == 200 ?
-        Finance::Robinhood::Watchlist->new(name => $name,
-                                           rh   => $self,
-                                           %$result
-        )
-        : ();
-}
-
-sub markets {
-    my $self = ref $_[0] ? shift : ();    # might be undef but that's okay
-    my ($symbol, $interval, $span) = @_;
-    my $result = _send_request(undef, 'GET',
-                               Finance::Robinhood::endpoint('markets'));
-    return _paginate($self, $result, 'Finance::Robinhood::Market');
-}
-
-# TESTING!
-# @GET("/documents/{id}/download/?redirect=False")
-#    Observable<DocumentDownloadResponse> getDocumentDownloadUrl(@Path("id") String str);
-sub documents_download {
-    my ($s, $id, $redirect) = @_;
-    warn Finance::Robinhood::endpoint('documents/download');
-    my $result =
-        _send_request($s, 'GET',
-                   sprintf Finance::Robinhood::endpoint('documents/download'),
-                   $id, $redirect ? 'True' : 'False');
-
-    #return _paginate( $self, $result, 'Finance::Robinhood::Market' );
-    $result;
-}
-
-# ---------------- Private Helper Functions --------------- //
-# Send request to API.
-#
-sub _paginate {    # Paginates results
-    my ($self, $res, $class) = @_;
-    my ($prev)
-        = defined $res->{previous} ?
-        ($res->{previous} =~ m[\?cursor=(.+)$])
-        : ();
-    my ($next)
-        = defined $res->{next} ? ($res->{next} =~ m[\?cursor=(.+)$]) : ();
-    return {
-        results => (
-            defined $class ?
-                [
-                map {
-                    $class->new(%$_, ($self ? (rh => $self) : ()), raw => $_)
-                } grep {defined} @{$res->{results}}
-                ]
-            : $res->{results}
-        ),
-        previous => $prev,
-        next     => $next
-    };
-}
-
-sub _send_request {
-
-    # TODO: Expose errors (400:{detail=>'Not enough shares to sell'}, etc.)
-    my ($self, $verb, $url, $data) = @_;
-
-    # Make sure we have a token.
-    if (defined $self && !defined($self->token)) {
-        carp
-            'No API token set. Please authorize by using ->login($user, $pass) or passing a token to ->new(...).';
-        return !1;
-    }
-
-    # Setup request client.
-    $client = HTTP::Tiny->new(agent => 'Finance::Robinhood/' . $VERSION . ' ')
-        if !defined $client;
-    $url =~ s|\+|%2B|g;
-
-    # Make API call.
-    if ($DEBUG) {
-        warn "$verb $url";
-        require Data::Dump;
-        Data::Dump::ddx($verb, $url,
-                        {headers => {%headers,
-                                     ($self && defined $self->token()
-                                      ? (Authorization => 'Token '
-                                          . $self->token())
-                                      : ()
-                                     )
-                         },
-                         (defined $data
-                          ? (content => $client->www_form_urlencode($data))
-                          : ()
-                         )
-                        }
-        );
-    }
-
-    #warn $post;
-    $res = $client->request($verb, $url,
-                            {headers => {%headers,
-                                         ($self && defined $self->token()
-                                          ? (Authorization => 'Token '
-                                             . $self->token())
-                                          : ()
-                                         )
-                             },
-                             (defined $data
-                              ? (content =>
-                                  $client->www_form_urlencode($data))
-                              : ()
-                             )
-                            }
-    );
-
-    # Make sure the API returned happy
-    if ($DEBUG) {
-        require Data::Dump;
-        Data::Dump::ddx($res);
-    }
-
-    #if ($res->{status} != 200 && $res->{status} != 201) {
-    #    carp 'Robinhood did not return a status code of 200 or 201. ('
-    #        . $res->{status} . ')';
-    #    #ddx $res;
-    #    return wantarray ? ((), $res) : ();
-    #}
-    # Decode the response.
-    my $json = $res->{content};
-
-    #ddx $res;
-    #warn $res->{content};
-    my $rt = $json ?
-        try {
-        decode_json($json)
-    }
-    catch {
-        warn "caught error: $_";
-        ()
-    }
-    : ();
-
-    # Return happy.
-    return wantarray ? ($res->{status}, $rt, $res) : $rt;
-}
-
-# Coerce ISO 8601-ish strings into Time::Piece or DateTime objects
-sub _2_datetime {
-    return if !$_[0];
-    if ($DEV && !defined $Time::Moment::VERSION)
-    {    # We lose millisecond timestamps but gain speed!
-        require Time::Moment;
-    }
-    if ($Time::Moment::VERSION) {
-        return
-            Time::Moment->from_string($_[0] =~ m[T] ? $_[0] : $_[0] . 'T00Z',
-                                      lenient => 1);
-    }
-    require DateTime;
-    $_[0]
-        =~ m[(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?(.+))?];
-    DateTime->new(year  => $1,
-                  month => $2,
-                  day   => $3,
-                  (defined $4 ? (hour       => $4) : ()),
-                  (defined $5 ? (minute     => $5) : ()),
-                  (defined $6 ? (second     => $6) : ()),
-                  (defined $7 ? (nanosecond => $7) : ()),
-                  (defined $8 ? (time_zone  => $8) : ())
-    );
-}
-1;
-
-#__END__
 
 =encoding utf-8
 
+=for stopwords watchlist watchlists untradable urls forex
+
 =head1 NAME
 
-Finance::Robinhood - Trade Stocks and ETFs with Commission Free Brokerage Robinhood
+Finance::Robinhood - Trade Stocks, ETFs, Options, and Cryptocurrency without
+Commission
 
 =head1 SYNOPSIS
 
     use Finance::Robinhood;
-
     my $rh = Finance::Robinhood->new();
 
-    my $token = $rh->login($user, $password); # Store it for later
+=cut
 
-    $rh->quote('MSFT');
-    Finance::Robinhood::quote('AAPL');
-    # ????
-    # Profit
+our $VERSION = '0.92_001';
+#
+use Mojo::Base-base, -signatures;
+use Mojo::UserAgent;
+use Mojo::URL;
+#
 
-=head1 Examples
-
-Some people have really only be reading this to get an automated stock trading
-bot up and running. If that's you, the quickest way to get in without a load
-of looking through documentation would be to move over to any of the example
-scripts that I've included with this distributio:
-
-=over
-
-=item C<eg/buy.pl>
-
-Buy stocks from the command line
-
-    buy.pl -username=getMoney -password=*** -symbol=MSFT -quantity=2000
-
-Currently only market orders are supported but adding all the different limit
-order types is really rather simple. I might update it myself if I find a
-round tuit somewhere this summer. Might even add a sell script...
-
-=item C<eg/export_orders.pl>
-
-Export your entire Robinhood order history to a CSV file from the command line
-
-    buy -username=getMoney -password=*** -output=Robinhood.csv
-
-You can dump the CSV to STDOUT by leaving C<-output> undefined.
-
-=back
-
-Both scripts provide help when called without arguments. In addition to those
-examples, you should check out the unofficial documentation of Robinhood
-trade's API. Find it on github:
-L<https://github.com/sanko/Finance-Robinhood/blob/master/API.md>
-
-=head1 DESCRIPTION
-
-Finance::Robinhood allows you to buy, sell, and gather information related to
-stocks and ETFs traded in the U.S commission free. Before we get into how,
-please read the L<Legal|LEGAL> section below. It's really important.
-
-Okay. This package is organized into very easy to understand parts:
-
-=over
-
-=item * Orders to buy and sell are created in L<Finance::Robinhood::Order>. If
-you're looking to make this as simple as possible, go check out the
-L<cheat sheet|Finance::Robinhood::Order/"Order Cheat Sheet">. You'll find
-recipes for market, limit, as well as stop loss and stop limit order types.
-
-=item * Quote information can be accessed with L<Finance::Robinhood::Quote>.
-
-=item * Account information is handled by L<Finance::Robinhood::Account>. If
-you'd like to view or edit any of the information Robinhood has on you, start
-there.
-
-=item * Individual securities are represented by
-L<Finance::Robinhood::Instrument> objects. Gathering quote and fundamental
-information is only the beginning.
-
-=item * L<Finance::Robinhood::Watchlist> objects represent persistant lists of
-securities you'd like to keep track of. Organize your watchlists by type!
-
-=back
-
-If you're looking to just buy and sell without lot of reading, head over to
-the L<Finance::Robinhood::Order> and pay special attention to the
-L<order cheat sheet|Finance::Robinhood::Order/"Order Cheat Sheet"> and apply
-what you learn to the C<eg/buy.pl> example script.
+use Finance::Robinhood::Error;
+use Finance::Robinhood::Utility::Iterator;
 
 =head1 METHODS
 
-Finance::Robinhood wraps a powerfully capable API which has many options.
-There are parts of this package that are object oriented (because they require
-persistant login information) and others which may also be used functionally
-(because they do not require login information). I've attempted to organize
-everything according to how and when they are used... Let's start at the very
-beginning: let's log in!
+Finance::Robinhood wraps several APIs. There are parts of this package that
+will not apply because your account does not have access to certain features.
 
-=head1 Logging In
+=head2 C<new( )>
 
 Robinhood requires an authorization token for most API calls. To get this
-token, you must either pass it as an argument to C<new( ... )> or log in with
-your username and password.
+token, you must log in with your username and password. But we'll get into that
+later. For now, let's create a client object...
 
-=head2 C<new( ... )>
+    # You can look up some basic instrument data with this
+    my $rh = Finance::Robinhood->new();
 
-    # Passing the token is the preferred way of handling authorization
-    my $rh = Finance::Robinhood->new( token => ... );
+A new Finance::Robinhood object is created without credentials. Before you can
+buy or sell or do almost anything else, you must L<log in|/"login( ... )">.
 
-This would create a new Finance::Robinhood object ready to go.
+=cut
 
-    # Requires ->login(...) call :(
-    my $rh = Finance::Robinhood->new( );
+has _ua => sub {
+    my $x = Mojo::UserAgent->new;
+    $x->transactor->name(
+        sprintf 'Perl/%s (%s) %s/%s', ( $^V =~ m[([\.\d]+)] ), $^O, __PACKAGE__,
+        $VERSION
+    );
+    $x;
+};
+has '_token';
 
-Without arguments, a new Finance::Robinhood object is created without account
-information. Before you can buy or sell or do almost anything else, you must
-L<log in manually|/"login( ... )">.
+sub _test_new {
+    ok( t::Utility::rh_instance(1) );
+}
 
-On the bright side, for future logins, you can store the authorization token
-and use it rather than having to pass your username and password around
-anymore.
+sub _get ( $s, $url, %data ) {
+
+    $data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
+    $url = Mojo::URL->new($url);
+    $url->query( \%data );
+
+    #warn 'GET  ' . $url;
+
+    #warn '  Auth: ' . (
+    #    ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] ) ? $s->_token->token_type :
+    #        'none' );
+    my $retval = $s->_ua->get(
+        $url => {
+            ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
+            ? (
+                'Authorization' => ucfirst join ' ',
+                $s->_token->token_type, $s->_token->access_token
+                )
+            : ()
+        }
+    );
+
+    #use Data::Dump;
+    #warn '  Result: ' . $get->res->code;
+    #use Data::Dump; ddx   $get->res->headers; ddx $get->res->json;
+    #warn $retval->res->code;
+
+    return $s->_get( $url, %data )
+        if $retval->res->code == 401 && $s->_refresh_login_token;
+
+    $retval->result;
+}
+
+sub _test_get {
+    my $rh  = t::Utility::rh_instance(0);
+    my $res = $rh->_get('https://jsonplaceholder.typicode.com/todos/1');
+    isa_ok( $res, 'Mojo::Message::Response' );
+    is( $res->json->{title}, 'delectus aut autem', '_post(...) works!' );
+
+    #
+    $res = $rh->_get('https://httpstat.us/500');
+    isa_ok( $res, 'Mojo::Message::Response' );
+    ok( !$res->is_success );
+}
+
+sub _options ( $s, $url, %data ) {
+    my $retval = $s->_ua->options(
+        Mojo::URL->new($url) => {
+            ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
+            ? (
+                'Authorization' => ucfirst join ' ',
+                $s->_token->token_type, $s->_token->access_token
+                )
+            : ()
+        } => json => \%data
+    );
+
+    return $s->_options( $url, %data )
+        if $retval->res->code == 401 && $s->_refresh_login_token;
+
+    $retval->result;
+}
+
+sub _test_options {
+    my $rh  = t::Utility::rh_instance(0);
+    my $res = $rh->_options('https://jsonplaceholder.typicode.com/');
+    isa_ok( $res, 'Mojo::Message::Response' );
+    is( $res->json, () );
+}
+
+sub _post ( $s, $url, %data ) {
+
+    #$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
+    #warn '  Auth: ' . (($s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]) ? $s->_token->token_type : 'none');
+    my $retval = $s->_ua->post(
+        Mojo::URL->new($url) => {
+            ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
+                && !delete $data{'no_auth_token'}
+            ? (
+                'Authorization' => ucfirst join ' ',
+                $s->_token->token_type, $s->_token->access_token
+                )
+            : ()
+        } => json => \%data
+    );
+
+    #use Data::Dump;
+    #warn '  Result: ' . $post->res->code;    die if $post->res->code ==401;
+    #use Data::Dump; ddx   $post->res->headers;
+    #ddx $post;
+    #warn $retval->res->code;
+    return $s->_post( $url, %data )    # Retry with new auth info
+        if $retval->res->code == 401 && $s->_refresh_login_token;
+    $retval->result;
+}
+
+sub _test_post {
+    my $rh  = t::Utility::rh_instance(0);
+    my $res = $rh->_post(
+        'https://jsonplaceholder.typicode.com/posts/',
+        title  => 'Whoa',
+        body   => 'This is a test',
+        userId => 13
+    );
+    isa_ok( $res, 'Mojo::Message::Response' );
+    is( $res->json, { body => 'This is a test', title => 'Whoa', userId => 13, id => 101 } );
+}
+
+sub _patch ( $s, $url, %data ) {
+
+    #$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
+    my $retval = $s->_ua->patch(
+        Mojo::URL->new($url) => {
+            ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
+                && !delete $data{'no_auth_token'}
+            ? (
+                'Authorization' => ucfirst join ' ',
+                $s->_token->token_type, $s->_token->access_token
+                )
+            : ()
+        } => json => \%data
+    );
+
+    return $s->_post( $url, %data )
+        if $retval->res->code == 401 && $s->_refresh_login_token;
+
+    $retval->result;
+}
+
+sub _test_patch {
+    my $rh  = t::Utility::rh_instance(0);
+    my $res = $rh->_patch( 'https://jsonplaceholder.typicode.com/posts/9/', title => 'Updated' );
+    isa_ok( $res, 'Mojo::Message::Response' );
+    is( $res->json->{title}, 'Updated' );
+}
+
+sub _delete ( $s, $url, %data ) {
+
+    #$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
+    my $retval = $s->_ua->delete(
+        Mojo::URL->new($url) => {
+            ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
+                && !delete $data{'no_auth_token'}
+            ? (
+                'Authorization' => ucfirst join ' ',
+                $s->_token->token_type, $s->_token->access_token
+                )
+            : ()
+        } => json => \%data
+    );
+
+    return $s->_delete( $url, %data )
+        if $retval->res->code == 401 && $s->_refresh_login_token;
+
+    $retval->result;
+}
+
+sub _test_delete {
+    my $rh  = t::Utility::rh_instance(0);
+    my $res = $rh->_patch('https://jsonplaceholder.typicode.com/posts/1/');
+    isa_ok( $res, 'Mojo::Message::Response' );
+    ok( $res->is_success, 'Deleted' );    # Lies
+}
 
 =head2 C<login( ... )>
 
-    my $token = $rh->login($user, $password);
-    # Save the token somewhere
+    my $rh = Finance::Robinhood->new()->login($user, $pass);
+
+A new Finance::Robinhood object is created without credentials. Before you can
+buy or sell or do almost anything else, you must L<log in|/"login( ... )">.
+
+    my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_callback => sub {
+        # Do something like pop open an inputbox in TK or whatever
+    } );
+
+If you have MFA enabled, you may (or must) also pass a callback. When the code
+is called, a ref will be passed that will contain C<mfa_required> (a boolean
+value) and C<mfa_type> which might be C<app>, C<sms>, etc. Your return value
+must be the MFA code.
+
+    my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_code => 980385);
+
+If you already know the MFA code (for example if you have MFA enabled through
+an app), you can pass that code directly and log in.
+
+=cut
+
+sub login ( $s, $u, $p, %opt ) {
+
+    # OAUTH2
+    my $res = $s->_post(
+        'https://api.robinhood.com/oauth2/token/',
+        no_auth_token => 1,            # NO AUTH INFO SENT!
+        scope         => 'internal',
+        username      => $u,
+        password      => $p,
+        ( $opt{mfa_code} ? ( mfa_code => $opt{mfa_code} ) : () ),
+        grant_type => ( $opt{grant_type} // 'password' ),
+        client_id  => $opt{client_id} // sub {
+            my ( @k, $c ) = split //, shift;
+            map {                      # cheap and easy
+                unshift @k, pop @k;
+                $c .= chr( ord ^ ord $k[0] );
+            } split //, "\aW];&Y55\35I[\a,6&>[5\34\36\f\2]]\$\x179L\\\x0B4<;,\"*&\5);";
+            $c;
+        }
+            ->(__PACKAGE__),
+    );
+    if ( $res->is_success ) {
+        if ( $res->json->{mfa_required} ) {
+            return $opt{mfa_callback}
+                ? Finance::Robinhood::Error->new( description => 'You must pass an mfa_callback.' )
+                : $s->login( $u, $p, %opt, mfa_code => $opt{mfa_callback}->( $res->json ) );
+        }
+        else {
+            require Finance::Robinhood::Data::OAuth2::Token;
+            $s->_token( Finance::Robinhood::Data::OAuth2::Token->new( $res->json ) );
+        }
+    }
+    else {
+        return Finance::Robinhood::Error->new(
+            $res->is_server_error ? ( details => $res->message ) : $res->json );
+    }
+    $s;
+}
+
+sub _test_login {
+    my $rh = t::Utility::rh_instance(1);
+    isa_ok( $rh->_token, 'Finance::Robinhood::Data::OAuth2::Token' );
+}
+
+# Cannot test this without using the same token for 24hrs and letting it expire
+sub _refresh_login_token ( $s, %opt ) {    # TODO: Store %opt from login and reuse it here
+                                           # OAUTH2
+    my $res = $s->_post(
+        'https://api.robinhood.com/oauth2/token/',
+        no_auth_token => 1,                # NO AUTH INFO SENT!
+
+        scope         => 'internal',
+        refresh_token => $s->_token->refresh_token,
+        grant_type    => ( $opt{grant_type} // 'password' ),
+        client_id     => $opt{client_id} // sub {
+            my ( @k, $c ) = split //, shift;
+            map {                          # cheap and easy
+                unshift @k, pop @k;
+                $c .= chr( ord ^ ord $k[0] );
+            } split //, "\aW];&Y55\35I[\a,6&>[5\34\36\f\2]]\$\x179L\\\x0B4<;,\"*&\5);";
+            $c;
+        }
+            ->(__PACKAGE__),
+    );
+    if ( $res->is_success ) {
+
+        require Finance::Robinhood::Data::OAuth2::Token;
+        $s->_token( Finance::Robinhood::Data::OAuth2::Token->new( $res->json ) );
+
+    }
+    else {
+        return Finance::Robinhood::Error->new(
+            $res->is_server_error ? ( details => $res->message ) : $res->json );
+    }
+    $s;
+}
+
+=head2 C<search( ... )>
+
+    my $results = $rh->search('microsoft');
+
+Returns a set of search results as a Finance::Robinhood::Search object.
+
+You do not need to be logged in for this to work.
+
+=cut
+
+sub search ( $s, $keyword ) {
+    my $res = $s->_get( 'https://midlands.robinhood.com/search/', query => $keyword );
+    require Finance::Robinhood::Search;
+    $res->is_success
+        ? Finance::Robinhood::Search->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_search {
+    my $rh = t::Utility::rh_instance(1);
+    isa_ok(
+        $rh->search('tesla'),
+        'Finance::Robinhood::Search'
+    );
+}
+
+=head2 C<news( ... )>
+
+    my $news = $rh->news('MSFT');
+    my $news = $rh->news('1072fc76-1862-41ab-82c2-485837590762'); # Forex - USD
+
+An iterator containing Finance::Robinhood::News objects is returned.
+
+=cut
+
+sub news ( $s, $symbol_or_id ) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://midlands.robinhood.com/news/')->query(
+            {
+                (
+                    $symbol_or_id
+                        =~ /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+                    ? 'currency_id'
+                    : 'symbol'
+                ) => $symbol_or_id
+            }
+        ),
+        _class => 'Finance::Robinhood::News'
+    );
+}
 
-Logging in allows you to buy and sell securities with your Robinhood account.
-You must do this if you do not have an authorization token.
+sub _test_news {
+    my $rh   = t::Utility::rh_instance();
+    my $msft = $rh->news('MSFT');
+    isa_ok( $msft, 'Finance::Robinhood::Utility::Iterator' );
+    $msft->has_next
+        ? isa_ok( $msft->next, 'Finance::Robinhood::News' )
+        : pass('Fake it... Might not be any news on the weekend');
 
-If login was successful, a valid token is returned and may also be had by
-calling C<token( )>. The token should be kept secret and stored for use in
-future calls to C<new( ... )>.
+    my $btc = $rh->news('d674efea-e623-4396-9026-39574b92b093');
+    isa_ok( $btc, 'Finance::Robinhood::Utility::Iterator' );
+    $btc->has_next
+        ? isa_ok( $btc->next, 'Finance::Robinhood::News' )
+        : pass('Fake it... Might not be any news on the weekend');
+}
 
-=head2 C<token( )>
+=head2 C<feed( )>
 
-If you logged in with a username/password combo but later decided you might
-want to securely store authorization info to pass to C<new( ... )> next time.
-Get the authorization token here.
+    my $feed = $rh->feed();
 
-=head2 C<logout( )>
+An iterator containing Finance::Robinhood::News objects is returned. This list
+will be filled with news related to instruments in your watchlist and
+portfolio.
 
-    my $token = $rh->login($user, $password);
-    # ...do some stuff... buy... sell... idk... stuff... and then...
-    $rh->logout( ); # Goodbye!
+You need to be logged in for this to work.
 
-Logs you out of Robinhood by forcing the token returned by C<login(...)> or
-passed to C<new(...)> to expire.
+=cut
 
-I<Note>: This will log you out I<everywhere> because Robinhood generates a
-single authorization token per account at a time! All logged in clients will
-be logged out. This is good in rare case your device or the token itself is
-stolen.
+sub feed ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://midlands.robinhood.com/feed/',
+        _class     => 'Finance::Robinhood::News'
+    );
+}
 
-=head2 C<forgot_password( ... )>
+sub _test_feed {
+    my $feed = t::Utility::rh_instance(1)->feed;
+    isa_ok( $feed,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $feed->current, 'Finance::Robinhood::News' );
+}
 
-    Finance::Robinhood::forgot_password('contact@example.com');
+=head2 C<notifications( )>
 
-It happens. This requests a password reset email to be sent from Robinhood.
+    my $cards = $rh->notifications();
 
-=head2 C<change_password( ... )>
+An iterator containing Finance::Robinhood::Notification objects is returned.
 
-    Finance::Robinhood::change_password( $username, $password, $token );
+You need to be logged in for this to work.
 
-When you've forgotten your password, the email Robinhood send contains a link
-to an online form where you may change your password. That link has a token
-you may use here to change the password as well.
+=cut
 
-=head1 User Information
+sub notifications ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://midlands.robinhood.com/notifications/stack/',
+        _class     => 'Finance::Robinhood::Notification'
+    );
+}
 
-Brokerage firms must collect a lot of information about their customers due to
-IRS and SEC regulations. They also keep data to identify you internally.
-Here's how to access all of the data you entered when during registration and
-beyond.
+sub _test_notifications {
+    my $cards = t::Utility::rh_instance(1)->notifications;
+    isa_ok( $cards,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $cards->current, 'Finance::Robinhood::Notification' );
+}
 
-=head2 C<user_id( )>
+=head2 C<notification_by_id( ... )>
 
-    my $user_id = $rh->user_id( );
+    my $card = $rh->notification_by_id($id);
 
-Returns the ID Robinhood uses to identify this particular account. You could
-also gather this information with the C<user_info( )> method.
+Returns a Finance::Robinhood::Notification object. You need to be logged in for
+this to work.
 
-=head2 C<user_info( )>
+=cut
 
-    my %info = $rh->user_info( );
-    say 'My name is ' . $info{first_name} . ' ' . $info{last_name};
+sub notification_by_id ( $s, $id ) {
+    my $res = $s->_get( 'https://midlands.robinhood.com/notifications/stack/' . $id . '/' );
+    require Finance::Robinhood::Notification if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Notification->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
 
-Returns very basic information (name, email address, etc.) about the currently
-logged in account as a hash.
+sub _test_notification_by_id {
+    my $rh   = t::Utility::rh_instance(1);
+    my $card = $rh->notification_by_id( $rh->notifications->current->id );
+    isa_ok( $card, 'Finance::Robinhood::Notification' );
+}
 
-=head2 C<basic_info( )>
+=head1 EQUITY METHODS
 
-This method grabs basic but more private information about the user including
-their date of birth, marital status, and the last four digits of their social
-security number.
 
-=head2 C<additional_info( )>
+=head2 C<equity_instruments( )>
 
-This method grabs information about the user that the SEC would like to know
-including any affiliations with publicly traded securities.
+    my $instruments = $rh->equity_instruments();
 
-=head2 C<employment_info( )>
+Returns an iterator containing equity instruments.
 
-This method grabs information about the user's current employment status and
-(if applicable) current job.
-
-=head2 C<investment_profile( )>
-
-This method grabs answers about the user's investment experience gathered by
-the survey performed during registration.
-
-=head2 C<identity_mismatch( )>
-
-Returns a paginated list of identification information.
-
-=head1 Accounts
-
-A user may have access to more than a single Robinhood account. Each account
-is represented by a Finance::Robinhood::Account object internally. Orders to
-buy and sell securities require an account object. The object also contains
-information about your financial standing.
-
-For more on how to use these objects, please see the
-Finance::Robinhood::Account docs.
-
-=head2 C<accounts( ... )>
-
-This method returns a paginated list of Finance::Robinhood::Account objects
-related to the currently logged in user.
-
-I<Note>: Not sure why the API returns a paginated list of accounts. Perhaps
-in the future a single user will have access to multiple accounts?
-
-=head1 Financial Instruments
-
-Financial Instrument is a fancy term for any equity, asset, debt, loan, etc.
-but we'll strictly be referring to securities (stocks and ETFs) as financial
-instruments.
-
-We use blessed Finance::Robinhood::Instrument objects to represent securities
-in order transactions, watchlists, etc. It's how we'll refer to a security so
-looking over the documentation found in Finance::Robinhood::Instrument would
-be a wise thing to do.
-
-=head2 C<instrument( ... )>
-
-    my $msft = $rh->instrument('MSFT');
-    my $msft = Finance::Robinhood::instrument('MSFT');
-
-When a single string is passed, only the exact match for the given symbol is
-returned as a Finance::Robinhood::Instrument object.
-
-    my $msft = $rh->instrument({id => '50810c35-d215-4866-9758-0ada4ac79ffa'});
-    my $msft = Finance::Robinhood::instrument({id => '50810c35-d215-4866-9758-0ada4ac79ffa'});
-
-If a hash reference is passed with an C<id> key, the single result is returned
-as a Finance::Robinhood::Instrument object. The unique ID is how Robinhood
-identifies securities internally.
-
-    my $results = $rh->instrument({query => 'solar'});
-    my $results = Finance::Robinhood::instrument({query => 'solar'});
-
-If a hash reference is passed with a C<query> key, results are returned as a
-hash reference with cursor keys (C<next> and C<previous>). The matching
-securities are Finance::Robinhood::Instrument objects which may be found in
-the C<results> key as a list.
-
-    my $results = $rh->instrument({cursor => 'cD04NjQ5'});
-    my $results = Finance::Robinhood::instrument({cursor => 'cD04NjQ5'});
-
-Results to a query may generate more than a single page of results. To gather
-them, use the C<next> or C<previous> values.
-
-    my $results = $rh->instrument( );
-    my $results = Finance::Robinhood::instrument( );
-
-Returns a paginated list of securities as Finance::Robinhood::Instrument
-objects along with C<next> and C<previous> cursor values. The list is sorted
-in reverse by their listing date. Use this to track securities that are new!
-
-=head1 Orders
-
-Now that you've L<logged in|/"Logging In"> and
-L<found the particular stock|/"Financial Instruments"> you're interested in,
-you probably want to buy or sell something. You do this by placing orders.
-
-Orders are created by using the constructor found in Finance::Robinhood::Order
-directly so have a look at the documentation there (especially the small cheat
-sheet).
-
-Once you've place the order, you'll want to keep track of them somehow. To do
-this, you may use either of the following methods.
-
-=head2 C<locate_order( ... )>
-
-    my $order = $rh->locate_order( $order_id );
-
-Returns a blessed Finance::Robinhood::Order object related to the buy or sell
-order with the given id if it exits.
-
-=head2 C<list_orders( ... )>
-
-    my $orders = $rh->list_orders( );
-
-Requests a list of all orders ordered from newest to oldest. Executed and even
-canceled orders are returned in a C<results> key as Finance::Robinhood::Order
-objects. Cursor keys C<next> and C<previous> may also be present.
-
-    my $more_orders = $rh->list_orders({ cursor => $orders->{next} });
-
-You'll likely generate more than a hand full of buy and sell orders which
-would generate more than a single page of results. To gather them, use the
-C<next> or C<previous> values.
-
-    my $new_orders = $rh->list_orders({ since => 1489273695 });
-
-To gather orders placed after a certain date or time, use the C<since>
-parameter.
-
-    my $new_orders = $rh->list_orders({ instrument => $msft });
-
-Gather only orders related to a certain instrument. Pass a full
-Finance::Robinhood::Instrument object.
-
-=head1 Quotes and Historical Data
-
-If you're doing anything beyond randomly choosing stocks with a symbol
-generator, you'll want to know a little more. Robinhood provides access to
-both current and historical data on securities.
-
-=head2 C<quote( ... )>
-
-    my %msft = $rh->quote('MSFT');
-    my $swa  = Finance::Robinhood::quote('LUV');
-
-    my $quotes = $rh->quote('AAPL', 'GOOG', 'MA');
-    my $quotes = Finance::Robinhood::quote('LUV', 'JBLU', 'DAL');
-
-Requests current information about a security which is returned as a
-Finance::Robinhood::Quote object. If C<quote( ... )> is given a list of
-symbols, the objects are returned as a paginated list.
-
-This function has both functional and object oriented forms. The functional
-form does not require an account and may be called without ever logging in.
-
-=head2 C<fundamentals( ... )>
-
-    my %msft = $rh->fundamentals('MSFT');
-    my $swa  = Finance::Robinhood::fundamentals('LUV');
-
-    my $fundamentals = $rh->fundamentals('AAPL', 'GOOG', 'MA');
-       $fundamentals = Finance::Robinhood::fundamentals('LUV', 'JBLU', 'DAL');
-
-Requests current information about a security which is returned as a
-Finance::Robinhood::Fundamentals object. If C<fundamentals( ... )>
-is given a list of symbols, the objects are returned as a paginated list. The
-API will accept up to ten (10) symbols at a time.
-
-This function has both functional and object oriented forms. The functional
-form does not require an account and may be called without ever logging in.
-
-=head2 C<historicals( ... )>
-
-    # Snapshots of basic quote data for every five minutes of the previous day
-    my $msft = $rh->historicals('MSFT', '5minute', 'day');
-
-You may retrieve historical quote data with this method. The first argument is
-a symbol. The second is an interval time and must be either C<5minute>,
-C<10minute>, C<day>, or C<week>. The third argument is a span of time
-indicating how far into the past you would like to retrieve and may be one of
-the following: C<day>, C<week>, C<year>, C<5year>, or C<all>. The fourth is a
-bounds which is one of the following: C<extended>, C<regular>, C<trading>.
-
-All are optional and may be filled with an undefined value.
-
-So, to get five years of weekly historical data for Apple, you would write...
-
-    my $iHist = $rh->historicals('AAPL', 'week', '5year');
-    my $gates = Finance::Robinhood::historicals('MSFT', 'week', '5year');
-
-This method returns a list of hashes which in turn contain the following keys:
+You may restrict, search, or modify the list of instruments returned with the
+following optional arguments:
 
 =over
 
-=item C<begins_at> - A Time::Piece or DateTime object indicating the timestamp
-of this block of data.
+=item C<symbol> - Ticker symbol
 
-=item C<close_price> - The most recent close price during this interval.
+    my $msft = $rh->equity_instruments(symbol => 'MSFT')->next;
 
-=item C<high_price> - The most recent high price during this interval.
+By the way, C<instrument_by_symbol( )> exists as sugar. It returns the
+instrument itself rather than an iterator object with a single element.
 
-=item C<interpolated> - Indicates whether the data was a statistical estimate.
-This is a boolean value.
+=item C<query> - Keyword search
 
-=item C<low_price> - The most recent low price during this interval.
+    my @solar = $rh->equity_instruments(query => 'solar')->all;
 
-=item C<open_price> - The most recent open price during this interval.
+=item C<ids> - List of instrument ids
 
-=item C<volume> - The trading volume during this interval.
+    my ( $msft, $tsla )
+        = $rh->equity_instruments(
+        ids => [ '50810c35-d215-4866-9758-0ada4ac79ffa', 'e39ed23a-7bd1-4587-b060-71988d9ef483' ] )
+        ->all;
+
+If you happen to know/store instrument ids, quickly get full instrument objects
+this way.
 
 =back
 
-Note that if you already have a Finance::Robinhood::Instrument object, you may
-want to just call the object's C<historicals( $interval, $span )> method which
-wraps this.
+=cut
 
-This function has both functional and object oriented forms. The functional
-form does not require an account and may be called without ever logging in.
+sub equity_instruments ( $s, %filter ) {
+    $filter{ids} = join ',', @{ $filter{ids} } if $filter{ids};    # Has to be done manually
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://api.robinhood.com/instruments/')->query( \%filter ),
+        _class     => 'Finance::Robinhood::Equity::Instrument'
+    );
+}
 
-=head1 Informational Cards and Notifications
-
-TODO
-
-=head2 C<cards( )>
-
-    my $cards = $rh->cards( );
-
-Returns the informational cards the Robinhood apps display. These are links to
-news, typically. Currently, these are returned as a paginated list of hashes
-which look like this:
-
-    {   action => "robinhood://web?url=https://finance.yahoo.com/news/spotify-agreement-win-artists-company-003248363.html",
-        call_to_action => "View Article",
-        fixed => bless(do{\(my $o = 0)}, "JSON::Tiny::_Bool"),
-        icon => "news",
-        message => "Spotify Agreement A 'win' For Artists, Company :Billboard Editor",
-        relative_time => "2h",
-        show_if_unsupported => 'fix',
-        time => "2016-03-19T00:32:48Z",
-        title => "Reuters",
-        type => "news",
-        url => "https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/",
+sub _test_equity_instruments {
+    my $rh          = t::Utility::rh_instance(0);
+    my $instruments = $rh->equity_instruments;
+    isa_ok( $instruments,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $instruments->next, 'Finance::Robinhood::Equity::Instrument' );
+    #
+    {
+        my $msft = $rh->equity_instruments( symbol => 'MSFT' )->current;
+        isa_ok( $msft, 'Finance::Robinhood::Equity::Instrument' );
+        is( $msft->symbol, 'MSFT', 'equity_instruments(symbol => "MSFT") returned Microsoft' );
     }
-
-* Please note that the C<url> provided by the API is incorrect! Rather than
-C<"https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/">,
-it should be
-C<<"https://api.robinhood.com/B<midlands/>notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/">>.
-
-=head1 Dividends
-
-TODO
-
-=head2 C<dividends( )>
-
-Gathers a paginated list of dividends due (or recently paid) for your account.
-
-C<results> currently contains a list of hashes which look a lot like this:
-
-    { account => "https://api.robinhood.com/accounts/XXXXXXXX/",
-      amount => 0.23,
-      id => "28a46be1-db41-4f75-bf89-76c803a151ef",
-      instrument => "https://api.robinhood.com/instruments/39ff611b-84e7-425b-bfb8-6fe2a983fcf3/",
-      paid_at => undef,
-      payable_date => "2016-04-25",
-      position => "1.0000",
-      rate => "0.2300000000",
-      record_date => "2016-02-29",
-      url => "https://api.robinhood.com/dividends/28a46be1-db41-4f75-bf89-76c803a151ef/",
-      withholding => "0.00",
+    #
+    {
+        my $tsla = $rh->equity_instruments( query => 'tesla' )->current;
+        isa_ok( $tsla, 'Finance::Robinhood::Equity::Instrument' );
+        is( $tsla->symbol, 'TSLA', 'equity_instruments(query => "tesla") returned Tesla' );
     }
+    {
+        my ( $msft, $tsla )
+            = $rh->equity_instruments( ids =>
+                [ '50810c35-d215-4866-9758-0ada4ac79ffa', 'e39ed23a-7bd1-4587-b060-71988d9ef483' ] )
+            ->all;
+        isa_ok( $msft, 'Finance::Robinhood::Equity::Instrument' );
+        is( $msft->symbol, 'MSFT', 'equity_instruments( ids => ... ) returned Microsoft' );
+        isa_ok( $tsla, 'Finance::Robinhood::Equity::Instrument' );
+        is( $tsla->symbol, 'TSLA', 'equity_instruments( ids => ... ) also returned Tesla' );
+    }
+}
 
-=head1 Watchlists
+=head2 C<equity_instrument_by_symbol( ... )>
 
-You can keep track of a list of securities by adding them to a watchlist. The
-watchlist used by the official Robinhood apps and preloaded with popular
-securities is named 'Default'. You may create new watchlists for
-organizational reasons but the official apps currently only display the
-'Default' watchlist.
+    my $instrument = $rh->equity_instrument_by_symbol('MSFT');
 
-Each watchlist is represented by a Finance::Robinhood::Watchlist object.
-Please read the docs for that package to find out how to add and remove
-individual securities.
+Searches for an equity instrument by ticker symbol and returns a
+Finance::Robinhood::Equity::Instrument.
 
-=head2 C<watchlist( ... )>
+=cut
 
-    my $hotlist = $rh->watchlist( 'Blue_Chips' );
+sub equity_instrument_by_symbol ( $s, $symbol ) {
+    $s->equity_instruments( symbol => $symbol )->current;
+}
 
-Returns a blessed Finance::Robinhood::Watchlist if the watchlist with the
-given name exists.
+sub _test_equity_instrument_by_symbol {
+    my $rh         = t::Utility::rh_instance(0);
+    my $instrument = $rh->equity_instrument_by_symbol('MSFT');
+    isa_ok( $instrument, 'Finance::Robinhood::Equity::Instrument' );
+}
 
-=head2 C<create_watchlist( ... )>
+=head2 C<equity_instrument_by_id( ... )>
 
-    my $watchlist = $rh->create_watchlist( 'Energy' );
+    my $instrument = $rh->equity_instrument_by_id('50810c35-d215-4866-9758-0ada4ac79ffa');
 
-You can create new Finance::Robinhood::Watchlist objects with this. Here, your
-code would create a new one named "Energy".
+Searches for a single of equity instrument by its instrument id and returns a
+Finance::Robinhood::Equity::Instrument object.
 
-Note that only alphanumeric characters and understore are allowed in watchlist
-names. No whitespace, etc.
+=cut
 
-=head2 C<delete_watchlist( ... )>
+sub equity_instrument_by_id ( $s, $id ) {
+    $s->equity_instruments( ids => [$id] )->next();
+}
 
-    my $watchlist = $rh->create_watchlist( 'Energy' );
-    $rh->delete_watchlist( $watchlist );
+sub _test_equity_instrument_by_id {
+    my $rh         = t::Utility::rh_instance(0);
+    my $instrument = $rh->equity_instrument_by_id('50810c35-d215-4866-9758-0ada4ac79ffa');
+    isa_ok( $instrument, 'Finance::Robinhood::Equity::Instrument' );
+    is( $instrument->symbol, 'MSFT', 'equity_instruments( ids => ... ) returned Microsoft' );
+}
 
-    $rh->create_watchlist( 'Energy' );
-    $rh->delete_watchlist( 'Energy' );
+=head2 C<equity_instruments_by_id( ... )>
 
-You may remove a watchlist with this method. The argument may either be a
-Finance::Robinhood::Watchlist object or the name of the watchlist as a string.
+    my $instrument = $rh->equity_instruments_by_id('50810c35-d215-4866-9758-0ada4ac79ffa');
 
-If you clobber the watchlist named 'Default', it will be recreated with
-popular securities the next time you open any of the official apps.
+Searches for a list of equity instruments by their instrument ids and returns a
+list of Finance::Robinhood::Equity::Instrument objects.
 
-=head2 C<watchlists( ... )>
+=cut
 
-    my $watchlists = $rh->watchlists( );
+sub equity_instruments_by_id ( $s, @ids ) {
 
-Returns all your current watchlists as a paginated list of
-Finance::Robinhood::Watchlists.
+    # Split ids into groups of 75 to keep URL length down
+    my @retval;
+    push @retval, $s->equity_instruments( ids => [ splice @ids, 0, 75 ] )->all() while @ids;
+    @retval;
+}
 
-    my $more = $rh->watchlists( { cursor => $watchlists->{next} } );
+sub _test_equity_instruments_by_id {
+    my $rh = t::Utility::rh_instance(0);
+    my ($instrument) = $rh->equity_instruments_by_id('50810c35-d215-4866-9758-0ada4ac79ffa');
+    isa_ok( $instrument, 'Finance::Robinhood::Equity::Instrument' );
+    is( $instrument->symbol, 'MSFT', 'equity_instruments( ids => ... ) returned Microsoft' );
+}
 
-In case where you have more than one page of watchlists, use the C<next> and
-C<previous> cursor strings.
+=head2 C<equity_orders( [...] )>
+
+    my $orders = $rh->equity_orders();
+
+An iterator containing Finance::Robinhood::Equity::Order objects is returned.
+You need to be logged in for this to work.
+
+    my $orders = $rh->equity_orders(instrument => $msft);
+
+If you would only like orders after a certain date, you can do that!
+
+    my $orders = $rh->equity_orders(after => Time::Moment->now->minus_days(7));
+    # Also accepts ISO 8601
+
+If you would only like orders before a certain date, you can do that!
+
+    my $orders = $rh->equity_orders(before => Time::Moment->now->minus_years(2));
+    # Also accepts ISO 8601
+
+=cut
+
+sub equity_orders ( $s, %opts ) {
+
+    #- `updated_at[gte]` - greater than or equal to a date; timestamp or ISO 8601
+    #- `updated_at[lte]` - less than or equal to a date; timestamp or ISO 8601
+    #- `instrument` - equity instrument URL
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://api.robinhood.com/orders/')->query(
+            {
+                $opts{instrument} ? ( instrument        => $opts{instrument}->url ) : (),
+                $opts{before}     ? ( 'updated_at[lte]' => +$opts{before} )         : (),
+                $opts{after}      ? ( 'updated_at[gte]' => +$opts{after} )          : ()
+            }
+        ),
+        _class => 'Finance::Robinhood::Equity::Order'
+    );
+}
+
+sub _test_equity_orders {
+    my $rh     = t::Utility::rh_instance(1);
+    my $orders = $rh->equity_orders;
+    isa_ok( $orders,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $orders->next, 'Finance::Robinhood::Equity::Order' );
+}
+
+=head2 C<equity_order_by_id( ... )>
+
+    my $order = $rh->equity_order_by_id($id);
+
+Returns a Finance::Robinhood::Equity::Order object. You need to be logged in
+for this to work.
+
+=cut
+
+sub equity_order_by_id ( $s, $id ) {
+    my $res = $s->_get( 'https://api.robinhood.com/orders/' . $id . '/' );
+    require Finance::Robinhood::Equity::Order if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Equity::Order->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_equity_order_by_id {
+    my $rh    = t::Utility::rh_instance(1);
+    my $order = $rh->equity_order_by_id( $rh->equity_orders->current->id );
+    isa_ok( $order, 'Finance::Robinhood::Equity::Order' );
+}
+
+=head2 C<equity_accounts( )>
+
+    my $accounts = $rh->equity_accounts();
+
+An iterator containing Finance::Robinhood::Equity::Account objects is returned.
+You need to be logged in for this to work.
+
+=cut
+
+sub equity_accounts ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://api.robinhood.com/accounts/',
+        _class     => 'Finance::Robinhood::Equity::Account'
+    );
+}
+
+sub _test_equity_accounts {
+    my $rh       = t::Utility::rh_instance(1);
+    my $accounts = $rh->equity_accounts;
+    isa_ok( $accounts,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $accounts->current, 'Finance::Robinhood::Equity::Account' );
+}
+
+=head2 C<equity_account_by_account_number( ... )>
+
+    my $account = $rh->equity_account_by_account_number($id);
+
+Returns a Finance::Robinhood::Equity::Account object. You need to be logged in
+for this to work.
+
+=cut
+
+sub equity_account_by_account_number ( $s, $id ) {
+    my $res = $s->_get( 'https://api.robinhood.com/accounts/' . $id . '/' );
+    require Finance::Robinhood::Equity::Account if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Equity::Account->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_equity_account_by_account_number {
+    my $rh = t::Utility::rh_instance(1);
+    my $acct
+        = $rh->equity_account_by_account_number( $rh->equity_accounts->current->account_number );
+    isa_ok( $acct, 'Finance::Robinhood::Equity::Account' );
+}
+
+=head2 C<equity_portfolios( )>
+
+    my $equity_portfolios = $rh->equity_portfolios();
+
+An iterator containing Finance::Robinhood::Equity::Account::Portfolio objects
+is returned. You need to be logged in for this to work.
+
+=cut
+
+sub equity_portfolios ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://api.robinhood.com/portfolios/',
+        _class     => 'Finance::Robinhood::Equity::Account::Portfolio'
+    );
+}
+
+sub _test_equity_portfolios {
+    my $rh                = t::Utility::rh_instance(1);
+    my $equity_portfolios = $rh->equity_portfolios;
+    isa_ok( $equity_portfolios,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $equity_portfolios->current, 'Finance::Robinhood::Equity::Account::Portfolio' );
+}
+
+=head2 C<equity_watchlists( )>
+
+    my $watchlists = $rh->equity_watchlists();
+
+An iterator containing Finance::Robinhood::Equity::Watchlist objects is
+returned. You need to be logged in for this to work.
+
+=cut
+
+sub equity_watchlists ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://api.robinhood.com/watchlists/',
+        _class     => 'Finance::Robinhood::Equity::Watchlist'
+    );
+}
+
+sub _test_equity_watchlists {
+    my $rh         = t::Utility::rh_instance(1);
+    my $watchlists = $rh->equity_watchlists;
+    isa_ok( $watchlists,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $watchlists->current, 'Finance::Robinhood::Equity::Watchlist' );
+}
+
+=head2 C<equity_watchlist_by_name( ... )>
+
+    my $watchlist = $rh->equity_watchlist_by_name('Default');
+
+Returns a Finance::Robinhood::Equity::Watchlist object. You need to be logged
+in for this to work.
+
+=cut
+
+sub equity_watchlist_by_name ( $s, $name ) {
+    require Finance::Robinhood::Equity::Watchlist;    # Subclass of Iterator
+    Finance::Robinhood::Equity::Watchlist->new(
+        _rh        => $s,
+        _next_page => 'https://api.robinhood.com/watchlists/' . $name . '/',
+        _class     => 'Finance::Robinhood::Equity::Watchlist::Element',
+        name       => $name
+    );
+}
+
+sub _test_equity_watchlist_by_name {
+    my $rh        = t::Utility::rh_instance(1);
+    my $watchlist = $rh->equity_watchlist_by_name('Default');
+    isa_ok( $watchlist, 'Finance::Robinhood::Equity::Watchlist' );
+}
+
+=head2 C<equity_fundamentals( )>
+
+    my $fundamentals = $rh->equity_fundamentals('MSFT', 'TSLA');
+
+An iterator containing Finance::Robinhood::Equity::Fundamentals objects is
+returned.
+
+You do not need to be logged in for this to work.
+
+=cut
+
+sub equity_fundamentals ( $s, @symbols_or_ids_or_urls ) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://api.robinhood.com/fundamentals/')->query(
+            {
+                (
+                    grep {
+                        /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i
+                    } @symbols_or_ids_or_urls
+                    )
+                ? ( grep {/^https?/i} @symbols_or_ids_or_urls )
+                        ? 'instruments'
+                        : 'ids'
+                : 'symbols' => join( ',', @symbols_or_ids_or_urls )
+            }
+            ),
+            _class => 'Finance::Robinhood::Equity::Fundamentals'
+    );
+}
+
+sub _test_equity_fundamentals {
+    my $rh = t::Utility::rh_instance(1);
+    isa_ok(
+        $rh->equity_fundamentals('MSFT')->current, 'Finance::Robinhood::Equity::Fundamentals',
+    );
+    isa_ok(
+        $rh->equity_fundamentals('50810c35-d215-4866-9758-0ada4ac79ffa')->current,
+        'Finance::Robinhood::Equity::Fundamentals',
+    );
+    isa_ok(
+        $rh->equity_fundamentals(
+            'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/')->current,
+        'Finance::Robinhood::Equity::Fundamentals',
+    );
+}
+
+=head2 C<equity_markets( )>
+
+    my $markets = $rh->equity_markets()->all;
+
+Returns an iterator containing Finance::Robinhood::Equity::Market objects.
+
+=cut
+
+sub equity_markets ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://api.robinhood.com/markets/',
+        _class     => 'Finance::Robinhood::Equity::Market'
+    );
+}
+
+sub _test_equity_markets {
+    my $markets = t::Utility::rh_instance(0)->equity_markets;
+    isa_ok( $markets, 'Finance::Robinhood::Utility::Iterator' );
+    skip_all('No equity markets found') if !$markets->has_next;
+    isa_ok( $markets->current, 'Finance::Robinhood::Equity::Market' );
+}
+
+=head2 C<equity_market_by_mic( )>
+
+    my $markets = $rh->equity_market_by_mic('XNAS'); # NASDAQ
+
+Locates an exchange by its Market Identifier Code and returns a
+Finance::Robinhood::Equity::Market object.
+
+See also https://en.wikipedia.org/wiki/Market_Identifier_Code
+
+=cut
+
+sub equity_market_by_mic ( $s, $mic ) {
+    my $res = $s->_get( 'https://api.robinhood.com/markets/' . $mic . '/' );
+    require Finance::Robinhood::Equity::Market if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Equity::Market->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_equity_market_by_mic {
+    isa_ok(
+        t::Utility::rh_instance(0)->equity_market_by_mic('XNAS'),
+        'Finance::Robinhood::Equity::Market'
+    );
+}
+
+=head2 C<top_movers( [...] )>
+
+    my $instruments = $rh->top_movers( );
+
+Returns an iterator containing members of the S&P 500 with large price changes
+during market hours as Finance::Robinhood::Equity::Movers objects.
+
+You may define whether or not you want the best or worst performing instruments
+with the following option:
+
+=over
+
+=item C<direction> - C<up> or C<down>
+
+    $rh->top_movers( direction => 'up' );
+
+Returns the best performing members. This is the default.
+
+    $rh->top_movers( direction => 'down' );
+
+Returns the worst performing members.
+
+=back
+
+=cut
+
+sub top_movers ( $s, %filter ) {
+    $filter{direction} //= 'up';
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh => $s,
+        _next_page =>
+            Mojo::URL->new('https://midlands.robinhood.com/movers/sp500/')->query( \%filter ),
+        _class => 'Finance::Robinhood::Equity::Mover'
+    );
+}
+
+sub _test_top_movers {
+    my $rh     = t::Utility::rh_instance(0);
+    my $movers = $rh->top_movers;
+    isa_ok( $movers,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $movers->current, 'Finance::Robinhood::Equity::Mover' );
+}
+
+=head2 C<tags( ... )>
+
+    my $tags = $rh->tags( 'food', 'oil' );
+
+Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
+
+=cut
+
+sub tags ( $s, @slugs ) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://midlands.robinhood.com/tags/')
+            ->query( { slugs => join ',', @slugs } ),
+        _class => 'Finance::Robinhood::Equity::Tag'
+    );
+}
+
+sub _test_tags {
+    my $rh   = t::Utility::rh_instance(0);
+    my $tags = $rh->tags('food');
+    isa_ok( $tags,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $tags->current, 'Finance::Robinhood::Equity::Tag' );
+}
+
+=head2 C<tags_discovery( ... )>
+
+    my $tags = $rh->tags_discovery( );
+
+Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
+
+=cut
+
+sub tags_discovery ( $s ) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://midlands.robinhood.com/tags/discovery/'),
+        _class     => 'Finance::Robinhood::Equity::Tag'
+    );
+}
+
+sub _test_tags_discovery {
+    my $rh   = t::Utility::rh_instance(0);
+    my $tags = $rh->tags_discovery();
+    isa_ok( $tags,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $tags->current, 'Finance::Robinhood::Equity::Tag' );
+}
+
+=head2 C<tags_popular( ... )>
+
+    my $tags = $rh->tags_popular( );
+
+Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
+
+=cut
+
+sub tags_popular ( $s ) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://midlands.robinhood.com/tags/discovery/'),
+        _class     => 'Finance::Robinhood::Equity::Tag'
+    );
+}
+
+sub _test_tags_popular {
+    my $rh   = t::Utility::rh_instance(0);
+    my $tags = $rh->tags_popular();
+    isa_ok( $tags,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $tags->current, 'Finance::Robinhood::Equity::Tag' );
+}
+
+=head2 C<tag( ... )>
+
+    my $tag = $rh->tag('food');
+
+Locates a tag by its slug and returns a Finance::Robinhood::Equity::Tag object.
+
+=cut
+
+sub tag ( $s, $slug ) {
+    my $res = $s->_get( 'https://midlands.robinhood.com/tags/tag/' . $slug . '/' );
+    require Finance::Robinhood::Equity::Tag if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Equity::Tag->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_tag {
+    isa_ok(
+        t::Utility::rh_instance(0)->tag('food'),
+        'Finance::Robinhood::Equity::Tag'
+    );
+}
+
+=head1 OPTIONS METHODS
+
+=head2 C<options_chains( )>
+
+    my $chains = $rh->options_chains->all;
+
+Returns an iterator containing chain elements.
+
+    my $equity = $rh->search('MSFT')->equity_instruments->[0]->options_chains->all;
+
+You may limit the call by passing a list of options instruments or a list of
+equity instruments.
+
+=cut
+
+sub options_chains ( $s, @filter ) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://api.robinhood.com/options/chains/')->query(
+            {
+                  ( grep { ref $_ eq 'Finance::Robinhood::Equity::Instrument' } @filter )
+                ? ( equity_instrument_ids => [ map { $_->id } @filter ] )
+                : ( grep { ref $_ eq 'Finance::Robinhood::Options::Instrument' } @filter )
+                ? ( ids => [ map { $_->chain_id } @filter ] )
+                : ()
+            }
+        ),
+        _class => 'Finance::Robinhood::Options::Chain'
+    );
+}
+
+sub _test_options_chains {
+    my $rh     = t::Utility::rh_instance(0);
+    my $chains = $rh->options_chains;
+    isa_ok( $chains,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $chains->next, 'Finance::Robinhood::Options::Chain' );
+
+    # Get by equity instrument
+    $chains = $rh->options_chains( $rh->search('MSFT')->equity_instruments );
+    isa_ok( $chains,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $chains->next, 'Finance::Robinhood::Options::Chain' );
+    is( $chains->current->symbol, 'MSFT' );
+
+    # Get by options instrument
+    my ($instrument) = $rh->search('MSFT')->equity_instruments;
+    my $options = $rh->options_instruments(
+        chain_id    => $instrument->tradable_chain_id,
+        tradability => 'tradable'
+    );
+    $chains = $rh->options_chains( $options->next );
+    isa_ok( $chains,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $chains->next, 'Finance::Robinhood::Options::Chain' );
+    is( $chains->current->symbol, 'MSFT' );
+}
+
+=head2 C<options_instruments( )>
+
+    my $options = $rh->options_instruments();
+
+Returns an iterator containing Finance::Robinhood::Options::Instrument objects.
+
+	my $options = $rh->options_instruments( state => 'active', type => 'put' );
+
+You can filter the results several ways. All of them are optional.
+
+=over
+
+=item C<state> - C<active>, C<inactive>, or C<expired>
+
+=item C<type> - C<call> or C<put>
+
+=item C<expiration_dates> - comma separated list of days; format is YYYY-M-DD
+
+=back
+
+=cut
+
+sub options_instruments ( $s, %filters ) {
+
+    #$filters{chain_id} = $filters{chain}->chain_id if $filters{chain};
+    #    - ids - comma separated list of options ids (optional)
+    #    - cursor - paginated list position (optional)
+    #    - tradability - 'tradable' or 'untradable' (optional)
+    #    - state - 'active', 'inactive', or 'expired' (optional)
+    #    - type - 'put' or 'call' (optional)
+    #    - expiration_dates - comma separated list of days (optional; YYYY-MM-DD)
+    #    - chain_id - related options chain id (optional; UUID)
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh => $s,
+        _next_page =>
+            Mojo::URL->new('https://api.robinhood.com/options/instruments/')->query( \%filters ),
+        _class => 'Finance::Robinhood::Options::Instrument'
+    );
+}
+
+sub _test_options_instruments {
+    my $rh      = t::Utility::rh_instance(1);
+    my $options = $rh->options_instruments(
+        chain_id    => $rh->equity_instrument_by_symbol('MSFT')->tradable_chain_id,
+        tradability => 'tradable'
+    );
+    isa_ok( $options,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $options->next, 'Finance::Robinhood::Options::Instrument' );
+    is( $options->current->chain_symbol, 'MSFT' );
+}
+
+=head1 UNSORTED
+
+
+=head2 C<user( )>
+
+    my $me = $rh->user();
+
+Returns a Finance::Robinhood::User object. You need to be logged in for this to
+work.
+
+=cut
+
+sub user ( $s ) {
+    my $res = $s->_get('https://api.robinhood.com/user/');
+    require Finance::Robinhood::User if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::User->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_user {
+    my $rh = t::Utility::rh_instance(1);
+    my $me = $rh->user();
+    isa_ok( $me, 'Finance::Robinhood::User' );
+}
+
+=head2 C<acats_transfers( )>
+
+    my $acats = $rh->acats_transfers();
+
+An iterator containing Finance::Robinhood::ACATS::Transfer objects is returned.
+
+You need to be logged in for this to work.
+
+=cut
+
+sub acats_transfers ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://api.robinhood.com/acats/',
+        _class     => 'Finance::Robinhood::ACATS::Transfer'
+    );
+}
+
+sub _test_acats_transfers {
+    my $transfers = t::Utility::rh_instance(1)->acats_transfers;
+    isa_ok( $transfers, 'Finance::Robinhood::Utility::Iterator' );
+    skip_all('No ACATS transfers found') if !$transfers->has_next;
+    isa_ok( $transfers->current, 'Finance::Robinhood::ACATS::Transfer' );
+}
+
+=head2 C<equity_positions( )>
+
+    my $positions = $rh->equity_positions( );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Equity::Position objects.
+
+You must be logged in.
+
+    my $positions = $rh->equity_positions( nonzero => 1 );
+
+You can filter and modify the results. All options are optional.
+
+=over
+
+=item C<nonzero> - true or false. Default is false
+
+=item C<ordering> - list of equity instruments
+
+=back
+
+=cut
+
+sub equity_positions ( $s, %filters ) {
+    $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false' if defined $filters{nonzero};
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://api.robinhood.com/positions/')->query( \%filters ),
+        _class     => 'Finance::Robinhood::Equity::Position'
+    );
+}
+
+sub _test_equity_positions {
+    my $positions = t::Utility::rh_instance(1)->equity_positions;
+    isa_ok( $positions,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $positions->current, 'Finance::Robinhood::Equity::Position' );
+}
+
+=head2 C<equity_earnings( ... )>
+
+    my $earnings = $rh->equity_earnings( symbol => 'MSFT' );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Equity::Earnings objects by ticker symbol.
+
+    my $earnings = $rh->equity_earnings( instrument => $rh->equity_instrument_by_symbol('MSFT') );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Equity::Earnings objects by instrument object/url.
+
+    my $earnings = $rh->equity_earnings( range=> 7 );
+
+Returns a paginated list object filled with
+Finance::Robinhood::Equity::Earnings objects for all expected earnings report
+over the next C<X> days where C<X> is between C<-21...-1, 1...21>. Negative
+values are days into the past. Positive are days into the future.
+
+You must be logged in for any of these to work.
+
+=cut
+
+sub equity_earnings ( $s, %filters ) {
+    $filters{range} = $filters{range} . 'day'
+        if defined $filters{range} && $filters{range} =~ m[^\-?\d+$];
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh => $s,
+        _next_page =>
+            Mojo::URL->new('https://api.robinhood.com/marketdata/earnings/')->query( \%filters ),
+        _class => 'Finance::Robinhood::Equity::Earnings'
+    );
+}
+
+sub _test_equity_earnings {
+    my $by_instrument
+        = t::Utility::rh_instance(1)
+        ->equity_earnings(
+        instrument => t::Utility::rh_instance(1)->equity_instrument_by_symbol('MSFT') );
+    isa_ok( $by_instrument,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $by_instrument->current, 'Finance::Robinhood::Equity::Earnings' );
+    is( $by_instrument->current->symbol, 'MSFT', 'correct symbol (by instrument)' );
+    #
+    my $by_symbol = t::Utility::rh_instance(1)->equity_earnings( symbol => 'MSFT' );
+    isa_ok( $by_symbol,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $by_symbol->current, 'Finance::Robinhood::Equity::Earnings' );
+    is( $by_symbol->current->symbol, 'MSFT', 'correct symbol (by symbol)' );
+
+    # Positive range
+    my $p_range = t::Utility::rh_instance(1)->equity_earnings( range => 7 );
+    isa_ok( $p_range,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $p_range->current, 'Finance::Robinhood::Equity::Earnings' );
+
+    # Negative range
+    my $n_range = t::Utility::rh_instance(1)->equity_earnings( range => -7 );
+    isa_ok( $n_range,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $n_range->current, 'Finance::Robinhood::Equity::Earnings' );
+}
+
+=head1 FOREX METHODS
+
+Depending on your jurisdiction, your account may have access to Robinhood
+Crypto. See https://crypto.robinhood.com/ for more.
+
+
+=head2 C<forex_accounts( )>
+
+    my $halts = $rh->forex_accounts;
+
+Returns an iterator full of Finance::Robinhood::Forex::Account objects.
+
+You need to be logged in and have access to Robinhood Crypto for this to work.
+
+=cut
+
+sub forex_accounts( $s ) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://nummus.robinhood.com/accounts/'),
+        _class     => 'Finance::Robinhood::Forex::Account'
+    );
+}
+
+sub _test_forex_accounts {
+    my $halts = t::Utility::rh_instance(1)->forex_accounts;
+    isa_ok( $halts,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $halts->current, 'Finance::Robinhood::Forex::Account' );
+}
+
+=head2 C<forex_account_by_id( ... )>
+
+    my $account = $rh->forex_account_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Account object. You need to be logged in
+for this to work.
+
+=cut
+
+sub forex_account_by_id ( $s, $id ) {
+    my $res = $s->_get( 'https://nummus.robinhood.com/accounts/' . $id . '/' );
+    require Finance::Robinhood::Forex::Account if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Forex::Account->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_forex_account_by_id {
+    my $rh   = t::Utility::rh_instance(1);
+    my $acct = $rh->forex_account_by_id( $rh->forex_accounts->current->id );
+    isa_ok( $acct, 'Finance::Robinhood::Forex::Account' );
+}
+
+=head2 C<forex_halts( [...] )>
+
+    my $halts = $rh->forex_halts;
+    # or
+    $halts = $rh->forex_halts( active => 1 );
+
+Returns an iterator full of Finance::Robinhood::Forex::Halt objects.
+
+If you pass a true value to a key named C<active>, only active halts will be
+returned.
+
+You need to be logged in and have access to Robinhood Crypto for this to work.
+
+=cut
+
+sub forex_halts ( $s, %filters ) {
+    $filters{active} = $filters{active} ? 'true' : 'false' if defined $filters{active};
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://nummus.robinhood.com/halts/')->query( \%filters ),
+        _class     => 'Finance::Robinhood::Forex::Halt'
+    );
+}
+
+sub _test_forex_halts {
+    my $halts = t::Utility::rh_instance(1)->forex_halts;
+    isa_ok( $halts,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $halts->current, 'Finance::Robinhood::Forex::Halt' );
+    #
+    is(
+        scalar $halts->all > scalar t::Utility::rh_instance(1)->forex_halts( active => 1 )->all,
+        1, 'active => 1 works'
+    );
+}
+
+=head2 C<forex_currencies( )>
+
+    my $currecies = $rh->forex_currencies();
+
+An iterator containing Finance::Robinhood::Forex::Currency objects is returned.
+You need to be logged in for this to work.
+
+=cut
+
+sub forex_currencies ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://nummus.robinhood.com/currencies/',
+        _class     => 'Finance::Robinhood::Forex::Currency'
+    );
+}
+
+sub _test_forex_currencies {
+    my $rh         = t::Utility::rh_instance(1);
+    my $currencies = $rh->forex_currencies;
+    isa_ok( $currencies,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $currencies->current, 'Finance::Robinhood::Forex::Currency' );
+}
+
+=head2 C<forex_currency_by_id( ... )>
+
+    my $currency = $rh->forex_currency_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Currency object. You need to be logged in
+for this to work.
+
+=cut
+
+sub forex_currency_by_id ( $s, $id ) {
+    my $res = $s->_get( 'https://nummus.robinhood.com/currencies/' . $id . '/' );
+    require Finance::Robinhood::Forex::Currency if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Forex::Currency->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_forex_currency_by_id {
+    my $rh  = t::Utility::rh_instance(1);
+    my $usd = $rh->forex_currency_by_id('1072fc76-1862-41ab-82c2-485837590762');
+    isa_ok( $usd, 'Finance::Robinhood::Forex::Currency' );
+}
+
+=head2 C<forex_pairs( )>
+
+    my $pairs = $rh->forex_pairs();
+
+An iterator containing Finance::Robinhood::Forex::Pair objects is returned. You
+need to be logged in for this to work.
+
+=cut
+
+sub forex_pairs ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://nummus.robinhood.com/currency_pairs/',
+        _class     => 'Finance::Robinhood::Forex::Pair'
+    );
+}
+
+sub _test_forex_pairs {
+    my $rh         = t::Utility::rh_instance(1);
+    my $watchlists = $rh->forex_pairs;
+    isa_ok( $watchlists,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $watchlists->current, 'Finance::Robinhood::Forex::Pair' );
+}
+
+=head2 C<forex_pair_by_id( ... )>
+
+    my $watchlist = $rh->forex_pair_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Pair object. You need to be logged in for
+this to work.
+
+=cut
+
+sub forex_pair_by_id ( $s, $id ) {
+    my $res = $s->_get( 'https://nummus.robinhood.com/currency_pairs/' . $id . '/' );
+    require Finance::Robinhood::Forex::Pair if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Forex::Pair->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_forex_pair_by_id {
+    my $rh      = t::Utility::rh_instance(1);
+    my $btc_usd = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');    # BTC-USD
+    isa_ok( $btc_usd, 'Finance::Robinhood::Forex::Pair' );
+}
+
+=head2 C<forex_pair_by_symbol( ... )>
+
+    my $btc = $rh->forex_pair_by_symbol('BTCUSD');
+
+Returns a Finance::Robinhood::Forex::Pair object. You need to be logged in for
+this to work.
+
+=cut
+
+sub forex_pair_by_symbol ( $s, $id ) {
+    my $res = $s->_get( 'https://nummus.robinhood.com/currency_pairs/?symbols=' . $id );
+    require Finance::Robinhood::Forex::Pair if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Forex::Pair->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_forex_pair_by_symbol {
+    my $rh      = t::Utility::rh_instance(1);
+    my $btc_usd = $rh->forex_pair_by_symbol('BTCUSD');    # BTC-USD
+    isa_ok( $btc_usd, 'Finance::Robinhood::Forex::Pair' );
+}
+
+=head2 C<forex_watchlists( )>
+
+    my $watchlists = $rh->forex_watchlists();
+
+An iterator containing Finance::Robinhood::Forex::Watchlist objects is
+returned. You need to be logged in for this to work.
+
+=cut
+
+sub forex_watchlists ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://nummus.robinhood.com/watchlists/',
+        _class     => 'Finance::Robinhood::Forex::Watchlist'
+    );
+}
+
+sub _test_forex_watchlists {
+    my $rh         = t::Utility::rh_instance(1);
+    my $watchlists = $rh->forex_watchlists;
+    isa_ok( $watchlists,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $watchlists->current, 'Finance::Robinhood::Forex::Watchlist' );
+}
+
+=head2 C<forex_watchlist_by_id( ... )>
+
+    my $watchlist = $rh->forex_watchlist_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Watchlist object. You need to be logged in
+for this to work.
+
+=cut
+
+sub forex_watchlist_by_id ( $s, $id ) {
+    my $res = $s->_get( 'https://nummus.robinhood.com/watchlists/' . $id . '/' );
+    require Finance::Robinhood::Forex::Watchlist if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Forex::Watchlist->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_forex_watchlist_by_id {
+    my $rh        = t::Utility::rh_instance(1);
+    my $watchlist = $rh->forex_watchlist_by_id( $rh->forex_watchlists->current->id );
+    isa_ok( $watchlist, 'Finance::Robinhood::Forex::Watchlist' );
+}
+
+=head2 C<forex_activations( )>
+
+    my $activations = $rh->forex_activations();
+
+An iterator containing Finance::Robinhood::Forex::Activation objects is
+returned. You need to be logged in for this to work.
+
+=cut
+
+sub forex_activations ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://nummus.robinhood.com/activations/',
+        _class     => 'Finance::Robinhood::Forex::Activation'
+    );
+}
+
+sub _test_forex_activations {
+    my $rh         = t::Utility::rh_instance(1);
+    my $watchlists = $rh->forex_activations;
+    isa_ok( $watchlists,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $watchlists->current, 'Finance::Robinhood::Forex::Activation' );
+}
+
+=head2 C<forex_activation_by_id( ... )>
+
+    my $activation = $rh->forex_activation_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Activation object. You need to be logged
+in for this to work.
+
+=cut
+
+sub forex_activation_by_id ( $s, $id ) {
+    my $res = $s->_get( 'https://nummus.robinhood.com/activations/' . $id . '/' );
+    require Finance::Robinhood::Forex::Activation if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Forex::Activation->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_forex_activation_by_id {
+    my $rh         = t::Utility::rh_instance(1);
+    my $activation = $rh->forex_activations->current;
+    my $forex      = $rh->forex_activation_by_id( $activation->id );    # Cheat
+    isa_ok( $forex, 'Finance::Robinhood::Forex::Activation' );
+}
+
+=head2 C<forex_portfolios( )>
+
+    my $portfolios = $rh->forex_portfolios();
+
+An iterator containing Finance::Robinhood::Forex::Portfolio objects is
+returned. You need to be logged in for this to work.
+
+=cut
+
+sub forex_portfolios ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => 'https://nummus.robinhood.com/portfolios/',
+        _class     => 'Finance::Robinhood::Forex::Portfolio'
+    );
+}
+
+sub _test_forex_portfolios {
+    my $rh         = t::Utility::rh_instance(1);
+    my $portfolios = $rh->forex_portfolios;
+    isa_ok( $portfolios,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $portfolios->current, 'Finance::Robinhood::Forex::Portfolio' );
+}
+
+=head2 C<forex_portfolio_by_id( ... )>
+
+    my $portfolio = $rh->forex_portfolio_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Portfolio object. You need to be logged in
+for this to work.
+
+=cut
+
+sub forex_portfolio_by_id ( $s, $id ) {
+    my $res = $s->_get( 'https://nummus.robinhood.com/portfolios/' . $id . '/' );
+    require Finance::Robinhood::Forex::Portfolio if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Forex::Portfolio->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_forex_portfolio_by_id {
+    my $rh        = t::Utility::rh_instance(1);
+    my $portfolio = $rh->forex_portfolios->current;
+    my $forex     = $rh->forex_portfolio_by_id( $portfolio->id );    # Cheat
+    isa_ok( $forex, 'Finance::Robinhood::Forex::Portfolio' );
+}
+
+=head2 C<forex_activation_request( ... )>
+
+    my $activation = $rh->forex_activation_request( type => 'new_account' );
+
+Submits an application to activate a new forex account. If successful, a new
+Fiance::Robinhood::Forex::Activation object is returned. You need to be logged
+in for this to work.
+
+The following options are accepted:
+
+=over
+
+=item C<type>
+
+This is required and must be one of the following:
+
+=over
+
+=item C<new_account>
+
+=item C<reactivation>
+
+=back
+
+=item C<speculative>
+
+This is an optional boolean value.
+
+=back
+
+=cut
+
+sub forex_activation_request ( $s, %filters ) {
+    $filters{type} = $filters{type} ? 'true' : 'false' if defined $filters{type};
+    my $res = $s->_post('https://nummus.robinhood.com/activations/')->query( \%filters );
+    require Finance::Robinhood::Forex::Activation if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Forex::Activation->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_forex_activation_request {
+    diag('This is one of those methods that is almost impossible to test from this side.');
+    pass('Rather not have a million activation attempts attached to my account');
+}
+
+=head2 C<forex_orders( )>
+
+    my $orders = $rh->forex_orders( );
+
+An iterator containing Finance::Robinhood::Forex::Order objects is returned.
+You need to be logged in for this to work.
+
+=cut
+
+sub forex_orders ($s) {
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://nummus.robinhood.com/orders/'),
+        _class     => 'Finance::Robinhood::Forex::Order'
+    );
+}
+
+sub _test_forex_orders {
+    my $rh     = t::Utility::rh_instance(1);
+    my $orders = $rh->forex_orders;
+    isa_ok( $orders,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $orders->current, 'Finance::Robinhood::Forex::Order' );
+}
+
+=head2 C<forex_order_by_id( ... )>
+
+    my $order = $rh->forex_order_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Order object. You need to be logged in for
+this to work.
+
+=cut
+
+sub forex_order_by_id ( $s, $id ) {
+    my $res = $s->_get( 'https://nummus.robinhood.com/orders/' . $id . '/' );
+    require Finance::Robinhood::Forex::Order if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Forex::Order->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_forex_order_by_id {
+    my $rh    = t::Utility::rh_instance(1);
+    my $order = $rh->forex_orders->current;
+    my $forex = $rh->forex_order_by_id( $order->id );    # Cheat
+    isa_ok( $forex, 'Finance::Robinhood::Forex::Order' );
+}
+
+=head2 C<forex_holdings( )>
+
+    my $holdings = $rh->forex_holdings( );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Forex::Holding objects.
+
+You must be logged in.
+
+    my $holdings = $rh->forex_holdings( nonzero => 1 );
+
+You can filter and modify the results. All options are optional.
+
+=over
+
+=item C<nonzero> - true or false. Default is false.
+
+=back
+
+=cut
+
+sub forex_holdings ( $s, %filters ) {
+    $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false' if defined $filters{nonzero};
+    Finance::Robinhood::Utility::Iterator->new(
+        _rh        => $s,
+        _next_page => Mojo::URL->new('https://nummus.robinhood.com/holdings/')->query( \%filters ),
+        _class     => 'Finance::Robinhood::Forex::Holding'
+    );
+}
+
+sub _test_forex_holdings {
+    my $positions = t::Utility::rh_instance(1)->forex_holdings;
+    isa_ok( $positions,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $positions->current, 'Finance::Robinhood::Forex::Holding' );
+}
+
+=head2 C<forex_holding_by_id( ... )>
+
+    my $holding = $rh->forex_holding_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Holding object. You need to be logged in
+for this to work.
+
+=cut
+
+sub forex_holding_by_id ( $s, $id ) {
+    my $res = $s->_get( 'https://nummus.robinhood.com/holdings/' . $id . '/' );
+    require Finance::Robinhood::Forex::Holding if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Forex::Holding->new( _rh => $s, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_forex_holding_by_id {
+    my $rh      = t::Utility::rh_instance(1);
+    my $holding = $rh->forex_holding_by_id( $rh->forex_holdings->current->id );
+    isa_ok( $holding, 'Finance::Robinhood::Forex::Holding' );
+}
 
 =head1 LEGAL
 
 This is a simple wrapper around the API used in the official apps. The author
 provides no investment, legal, or tax advice and is not responsible for any
-damages incurred while using this software. Neither this software nor its
-author are affiliated with Robinhood Financial LLC in any way.
+damages incurred while using this software. This software is not affiliated
+with Robinhood Financial LLC in any way.
 
-For Robinhood's terms and disclosures, please see their website at http://robinhood.com/
+For Robinhood's terms and disclosures, please see their website at
+https://robinhood.com/legal/
 
 =head1 LICENSE
 
 Copyright (C) Sanko Robinson.
 
-This library is free software; you can redistribute it and/or modify
-it under the terms found in the Artistic License 2.
-
-Other copyrights, terms, and conditions may apply to data transmitted through
-this module. Please refer to the L<LEGAL> section.
+This library is free software; you can redistribute it and/or modify it under
+the terms found in the Artistic License 2. Other copyrights, terms, and
+conditions may apply to data transmitted through this module. Please refer to
+the L<LEGAL> section.
 
 =head1 AUTHOR
 
 Sanko Robinson E<lt>sanko@cpan.orgE<gt>
 
 =cut
+
+1;

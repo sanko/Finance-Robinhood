@@ -1,514 +1,540 @@
-[![Build Status](https://travis-ci.org/sanko/Finance-Robinhood.svg?branch=master)](https://travis-ci.org/sanko/Finance-Robinhood)
+[![Build Status](https://travis-ci.org/sanko/Finance-Robinhood.svg?branch=master)](https://travis-ci.org/sanko/Finance-Robinhood) [![MetaCPAN Release](https://badge.fury.io/pl/Finance-Robinhood.svg)](https://metacpan.org/release/Finance-Robinhood) [![Build Status](https://img.shields.io/appveyor/ci/sanko/Finance-Robinhood/master.svg?logo=appveyor)](https://ci.appveyor.com/project/sanko/Finance-Robinhood/branch/master)
 # NAME
 
-Finance::Robinhood - Trade Stocks and ETFs with Commission Free Brokerage Robinhood
+Finance::Robinhood - Trade Stocks, ETFs, Options, and Cryptocurrency without
+Commission
 
 # SYNOPSIS
 
     use Finance::Robinhood;
-
     my $rh = Finance::Robinhood->new();
-
-    my $token = $rh->login($user, $password); # Store it for later
-
-    $rh->quote('MSFT');
-    Finance::Robinhood::quote('AAPL');
-    # ????
-    # Profit
-
-# Examples
-
-Some people have really only be reading this to get an automated stock trading
-bot up and running. If that's you, the quickest way to get in without a load
-of looking through documentation would be to move over to any of the example
-scripts that I've included with this distributio:
-
-- `eg/buy.pl`
-
-    Buy stocks from the command line
-
-        buy.pl -username=getMoney -password=*** -symbol=MSFT -quantity=2000
-
-    Currently only market orders are supported but adding all the different limit
-    order types is really rather simple. I might update it myself if I find a
-    round tuit somewhere this summer. Might even add a sell script...
-
-- `eg/export_orders.pl`
-
-    Export your entire Robinhood order history to a CSV file from the command line
-
-        buy -username=getMoney -password=*** -output=Robinhood.csv
-
-    You can dump the CSV to STDOUT by leaving `-output` undefined.
-
-Both scripts provide help when called without arguments. In addition to those
-examples, you should check out the unofficial documentation of Robinhood
-trade's API. Find it on github:
-[https://github.com/sanko/Finance-Robinhood/blob/master/API.md](https://github.com/sanko/Finance-Robinhood/blob/master/API.md)
-
-# DESCRIPTION
-
-Finance::Robinhood allows you to buy, sell, and gather information related to
-stocks and ETFs traded in the U.S commission free. Before we get into how,
-please read the [Legal](https://metacpan.org/pod/LEGAL) section below. It's really important.
-
-Okay. This package is organized into very easy to understand parts:
-
-- Orders to buy and sell are created in [Finance::Robinhood::Order](https://metacpan.org/pod/Finance::Robinhood::Order). If
-you're looking to make this as simple as possible, go check out the
-[cheat sheet](https://metacpan.org/pod/Finance::Robinhood::Order#Order-Cheat-Sheet). You'll find
-recipes for market, limit, as well as stop loss and stop limit order types.
-- Quote information can be accessed with [Finance::Robinhood::Quote](https://metacpan.org/pod/Finance::Robinhood::Quote).
-- Account information is handled by [Finance::Robinhood::Account](https://metacpan.org/pod/Finance::Robinhood::Account). If
-you'd like to view or edit any of the information Robinhood has on you, start
-there.
-- Individual securities are represented by
-[Finance::Robinhood::Instrument](https://metacpan.org/pod/Finance::Robinhood::Instrument) objects. Gathering quote and fundamental
-information is only the beginning.
-- [Finance::Robinhood::Watchlist](https://metacpan.org/pod/Finance::Robinhood::Watchlist) objects represent persistant lists of
-securities you'd like to keep track of. Organize your watchlists by type!
-
-If you're looking to just buy and sell without lot of reading, head over to
-the [Finance::Robinhood::Order](https://metacpan.org/pod/Finance::Robinhood::Order) and pay special attention to the
-[order cheat sheet](https://metacpan.org/pod/Finance::Robinhood::Order#Order-Cheat-Sheet) and apply
-what you learn to the `eg/buy.pl` example script.
 
 # METHODS
 
-Finance::Robinhood wraps a powerfully capable API which has many options.
-There are parts of this package that are object oriented (because they require
-persistant login information) and others which may also be used functionally
-(because they do not require login information). I've attempted to organize
-everything according to how and when they are used... Let's start at the very
-beginning: let's log in!
+Finance::Robinhood wraps several APIs. There are parts of this package that
+will not apply because your account does not have access to certain features.
 
-# Logging In
+## `new( )`
 
 Robinhood requires an authorization token for most API calls. To get this
-token, you must either pass it as an argument to `new( ... )` or log in with
-your username and password.
+token, you must log in with your username and password. But we'll get into that
+later. For now, let's create a client object...
 
-## `new( ... )`
+    # You can look up some basic instrument data with this
+    my $rh = Finance::Robinhood->new();
 
-    # Passing the token is the preferred way of handling authorization
-    my $rh = Finance::Robinhood->new( token => ... );
-
-This would create a new Finance::Robinhood object ready to go.
-
-    # Requires ->login(...) call :(
-    my $rh = Finance::Robinhood->new( );
-
-Without arguments, a new Finance::Robinhood object is created without account
-information. Before you can buy or sell or do almost anything else, you must
-[log in manually](#login).
-
-On the bright side, for future logins, you can store the authorization token
-and use it rather than having to pass your username and password around
-anymore.
+A new Finance::Robinhood object is created without credentials. Before you can
+buy or sell or do almost anything else, you must [log in](#login).
 
 ## `login( ... )`
 
-    my $token = $rh->login($user, $password);
-    # Save the token somewhere
+    my $rh = Finance::Robinhood->new()->login($user, $pass);
 
-Logging in allows you to buy and sell securities with your Robinhood account.
-You must do this if you do not have an authorization token.
+A new Finance::Robinhood object is created without credentials. Before you can
+buy or sell or do almost anything else, you must [log in](#login).
 
-If login was successful, a valid token is returned and may also be had by
-calling `token( )`. The token should be kept secret and stored for use in
-future calls to `new( ... )`.
+    my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_callback => sub {
+        # Do something like pop open an inputbox in TK or whatever
+    } );
 
-## `token( )`
+If you have MFA enabled, you may (or must) also pass a callback. When the code
+is called, a ref will be passed that will contain `mfa_required` (a boolean
+value) and `mfa_type` which might be `app`, `sms`, etc. Your return value
+must be the MFA code.
 
-If you logged in with a username/password combo but later decided you might
-want to securely store authorization info to pass to `new( ... )` next time.
-Get the authorization token here.
+    my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_code => 980385);
 
-## `logout( )`
+If you already know the MFA code (for example if you have MFA enabled through
+an app), you can pass that code directly and log in.
 
-    my $token = $rh->login($user, $password);
-    # ...do some stuff... buy... sell... idk... stuff... and then...
-    $rh->logout( ); # Goodbye!
+## `search( ... )`
 
-Logs you out of Robinhood by forcing the token returned by `login(...)` or
-passed to `new(...)` to expire.
+    my $results = $rh->search('microsoft');
 
-_Note_: This will log you out _everywhere_ because Robinhood generates a
-single authorization token per account at a time! All logged in clients will
-be logged out. This is good in rare case your device or the token itself is
-stolen.
+Returns a set of search results as a Finance::Robinhood::Search object.
 
-## `forgot_password( ... )`
+You do not need to be logged in for this to work.
 
-    Finance::Robinhood::forgot_password('contact@example.com');
+## `news( ... )`
 
-It happens. This requests a password reset email to be sent from Robinhood.
+    my $news = $rh->news('MSFT');
+    my $news = $rh->news('1072fc76-1862-41ab-82c2-485837590762'); # Forex - USD
 
-## `change_password( ... )`
+An iterator containing Finance::Robinhood::News objects is returned.
 
-    Finance::Robinhood::change_password( $username, $password, $token );
+## `feed( )`
 
-When you've forgotten your password, the email Robinhood send contains a link
-to an online form where you may change your password. That link has a token
-you may use here to change the password as well.
+    my $feed = $rh->feed();
 
-# User Information
+An iterator containing Finance::Robinhood::News objects is returned. This list
+will be filled with news related to instruments in your watchlist and
+portfolio.
 
-Brokerage firms must collect a lot of information about their customers due to
-IRS and SEC regulations. They also keep data to identify you internally.
-Here's how to access all of the data you entered when during registration and
-beyond.
+You need to be logged in for this to work.
 
-## `user_id( )`
+## `notifications( )`
 
-    my $user_id = $rh->user_id( );
+    my $cards = $rh->notifications();
 
-Returns the ID Robinhood uses to identify this particular account. You could
-also gather this information with the `user_info( )` method.
+An iterator containing Finance::Robinhood::Notification objects is returned.
 
-## `user_info( )`
+You need to be logged in for this to work.
 
-    my %info = $rh->user_info( );
-    say 'My name is ' . $info{first_name} . ' ' . $info{last_name};
+## `notification_by_id( ... )`
 
-Returns very basic information (name, email address, etc.) about the currently
-logged in account as a hash.
+    my $card = $rh->notification_by_id($id);
 
-## `basic_info( )`
+Returns a Finance::Robinhood::Notification object. You need to be logged in for
+this to work.
 
-This method grabs basic but more private information about the user including
-their date of birth, marital status, and the last four digits of their social
-security number.
+# EQUITY METHODS
 
-## `additional_info( )`
+## `equity_instruments( )`
 
-This method grabs information about the user that the SEC would like to know
-including any affiliations with publicly traded securities.
+    my $instruments = $rh->equity_instruments();
 
-## `employment_info( )`
+Returns an iterator containing equity instruments.
 
-This method grabs information about the user's current employment status and
-(if applicable) current job.
+You may restrict, search, or modify the list of instruments returned with the
+following optional arguments:
 
-## `investment_profile( )`
+- `symbol` - Ticker symbol
 
-This method grabs answers about the user's investment experience gathered by
-the survey performed during registration.
+        my $msft = $rh->equity_instruments(symbol => 'MSFT')->next;
 
-## `identity_mismatch( )`
+    By the way, `instrument_by_symbol( )` exists as sugar. It returns the
+    instrument itself rather than an iterator object with a single element.
 
-Returns a paginated list of identification information.
+- `query` - Keyword search
 
-# Accounts
+        my @solar = $rh->equity_instruments(query => 'solar')->all;
 
-A user may have access to more than a single Robinhood account. Each account
-is represented by a Finance::Robinhood::Account object internally. Orders to
-buy and sell securities require an account object. The object also contains
-information about your financial standing.
+- `ids` - List of instrument ids
 
-For more on how to use these objects, please see the
-Finance::Robinhood::Account docs.
+        my ( $msft, $tsla )
+            = $rh->equity_instruments(
+            ids => [ '50810c35-d215-4866-9758-0ada4ac79ffa', 'e39ed23a-7bd1-4587-b060-71988d9ef483' ] )
+            ->all;
 
-## `accounts( ... )`
+    If you happen to know/store instrument ids, quickly get full instrument objects
+    this way.
 
-This method returns a paginated list of Finance::Robinhood::Account objects
-related to the currently logged in user.
+## `equity_instrument_by_symbol( ... )`
 
-_Note_: Not sure why the API returns a paginated list of accounts. Perhaps
-in the future a single user will have access to multiple accounts?
+    my $instrument = $rh->equity_instrument_by_symbol('MSFT');
 
-# Financial Instruments
+Searches for an equity instrument by ticker symbol and returns a
+Finance::Robinhood::Equity::Instrument.
 
-Financial Instrument is a fancy term for any equity, asset, debt, loan, etc.
-but we'll strictly be referring to securities (stocks and ETFs) as financial
-instruments.
+## `equity_instrument_by_id( ... )`
 
-We use blessed Finance::Robinhood::Instrument objects to represent securities
-in order transactions, watchlists, etc. It's how we'll refer to a security so
-looking over the documentation found in Finance::Robinhood::Instrument would
-be a wise thing to do.
+    my $instrument = $rh->equity_instrument_by_id('50810c35-d215-4866-9758-0ada4ac79ffa');
 
-## `instrument( ... )`
+Searches for a single of equity instrument by its instrument id and returns a
+Finance::Robinhood::Equity::Instrument object.
 
-    my $msft = $rh->instrument('MSFT');
-    my $msft = Finance::Robinhood::instrument('MSFT');
+## `equity_instruments_by_id( ... )`
 
-When a single string is passed, only the exact match for the given symbol is
-returned as a Finance::Robinhood::Instrument object.
+    my $instrument = $rh->equity_instruments_by_id('50810c35-d215-4866-9758-0ada4ac79ffa');
 
-    my $msft = $rh->instrument({id => '50810c35-d215-4866-9758-0ada4ac79ffa'});
-    my $msft = Finance::Robinhood::instrument({id => '50810c35-d215-4866-9758-0ada4ac79ffa'});
+Searches for a list of equity instruments by their instrument ids and returns a
+list of Finance::Robinhood::Equity::Instrument objects.
 
-If a hash reference is passed with an `id` key, the single result is returned
-as a Finance::Robinhood::Instrument object. The unique ID is how Robinhood
-identifies securities internally.
+## `equity_orders( [...] )`
 
-    my $results = $rh->instrument({query => 'solar'});
-    my $results = Finance::Robinhood::instrument({query => 'solar'});
+    my $orders = $rh->equity_orders();
 
-If a hash reference is passed with a `query` key, results are returned as a
-hash reference with cursor keys (`next` and `previous`). The matching
-securities are Finance::Robinhood::Instrument objects which may be found in
-the `results` key as a list.
+An iterator containing Finance::Robinhood::Equity::Order objects is returned.
+You need to be logged in for this to work.
 
-    my $results = $rh->instrument({cursor => 'cD04NjQ5'});
-    my $results = Finance::Robinhood::instrument({cursor => 'cD04NjQ5'});
+    my $orders = $rh->equity_orders(instrument => $msft);
 
-Results to a query may generate more than a single page of results. To gather
-them, use the `next` or `previous` values.
+If you would only like orders after a certain date, you can do that!
 
-    my $results = $rh->instrument( );
-    my $results = Finance::Robinhood::instrument( );
+    my $orders = $rh->equity_orders(after => Time::Moment->now->minus_days(7));
+    # Also accepts ISO 8601
 
-Returns a paginated list of securities as Finance::Robinhood::Instrument
-objects along with `next` and `previous` cursor values. The list is sorted
-in reverse by their listing date. Use this to track securities that are new!
+If you would only like orders before a certain date, you can do that!
 
-# Orders
+    my $orders = $rh->equity_orders(before => Time::Moment->now->minus_years(2));
+    # Also accepts ISO 8601
 
-Now that you've [logged in](#logging-in) and
-[found the particular stock](#financial-instruments) you're interested in,
-you probably want to buy or sell something. You do this by placing orders.
+## `equity_order_by_id( ... )`
 
-Orders are created by using the constructor found in Finance::Robinhood::Order
-directly so have a look at the documentation there (especially the small cheat
-sheet).
+    my $order = $rh->equity_order_by_id($id);
 
-Once you've place the order, you'll want to keep track of them somehow. To do
-this, you may use either of the following methods.
+Returns a Finance::Robinhood::Equity::Order object. You need to be logged in
+for this to work.
 
-## `locate_order( ... )`
+## `equity_accounts( )`
 
-    my $order = $rh->locate_order( $order_id );
+    my $accounts = $rh->equity_accounts();
 
-Returns a blessed Finance::Robinhood::Order object related to the buy or sell
-order with the given id if it exits.
+An iterator containing Finance::Robinhood::Equity::Account objects is returned.
+You need to be logged in for this to work.
 
-## `list_orders( ... )`
+## `equity_account_by_account_number( ... )`
 
-    my $orders = $rh->list_orders( );
+    my $account = $rh->equity_account_by_account_number($id);
 
-Requests a list of all orders ordered from newest to oldest. Executed and even
-canceled orders are returned in a `results` key as Finance::Robinhood::Order
-objects. Cursor keys `next` and `previous` may also be present.
+Returns a Finance::Robinhood::Equity::Account object. You need to be logged in
+for this to work.
 
-    my $more_orders = $rh->list_orders({ cursor => $orders->{next} });
+## `equity_portfolios( )`
 
-You'll likely generate more than a hand full of buy and sell orders which
-would generate more than a single page of results. To gather them, use the
-`next` or `previous` values.
+    my $equity_portfolios = $rh->equity_portfolios();
 
-    my $new_orders = $rh->list_orders({ since => 1489273695 });
+An iterator containing Finance::Robinhood::Equity::Account::Portfolio objects
+is returned. You need to be logged in for this to work.
 
-To gather orders placed after a certain date or time, use the `since`
-parameter.
+## `equity_watchlists( )`
 
-    my $new_orders = $rh->list_orders({ instrument => $msft });
+    my $watchlists = $rh->equity_watchlists();
 
-Gather only orders related to a certain instrument. Pass a full
-Finance::Robinhood::Instrument object.
+An iterator containing Finance::Robinhood::Equity::Watchlist objects is
+returned. You need to be logged in for this to work.
 
-# Quotes and Historical Data
+## `equity_watchlist_by_name( ... )`
 
-If you're doing anything beyond randomly choosing stocks with a symbol
-generator, you'll want to know a little more. Robinhood provides access to
-both current and historical data on securities.
+    my $watchlist = $rh->equity_watchlist_by_name('Default');
 
-## `quote( ... )`
+Returns a Finance::Robinhood::Equity::Watchlist object. You need to be logged
+in for this to work.
 
-    my %msft = $rh->quote('MSFT');
-    my $swa  = Finance::Robinhood::quote('LUV');
+## `equity_fundamentals( )`
 
-    my $quotes = $rh->quote('AAPL', 'GOOG', 'MA');
-    my $quotes = Finance::Robinhood::quote('LUV', 'JBLU', 'DAL');
+    my $fundamentals = $rh->equity_fundamentals('MSFT', 'TSLA');
 
-Requests current information about a security which is returned as a
-Finance::Robinhood::Quote object. If `quote( ... )` is given a list of
-symbols, the objects are returned as a paginated list.
+An iterator containing Finance::Robinhood::Equity::Fundamentals objects is
+returned.
 
-This function has both functional and object oriented forms. The functional
-form does not require an account and may be called without ever logging in.
+You do not need to be logged in for this to work.
 
-## `fundamentals( ... )`
+## `equity_markets( )`
 
-    my %msft = $rh->fundamentals('MSFT');
-    my $swa  = Finance::Robinhood::fundamentals('LUV');
+    my $markets = $rh->equity_markets()->all;
 
-    my $fundamentals = $rh->fundamentals('AAPL', 'GOOG', 'MA');
-       $fundamentals = Finance::Robinhood::fundamentals('LUV', 'JBLU', 'DAL');
+Returns an iterator containing Finance::Robinhood::Equity::Market objects.
 
-Requests current information about a security which is returned as a
-Finance::Robinhood::Fundamentals object. If `fundamentals( ... )`
-is given a list of symbols, the objects are returned as a paginated list. The
-API will accept up to ten (10) symbols at a time.
+## `equity_market_by_mic( )`
 
-This function has both functional and object oriented forms. The functional
-form does not require an account and may be called without ever logging in.
+    my $markets = $rh->equity_market_by_mic('XNAS'); # NASDAQ
 
-## `historicals( ... )`
+Locates an exchange by its Market Identifier Code and returns a
+Finance::Robinhood::Equity::Market object.
 
-    # Snapshots of basic quote data for every five minutes of the previous day
-    my $msft = $rh->historicals('MSFT', '5minute', 'day');
+See also https://en.wikipedia.org/wiki/Market\_Identifier\_Code
 
-You may retrieve historical quote data with this method. The first argument is
-a symbol. The second is an interval time and must be either `5minute`,
-`10minute`, `day`, or `week`. The third argument is a span of time
-indicating how far into the past you would like to retrieve and may be one of
-the following: `day`, `week`, `year`, `5year`, or `all`. The fourth is a
-bounds which is one of the following: `extended`, `regular`, `trading`.
+## `top_movers( [...] )`
 
-All are optional and may be filled with an undefined value.
+    my $instruments = $rh->top_movers( );
 
-So, to get five years of weekly historical data for Apple, you would write...
+Returns an iterator containing members of the S&P 500 with large price changes
+during market hours as Finance::Robinhood::Equity::Movers objects.
 
-    my $iHist = $rh->historicals('AAPL', 'week', '5year');
-    my $gates = Finance::Robinhood::historicals('MSFT', 'week', '5year');
+You may define whether or not you want the best or worst performing instruments
+with the following option:
 
-This method returns a list of hashes which in turn contain the following keys:
+- `direction` - `up` or `down`
 
-- `begins_at` - A Time::Piece or DateTime object indicating the timestamp
-of this block of data.
-- `close_price` - The most recent close price during this interval.
-- `high_price` - The most recent high price during this interval.
-- `interpolated` - Indicates whether the data was a statistical estimate.
-This is a boolean value.
-- `low_price` - The most recent low price during this interval.
-- `open_price` - The most recent open price during this interval.
-- `volume` - The trading volume during this interval.
+        $rh->top_movers( direction => 'up' );
 
-Note that if you already have a Finance::Robinhood::Instrument object, you may
-want to just call the object's `historicals( $interval, $span )` method which
-wraps this.
+    Returns the best performing members. This is the default.
 
-This function has both functional and object oriented forms. The functional
-form does not require an account and may be called without ever logging in.
+        $rh->top_movers( direction => 'down' );
 
-# Informational Cards and Notifications
+    Returns the worst performing members.
 
-TODO
+## `tags( ... )`
 
-## `cards( )`
+    my $tags = $rh->tags( 'food', 'oil' );
 
-    my $cards = $rh->cards( );
+Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
 
-Returns the informational cards the Robinhood apps display. These are links to
-news, typically. Currently, these are returned as a paginated list of hashes
-which look like this:
+## `tags_discovery( ... )`
 
-    {   action => "robinhood://web?url=https://finance.yahoo.com/news/spotify-agreement-win-artists-company-003248363.html",
-        call_to_action => "View Article",
-        fixed => bless(do{\(my $o = 0)}, "JSON::Tiny::_Bool"),
-        icon => "news",
-        message => "Spotify Agreement A 'win' For Artists, Company :Billboard Editor",
-        relative_time => "2h",
-        show_if_unsupported => 'fix',
-        time => "2016-03-19T00:32:48Z",
-        title => "Reuters",
-        type => "news",
-        url => "https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/",
-    }
+    my $tags = $rh->tags_discovery( );
 
-\* Please note that the `url` provided by the API is incorrect! Rather than
-`"https://api.robinhood.com/notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/"`,
-it should be
-`<"https://api.robinhood.com/**midlands/**notifications/stack/4494b413-33db-4ed3-a9d0-714a4acd38de/"`>.
+Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
 
-# Dividends
+## `tags_popular( ... )`
 
-TODO
+    my $tags = $rh->tags_popular( );
 
-## `dividends( )`
+Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
 
-Gathers a paginated list of dividends due (or recently paid) for your account.
+## `tag( ... )`
 
-`results` currently contains a list of hashes which look a lot like this:
+    my $tag = $rh->tag('food');
 
-    { account => "https://api.robinhood.com/accounts/XXXXXXXX/",
-      amount => 0.23,
-      id => "28a46be1-db41-4f75-bf89-76c803a151ef",
-      instrument => "https://api.robinhood.com/instruments/39ff611b-84e7-425b-bfb8-6fe2a983fcf3/",
-      paid_at => undef,
-      payable_date => "2016-04-25",
-      position => "1.0000",
-      rate => "0.2300000000",
-      record_date => "2016-02-29",
-      url => "https://api.robinhood.com/dividends/28a46be1-db41-4f75-bf89-76c803a151ef/",
-      withholding => "0.00",
-    }
+Locates a tag by its slug and returns a Finance::Robinhood::Equity::Tag object.
 
-# Watchlists
+# OPTIONS METHODS
 
-You can keep track of a list of securities by adding them to a watchlist. The
-watchlist used by the official Robinhood apps and preloaded with popular
-securities is named 'Default'. You may create new watchlists for
-organizational reasons but the official apps currently only display the
-'Default' watchlist.
+## `options_chains( )`
 
-Each watchlist is represented by a Finance::Robinhood::Watchlist object.
-Please read the docs for that package to find out how to add and remove
-individual securities.
+    my $chains = $rh->options_chains->all;
 
-## `watchlist( ... )`
+Returns an iterator containing chain elements.
 
-    my $hotlist = $rh->watchlist( 'Blue_Chips' );
+    my $equity = $rh->search('MSFT')->equity_instruments->[0]->options_chains->all;
 
-Returns a blessed Finance::Robinhood::Watchlist if the watchlist with the
-given name exists.
+You may limit the call by passing a list of options instruments or a list of
+equity instruments.
 
-## `create_watchlist( ... )`
+## `options_instruments( )`
 
-    my $watchlist = $rh->create_watchlist( 'Energy' );
+    my $options = $rh->options_instruments();
 
-You can create new Finance::Robinhood::Watchlist objects with this. Here, your
-code would create a new one named "Energy".
+Returns an iterator containing Finance::Robinhood::Options::Instrument objects.
 
-Note that only alphanumeric characters and understore are allowed in watchlist
-names. No whitespace, etc.
+        my $options = $rh->options_instruments( state => 'active', type => 'put' );
 
-## `delete_watchlist( ... )`
+You can filter the results several ways. All of them are optional.
 
-    my $watchlist = $rh->create_watchlist( 'Energy' );
-    $rh->delete_watchlist( $watchlist );
+- `state` - `active`, `inactive`, or `expired`
+- `type` - `call` or `put`
+- `expiration_dates` - comma separated list of days; format is YYYY-M-DD
 
-    $rh->create_watchlist( 'Energy' );
-    $rh->delete_watchlist( 'Energy' );
+# UNSORTED
 
-You may remove a watchlist with this method. The argument may either be a
-Finance::Robinhood::Watchlist object or the name of the watchlist as a string.
+## `user( )`
 
-If you clobber the watchlist named 'Default', it will be recreated with
-popular securities the next time you open any of the official apps.
+    my $me = $rh->user();
 
-## `watchlists( ... )`
+Returns a Finance::Robinhood::User object. You need to be logged in for this to
+work.
 
-    my $watchlists = $rh->watchlists( );
+## `acats_transfers( )`
 
-Returns all your current watchlists as a paginated list of
-Finance::Robinhood::Watchlists.
+    my $acats = $rh->acats_transfers();
 
-    my $more = $rh->watchlists( { cursor => $watchlists->{next} } );
+An iterator containing Finance::Robinhood::ACATS::Transfer objects is returned.
 
-In case where you have more than one page of watchlists, use the `next` and
-`previous` cursor strings.
+You need to be logged in for this to work.
+
+## `equity_positions( )`
+
+    my $positions = $rh->equity_positions( );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Equity::Position objects.
+
+You must be logged in.
+
+    my $positions = $rh->equity_positions( nonzero => 1 );
+
+You can filter and modify the results. All options are optional.
+
+- `nonzero` - true or false. Default is false
+- `ordering` - list of equity instruments
+
+## `equity_earnings( ... )`
+
+    my $earnings = $rh->equity_earnings( symbol => 'MSFT' );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Equity::Earnings objects by ticker symbol.
+
+    my $earnings = $rh->equity_earnings( instrument => $rh->equity_instrument_by_symbol('MSFT') );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Equity::Earnings objects by instrument object/url.
+
+    my $earnings = $rh->equity_earnings( range=> 7 );
+
+Returns a paginated list object filled with
+Finance::Robinhood::Equity::Earnings objects for all expected earnings report
+over the next `X` days where `X` is between `-21...-1, 1...21`. Negative
+values are days into the past. Positive are days into the future.
+
+You must be logged in for any of these to work.
+
+# FOREX METHODS
+
+Depending on your jurisdiction, your account may have access to Robinhood
+Crypto. See https://crypto.robinhood.com/ for more.
+
+## `forex_accounts( )`
+
+    my $halts = $rh->forex_accounts;
+
+Returns an iterator full of Finance::Robinhood::Forex::Account objects.
+
+You need to be logged in and have access to Robinhood Crypto for this to work.
+
+## `forex_account_by_id( ... )`
+
+    my $account = $rh->forex_account_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Account object. You need to be logged in
+for this to work.
+
+## `forex_halts( [...] )`
+
+    my $halts = $rh->forex_halts;
+    # or
+    $halts = $rh->forex_halts( active => 1 );
+
+Returns an iterator full of Finance::Robinhood::Forex::Halt objects.
+
+If you pass a true value to a key named `active`, only active halts will be
+returned.
+
+You need to be logged in and have access to Robinhood Crypto for this to work.
+
+## `forex_currencies( )`
+
+    my $currecies = $rh->forex_currencies();
+
+An iterator containing Finance::Robinhood::Forex::Currency objects is returned.
+You need to be logged in for this to work.
+
+## `forex_currency_by_id( ... )`
+
+    my $currency = $rh->forex_currency_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Currency object. You need to be logged in
+for this to work.
+
+## `forex_pairs( )`
+
+    my $pairs = $rh->forex_pairs();
+
+An iterator containing Finance::Robinhood::Forex::Pair objects is returned. You
+need to be logged in for this to work.
+
+## `forex_pair_by_id( ... )`
+
+    my $watchlist = $rh->forex_pair_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Pair object. You need to be logged in for
+this to work.
+
+## `forex_pair_by_symbol( ... )`
+
+    my $btc = $rh->forex_pair_by_symbol('BTCUSD');
+
+Returns a Finance::Robinhood::Forex::Pair object. You need to be logged in for
+this to work.
+
+## `forex_watchlists( )`
+
+    my $watchlists = $rh->forex_watchlists();
+
+An iterator containing Finance::Robinhood::Forex::Watchlist objects is
+returned. You need to be logged in for this to work.
+
+## `forex_watchlist_by_id( ... )`
+
+    my $watchlist = $rh->forex_watchlist_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Watchlist object. You need to be logged in
+for this to work.
+
+## `forex_activations( )`
+
+    my $activations = $rh->forex_activations();
+
+An iterator containing Finance::Robinhood::Forex::Activation objects is
+returned. You need to be logged in for this to work.
+
+## `forex_activation_by_id( ... )`
+
+    my $activation = $rh->forex_activation_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Activation object. You need to be logged
+in for this to work.
+
+## `forex_portfolios( )`
+
+    my $portfolios = $rh->forex_portfolios();
+
+An iterator containing Finance::Robinhood::Forex::Portfolio objects is
+returned. You need to be logged in for this to work.
+
+## `forex_portfolio_by_id( ... )`
+
+    my $portfolio = $rh->forex_portfolio_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Portfolio object. You need to be logged in
+for this to work.
+
+## `forex_activation_request( ... )`
+
+    my $activation = $rh->forex_activation_request( type => 'new_account' );
+
+Submits an application to activate a new forex account. If successful, a new
+Fiance::Robinhood::Forex::Activation object is returned. You need to be logged
+in for this to work.
+
+The following options are accepted:
+
+- `type`
+
+    This is required and must be one of the following:
+
+    - `new_account`
+    - `reactivation`
+
+- `speculative`
+
+    This is an optional boolean value.
+
+## `forex_orders( )`
+
+    my $orders = $rh->forex_orders( );
+
+An iterator containing Finance::Robinhood::Forex::Order objects is returned.
+You need to be logged in for this to work.
+
+## `forex_order_by_id( ... )`
+
+    my $order = $rh->forex_order_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Order object. You need to be logged in for
+this to work.
+
+## `forex_holdings( )`
+
+    my $holdings = $rh->forex_holdings( );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Forex::Holding objects.
+
+You must be logged in.
+
+    my $holdings = $rh->forex_holdings( nonzero => 1 );
+
+You can filter and modify the results. All options are optional.
+
+- `nonzero` - true or false. Default is false.
+
+## `forex_holding_by_id( ... )`
+
+    my $holding = $rh->forex_holding_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Holding object. You need to be logged in
+for this to work.
 
 # LEGAL
 
 This is a simple wrapper around the API used in the official apps. The author
 provides no investment, legal, or tax advice and is not responsible for any
-damages incurred while using this software. Neither this software nor its
-author are affiliated with Robinhood Financial LLC in any way.
+damages incurred while using this software. This software is not affiliated
+with Robinhood Financial LLC in any way.
 
-For Robinhood's terms and disclosures, please see their website at http://robinhood.com/
+For Robinhood's terms and disclosures, please see their website at
+https://robinhood.com/legal/
 
 # LICENSE
 
 Copyright (C) Sanko Robinson.
 
-This library is free software; you can redistribute it and/or modify
-it under the terms found in the Artistic License 2.
-
-Other copyrights, terms, and conditions may apply to data transmitted through
-this module. Please refer to the [LEGAL](https://metacpan.org/pod/LEGAL) section.
+This library is free software; you can redistribute it and/or modify it under
+the terms found in the Artistic License 2. Other copyrights, terms, and
+conditions may apply to data transmitted through this module. Please refer to
+the [LEGAL](https://metacpan.org/pod/LEGAL) section.
 
 # AUTHOR
 
