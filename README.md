@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/sanko/Finance-Robinhood.svg?branch=master)](https://travis-ci.org/sanko/Finance-Robinhood) [![MetaCPAN Release](https://badge.fury.io/pl/Finance-Robinhood.svg)](https://metacpan.org/release/Finance-Robinhood) [![Build Status](https://img.shields.io/appveyor/ci/sanko/Finance-Robinhood/master.svg?logo=appveyor)](https://ci.appveyor.com/project/sanko/Finance-Robinhood/branch/master)
+[![Build Status](https://travis-ci.org/sanko/Finance-Robinhood.svg?branch=master)](https://travis-ci.org/sanko/Finance-Robinhood) [![MetaCPAN Release](https://badge.fury.io/pl/Finance-Robinhood.svg)](https://metacpan.org/release/Finance-Robinhood)
 # NAME
 
 Finance::Robinhood - Trade Stocks, ETFs, Options, and Cryptocurrency without

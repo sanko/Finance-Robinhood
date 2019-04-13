@@ -1,5 +1,5 @@
 name = "Finance-Robinhood"
-badges=['travis', 'metacpan', 'appveyor']
+badges=['travis', 'metacpan']
 module_maker="ModuleBuildTiny"
 license="artistic_2"
 authority="cpan:SANKO"
