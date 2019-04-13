@@ -11,7 +11,7 @@ Finance::Robinhood::Utility::Iterator - Sugary Access to Paginated Data
 =head1 SYNOPSIS
 
     use Finance::Robinhood;
-    my $rh = Finance::Robinhood->new;
+    my $rh = t::Utility::rh_instance(1);
     my $instruments = $rh->instruments();
 
     for my $instrument ($instruments->all) {
@@ -20,12 +20,11 @@ Finance::Robinhood::Utility::Iterator - Sugary Access to Paginated Data
 
 =cut
 
+our $VERSION = '0.92_001';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 
 =head1 METHODS
-
-
 
 =cut
 
@@ -54,15 +53,13 @@ sub reset($s) {
 }
 
 sub _test_reset {
-    plan( tests => 3 );
-    my $rh          = new_ok('Finance::Robinhood');
-    my $instruments = $rh->instruments;
-    isa_ok( $instruments, 'Finance::Robinhood::Utility::Iterator', '...instruments call works' );
+    my $rh          = t::Utility::rh_instance(0);
+    my $instruments = $rh->equity_instruments;
+    isa_ok( $instruments, __PACKAGE__ );
     my $next = $instruments->next;
     $instruments->take(300);
     $instruments->reset;
-    is_deeply( $instruments->next, $next, '->reset() worked' );
-    done_testing();
+    is( $instruments->next, $next );
 }
 
 =head2 C<current( )>
@@ -78,14 +75,12 @@ sub current($s) {
 }
 
 sub _test_current {
-    plan( tests => 4 );
-    my $rh          = new_ok('Finance::Robinhood');
-    my $instruments = $rh->instruments;
-    isa_ok( $instruments, 'Finance::Robinhood::Utility::Iterator', '...instruments call works' );
+    my $rh          = t::Utility::rh_instance(0);
+    my $instruments = $rh->equity_instruments;
+    isa_ok( $instruments, __PACKAGE__ );
     my $next = $instruments->next;
     isa_ok( $instruments->current, 'Finance::Robinhood::Equity::Instrument' );
-    is_deeply( $instruments->current, $next, '->current() is correct' );
-    done_testing();
+    is( $instruments->current, $next );
 }
 
 =head2 C<next( )>
@@ -118,13 +113,11 @@ sub peek ( $s, $pos = 1 ) {
 }
 
 sub _test_peek {
-    plan( tests => 3 );
-    my $rh          = new_ok('Finance::Robinhood');
-    my $instruments = $rh->instruments;
-    isa_ok( $instruments, 'Finance::Robinhood::Utility::Iterator', '...instruments call works' );
+    my $rh          = t::Utility::rh_instance(0);
+    my $instruments = $rh->equity_instruments;
+    isa_ok( $instruments, __PACKAGE__ );
     my $peek = $instruments->peek;
-    is_deeply( $instruments->next, $peek, '->peek() is correct' );
-    done_testing();
+    is( $instruments->next, $peek );
 }
 
 =head2 C<has_next( ... )>
@@ -156,10 +149,9 @@ sub take ( $s, $count = 1 ) {
 }
 
 sub _test_take {
-    plan( tests => 4 );
-    my $rh          = new_ok('Finance::Robinhood');
-    my $instruments = $rh->instruments;
-    isa_ok( $instruments, 'Finance::Robinhood::Utility::Iterator', '...instruments call works' );
+    my $rh          = t::Utility::rh_instance(0);
+    my $instruments = $rh->equity_instruments;
+    isa_ok( $instruments, __PACKAGE__ );
     {
         my @take = $instruments->take(3);
         is( 3, scalar @take, '...take(3) returns 3 items' );
@@ -168,7 +160,6 @@ sub _test_take {
         my @take = $instruments->take(300);
         is( 300, scalar @take, '...take(300) returns 300 items' );
     }
-    done_testing();
 }
 
 =head2 C<all( )>
@@ -185,15 +176,13 @@ sub all($s) {
 }
 
 sub _test_all_and_has_next {
-    plan( tests => 4 );
-    my $rh          = new_ok('Finance::Robinhood');
-    my $instruments = $rh->instruments;
-    isa_ok( $instruments, 'Finance::Robinhood::Utility::Iterator', '...instruments call works' );
+    my $rh          = t::Utility::rh_instance(0);    # Do not log in!
+    my $instruments = $rh->equity_instruments;
+    isa_ok( $instruments, __PACKAGE__ );
     diag('Grabbing all instruments... please hold...');
     my @take = $instruments->all;
     cmp_ok( 11000, '<=', scalar(@take), sprintf '...all() returns %d items', scalar @take );
     isnt( $instruments->has_next, !!1, '...has_next() works at the end of the list' );
-    done_testing();
 }
 
 # Check if we need to slurp the next page of elements to fill a position
@@ -211,15 +200,24 @@ sub _check_next_page ( $s, $count = 1 ) {
         if ( $res->is_success ) {
             my $json = $res->json;
             $s->_next_page( $json->{next} );
-            push @push,
-                map { defined $s->_class ? $s->_class->new( _rh => $s->_rh, %$_ ) : $_ }
-                @{ $json->{results} };
+            push @push, map {
+                      defined $_
+                    ? defined $s->_class
+                        ? do { eval 'require ' . $s->_class; $s->_class->new( _rh => $s->_rh, %$_ ) }
+                        : $_
+                    : ()
+            } @{ $json->{results} };
         }
         else {    # Trouble! Let's not try another page
-            $s->_next_page( () );
+            $s->_next_page(undef);
         }
     }
     $s->_results( \@push ) if scalar @push > $pre;
+}
+
+sub _test_check_next_page {
+    my $rh = t::Utility::rh_instance(0);    # Do not log in!
+    is( $rh->equity_instruments_by_id('c7d4323d-9512-4b15-977a-7cb2d1381d00'), () );    # Fake id
 }
 
 =head1 LEGAL

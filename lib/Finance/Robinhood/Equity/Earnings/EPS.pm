@@ -1,4 +1,4 @@
-package Finance::Robinhood::Account;
+package Finance::Robinhood::Equity::Earnings::EPS;
 
 =encoding utf-8
 
@@ -6,24 +6,50 @@ package Finance::Robinhood::Account;
 
 =head1 NAME
 
-Finance::Robinhood::Account - Represents a Single Robinhood Account
+Finance::Robinhood::Equity::Earnings::EPS - Earnings Per Share Data
 
 =head1 SYNOPSIS
 
     use Finance::Robinhood;
-    my $rh = Finance::Robinhood->new->login('user', 'pass');
-    my $account = $rh->accounts->current();
+    my $rh = Finance::Robinhood->new;
+    
+    my $earnings = $rh->equity_earnings;
 
-    # TODO
+    for my $earnings ( $rh->equity_earnings('7d')->all ) {
+        CORE::say sprintf 'Earnings for %s: expected: %.2f | actual: %.2f',
+            $earnings->symbol, $earnings->eps->estimate,   $earnings->eps->actual;
+    }    
 
 =cut
 
-use Mojo::Base-base;
+our $VERSION = '0.92_001';
+
+sub _test__init {
+    my $rh  = t::Utility::rh_instance(1);
+    my $eps = $rh->equity_earnings( range => -7 )->current->eps;
+    isa_ok( $eps, __PACKAGE__ );
+    t::Utility::stash( 'EPS', $eps );
+}
+use Mojo::Base-base, -signatures;
 use Mojo::URL;
-use overload '""' => sub { shift->url };
+#
+use Time::Moment;
 #
 has _rh => undef => weak => 1;
-has [ 'account_number', 'cash' ];
+
+=head1 METHODS
+
+=head2 C<estimage( )>
+
+Expectations.
+
+=head2 C<actual( )>
+
+Reality.
+
+=cut
+
+has [ 'estimate', 'actual' ];
 
 =head1 LEGAL
 

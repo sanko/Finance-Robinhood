@@ -22,7 +22,16 @@ Finance::Robinhood::Equity::Fundamentals - Equity Instrument's Fundamental Data
 
 =cut
 
+our $VERSION = '0.92_001';
 use Mojo::Base-base, -signatures;
+use Finance::Robinhood::Equity::Instrument;
+
+sub _test__init {
+    my $rh   = t::Utility::rh_instance(1);
+    my $tsla = $rh->equity_instrument_by_symbol('TSLA')->fundamentals();
+    isa_ok( $tsla, __PACKAGE__ );
+    t::Utility::stash( 'TSLA', $tsla );    #  Store it for later
+}
 #
 has _rh => undef => weak => 1;
 
@@ -133,22 +142,15 @@ Loop back to the equity instrument.
 
 sub instrument($s) {
     my $res = $s->_rh->_get( $s->{instrument} );
-    $res->is_success ?
-        Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } ) :
-        Finance::Robinhood::Error->new( $res->json );
+    $res->is_success
+        ? Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
 }
 
 sub _test_instrument {
-    plan( tests => 3 );
-    my $rh   = new_ok('Finance::Robinhood');
-    my $msft = $rh->search('MSFT')->{instruments}[0];
-    isa_ok( $msft, 'Finance::Robinhood::Equity::Instrument', 'instrument works...', );
-    isa_ok(
-        $msft->fundamentals->instrument,
-        'Finance::Robinhood::Equity::Instrument',
-        'instrument works...',
-    );
-    done_testing();
+    t::Utility::stash('TSLA') // skip_all();
+    isa_ok( t::Utility::stash('TSLA')->instrument, 'Finance::Robinhood::Equity::Instrument' );
 }
 
 =head1 LEGAL
@@ -175,4 +177,5 @@ the L<LEGAL> section.
 Sanko Robinson E<lt>sanko@cpan.orgE<gt>
 
 =cut
+
 1;

@@ -21,14 +21,18 @@ Instrument
 
 =cut
 
-sub _test__init {
-    plan( tests => 1 );
-    use_ok('Finance::Robinhood');
-}
+our $VERSION = '0.92_001';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
-#
 use Time::Moment;
+use Finance::Robinhood::Equity::Instrument;
+
+sub _test__init {
+    my $rh    = t::Utility::rh_instance(1);
+    my $quote = $rh->equity_instrument_by_symbol('MSFT')->quote();
+    isa_ok( $quote, __PACKAGE__ );
+    t::Utility::stash( 'QUOTE', $quote );    #  Store it for later
+}
 #
 has _rh => undef => weak => 1;
 
@@ -107,14 +111,8 @@ sub previous_close_date ($s) {
 }
 
 sub _test_previous_close_date {
-    plan( tests => 2 );
-    my $rh         = new_ok('Finance::Robinhood');
-    my $instrument = $rh->search('MSFT')->{instruments}[0];
-    isa_ok(
-        $instrument->quote()->previous_close_date(),
-        'Time::Moment', '...->previous_close_date() works',
-    );
-    done_testing();
+    t::Utility::stash('QUOTE') // skip_all();
+    isa_ok( t::Utility::stash('QUOTE')->previous_close_date(), 'Time::Moment' );
 }
 
 =head2 C<updated_at( )>
@@ -130,11 +128,8 @@ sub updated_at ($s) {
 }
 
 sub _test_updated_at {
-    plan( tests => 2 );
-    my $rh         = new_ok('Finance::Robinhood');
-    my $instrument = $rh->search('MSFT')->{instruments}[0];
-    isa_ok( $instrument->quote()->updated_at(), 'Time::Moment', '...->updated_at() works', );
-    done_testing();
+    t::Utility::stash('QUOTE') // skip_all();
+    isa_ok( t::Utility::stash('QUOTE')->updated_at(), 'Time::Moment' );
 }
 
 =head2 C<instrument( )>
@@ -147,21 +142,15 @@ Loops back to a Finance::Robinhood::Equity::Instrument object.
 
 sub instrument ($s) {
     my $res = $s->_rh->_get( $s->{instrument} );
-    $res->is_success ?
-        Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } ) :
-        Finance::Robinhood::Error->new( $res->json );
+    $res->is_success
+        ? Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
 }
 
 sub _test_instrument {
-    plan( tests => 2 );
-    my $rh         = new_ok('Finance::Robinhood');
-    my $instrument = $rh->search('MSFT')->{instruments}[0];
-    isa_ok(
-        $instrument->quote()->instrument(),
-        'Finance::Robinhood::Equity::Instrument',
-        '...->instrument() works',
-    );
-    done_testing();
+    t::Utility::stash('QUOTE') // skip_all();
+    isa_ok( t::Utility::stash('QUOTE')->instrument(), 'Finance::Robinhood::Equity::Instrument' );
 }
 
 =head1 LEGAL

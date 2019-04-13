@@ -1,4 +1,4 @@
-package Finance::Robinhood::Tag;
+package Finance::Robinhood::Options::Chain::Ticks;
 
 =encoding utf-8
 
@@ -6,23 +6,61 @@ package Finance::Robinhood::Tag;
 
 =head1 NAME
 
-Finance::Robinhood::Tag - Represents a Single Categorized List of Equity
-Instruments
+Finance::Robinhood::Options::Chain::Ticks - Represents Pricing Ticks for an
+Options Chain
 
 =head1 SYNOPSIS
 
     use Text::Wrap qw[wrap];
     use Finance::Robinhood;
     my $rh = Finance::Robinhood->new;
+
     # TODO
+
+=head1 METHODS
 
 =cut
 
-use Mojo::Base-base;
+our $VERSION = '0.92_001';
+
+use Mojo::Base-base, -signatures;
 use Mojo::URL;
+
+sub _test__init {
+    my $rh    = t::Utility::rh_instance(0);
+    my $ticks = $rh->options_chains->current->min_ticks;
+    isa_ok( $ticks, __PACKAGE__ );
+    t::Utility::stash( 'TICKS', $ticks );    #  Store it for later
+}
+
+use overload '""' => sub ( $s, @ ) { $s->{below_tick} }, fallback => 1;
+
+sub _test_stringify {
+    t::Utility::stash('TICKS') // skip_all();
+    like(
+        +t::Utility::stash('TICKS'),
+        qr[^\d+\.\d+$],
+    );
+}
 #
 has _rh => undef => weak => 1;
-has [ 'canonical_examples', 'description', 'instruments', 'membership_count', 'name', 'slug' ];
+
+=head2 C<above_tick( )>
+
+Value to 'round up' to.
+
+=head2 C<below_tick( )>
+
+Value to 'round down' to.
+
+=head2 C<cutoff_price( )>
+
+Below this, use the C<above_tick( )> and C<below_tick( )> values. Otherwise,
+ignore them.
+
+=cut
+
+has [ 'above_tick', 'below_tick', 'cutoff_price' ];
 
 =head1 LEGAL
 

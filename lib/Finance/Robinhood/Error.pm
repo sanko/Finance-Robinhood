@@ -10,15 +10,42 @@ Finance::Robinhood::Error - What You Find When Things Go Wrong
 
 =head1 SYNOPSIS
 
-    # TODO
+    use Finance::Robinhood;
+
+    my $rh = Finance::Robinhood->new->login( 'timbob35', 'hunter3' );    # Wrong password
+    $rh || die $rh; # false value is retured; stringify it as a fatal error
+
+=head1 DESCRIPTION
+
+When this distribution has trouble with anything, this is returned.
+
+Error objects evaluate to untrue values.
+
+Error objects stringify to the contents of C<detail( )> or 'Unknown error.'
+
+=head1 METHODS
 
 =cut
 
-use Mojo::Base-base;
+our $VERSION = '0.92_001';
+use Mojo::Base-base, -signatures;
 use Mojo::URL;
-use overload 'bool' => sub {0};    # Always be false
+use overload 'bool' => sub ( $s, @ ) {0},
+    '""'     => sub ( $s, @ ) { $s->detail // 'Unknown error.' },
+    fallback => 1;
 #
+
+=head2 C<detail( )>
+
+	warn $error->detail;
+
+Returns a string. If this is a failed API call, the message returned by the
+service is here.
+
+=cut
+
 has _rh => undef => weak => 1;
+
 has ['detail'];
 
 =head1 LEGAL

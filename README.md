@@ -7,7 +7,7 @@ Commission
 # SYNOPSIS
 
     use Finance::Robinhood;
-    my $rh = Finance::Robinhood->new;
+    my $rh = Finance::Robinhood->new();
 
 # METHODS
 
@@ -33,32 +33,243 @@ buy or sell or do almost anything else, you must [log in](#login).
 A new Finance::Robinhood object is created without credentials. Before you can
 buy or sell or do almost anything else, you must [log in](#login).
 
-        my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_callback => sub {
-                # Do something like pop open an inputbox in TK or whatever
-        } );
+    my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_callback => sub {
+        # Do something like pop open an inputbox in TK or whatever
+    } );
 
 If you have MFA enabled, you may (or must) also pass a callback. When the code
 is called, a ref will be passed that will contain `mfa_required` (a boolean
 value) and `mfa_type` which might be `app`, `sms`, etc. Your return value
 must be the MFA code.
 
-        my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_code => 980385);
+    my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_code => 980385);
 
 If you already know the MFA code (for example if you have MFA enabled through
 an app), you can pass that code directly and log in.
 
-## `instruments( )`
+## `search( ... )`
 
-    my $instruments = $rh->instruments();
+    my $results = $rh->search('microsoft');
+
+Returns a set of search results as a Finance::Robinhood::Search object.
+
+You do not need to be logged in for this to work.
+
+## `news( ... )`
+
+    my $news = $rh->news('MSFT');
+    my $news = $rh->news('1072fc76-1862-41ab-82c2-485837590762'); # Forex - USD
+
+An iterator containing Finance::Robinhood::News objects is returned.
+
+## `feed( )`
+
+    my $feed = $rh->feed();
+
+An iterator containing Finance::Robinhood::News objects is returned. This list
+will be filled with news related to instruments in your watchlist and
+portfolio.
+
+You need to be logged in for this to work.
+
+## `notifications( )`
+
+    my $cards = $rh->notifications();
+
+An iterator containing Finance::Robinhood::Notification objects is returned.
+
+You need to be logged in for this to work.
+
+## `notification_by_id( ... )`
+
+    my $card = $rh->notification_by_id($id);
+
+Returns a Finance::Robinhood::Notification object. You need to be logged in for
+this to work.
+
+# EQUITY METHODS
+
+## `equity_instruments( )`
+
+    my $instruments = $rh->equity_instruments();
 
 Returns an iterator containing equity instruments.
 
-## `instrument_by_symbol( )`
+You may restrict, search, or modify the list of instruments returned with the
+following optional arguments:
 
-    my $instrument = $rh->instrument_by_symbol();
+- `symbol` - Ticker symbol
+
+        my $msft = $rh->equity_instruments(symbol => 'MSFT')->next;
+
+    By the way, `instrument_by_symbol( )` exists as sugar. It returns the
+    instrument itself rather than an iterator object with a single element.
+
+- `query` - Keyword search
+
+        my @solar = $rh->equity_instruments(query => 'solar')->all;
+
+- `ids` - List of instrument ids
+
+        my ( $msft, $tsla )
+            = $rh->equity_instruments(
+            ids => [ '50810c35-d215-4866-9758-0ada4ac79ffa', 'e39ed23a-7bd1-4587-b060-71988d9ef483' ] )
+            ->all;
+
+    If you happen to know/store instrument ids, quickly get full instrument objects
+    this way.
+
+## `equity_instrument_by_symbol( ... )`
+
+    my $instrument = $rh->equity_instrument_by_symbol('MSFT');
 
 Searches for an equity instrument by ticker symbol and returns a
 Finance::Robinhood::Equity::Instrument.
+
+## `equity_instrument_by_id( ... )`
+
+    my $instrument = $rh->equity_instrument_by_id('50810c35-d215-4866-9758-0ada4ac79ffa');
+
+Searches for a single of equity instrument by its instrument id and returns a
+Finance::Robinhood::Equity::Instrument object.
+
+## `equity_instruments_by_id( ... )`
+
+    my $instrument = $rh->equity_instruments_by_id('50810c35-d215-4866-9758-0ada4ac79ffa');
+
+Searches for a list of equity instruments by their instrument ids and returns a
+list of Finance::Robinhood::Equity::Instrument objects.
+
+## `equity_orders( [...] )`
+
+    my $orders = $rh->equity_orders();
+
+An iterator containing Finance::Robinhood::Equity::Order objects is returned.
+You need to be logged in for this to work.
+
+    my $orders = $rh->equity_orders(instrument => $msft);
+
+If you would only like orders after a certain date, you can do that!
+
+    my $orders = $rh->equity_orders(after => Time::Moment->now->minus_days(7));
+    # Also accepts ISO 8601
+
+If you would only like orders before a certain date, you can do that!
+
+    my $orders = $rh->equity_orders(before => Time::Moment->now->minus_years(2));
+    # Also accepts ISO 8601
+
+## `equity_order_by_id( ... )`
+
+    my $order = $rh->equity_order_by_id($id);
+
+Returns a Finance::Robinhood::Equity::Order object. You need to be logged in
+for this to work.
+
+## `equity_accounts( )`
+
+    my $accounts = $rh->equity_accounts();
+
+An iterator containing Finance::Robinhood::Equity::Account objects is returned.
+You need to be logged in for this to work.
+
+## `equity_account_by_account_number( ... )`
+
+    my $account = $rh->equity_account_by_account_number($id);
+
+Returns a Finance::Robinhood::Equity::Account object. You need to be logged in
+for this to work.
+
+## `equity_portfolios( )`
+
+    my $equity_portfolios = $rh->equity_portfolios();
+
+An iterator containing Finance::Robinhood::Equity::Account::Portfolio objects
+is returned. You need to be logged in for this to work.
+
+## `equity_watchlists( )`
+
+    my $watchlists = $rh->equity_watchlists();
+
+An iterator containing Finance::Robinhood::Equity::Watchlist objects is
+returned. You need to be logged in for this to work.
+
+## `equity_watchlist_by_name( ... )`
+
+    my $watchlist = $rh->equity_watchlist_by_name('Default');
+
+Returns a Finance::Robinhood::Equity::Watchlist object. You need to be logged
+in for this to work.
+
+## `equity_fundamentals( )`
+
+    my $fundamentals = $rh->equity_fundamentals('MSFT', 'TSLA');
+
+An iterator containing Finance::Robinhood::Equity::Fundamentals objects is
+returned.
+
+You do not need to be logged in for this to work.
+
+## `equity_markets( )`
+
+    my $markets = $rh->equity_markets()->all;
+
+Returns an iterator containing Finance::Robinhood::Equity::Market objects.
+
+## `equity_market_by_mic( )`
+
+    my $markets = $rh->equity_market_by_mic('XNAS'); # NASDAQ
+
+Locates an exchange by its Market Identifier Code and returns a
+Finance::Robinhood::Equity::Market object.
+
+See also https://en.wikipedia.org/wiki/Market\_Identifier\_Code
+
+## `top_movers( [...] )`
+
+    my $instruments = $rh->top_movers( );
+
+Returns an iterator containing members of the S&P 500 with large price changes
+during market hours as Finance::Robinhood::Equity::Movers objects.
+
+You may define whether or not you want the best or worst performing instruments
+with the following option:
+
+- `direction` - `up` or `down`
+
+        $rh->top_movers( direction => 'up' );
+
+    Returns the best performing members. This is the default.
+
+        $rh->top_movers( direction => 'down' );
+
+    Returns the worst performing members.
+
+## `tags( ... )`
+
+    my $tags = $rh->tags( 'food', 'oil' );
+
+Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
+
+## `tags_discovery( ... )`
+
+    my $tags = $rh->tags_discovery( );
+
+Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
+
+## `tags_popular( ... )`
+
+    my $tags = $rh->tags_popular( );
+
+Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
+
+## `tag( ... )`
+
+    my $tag = $rh->tag('food');
+
+Locates a tag by its slug and returns a Finance::Robinhood::Equity::Tag object.
+
+# OPTIONS METHODS
 
 ## `options_chains( )`
 
@@ -66,17 +277,10 @@ Finance::Robinhood::Equity::Instrument.
 
 Returns an iterator containing chain elements.
 
-        my $equity = $rh->search('MSFT')->{instruments}[0]->options_chains->all;
+    my $equity = $rh->search('MSFT')->equity_instruments->[0]->options_chains->all;
 
 You may limit the call by passing a list of options instruments or a list of
 equity instruments.
-
-## `orders( )`
-
-    my $orders = $rh->orders();
-
-An iterator containing Finance::Robinhood::Equity::Order objects is returned.
-You need to be logged in for this to work.
 
 ## `options_instruments( )`
 
@@ -92,53 +296,226 @@ You can filter the results several ways. All of them are optional.
 - `type` - `call` or `put`
 - `expiration_dates` - comma separated list of days; format is YYYY-M-DD
 
-## `accounts( )`
+# UNSORTED
 
-    my $accounts = $rh->accounts();
+## `user( )`
 
-An iterator containing Finance::Robinhood::Account objects is returned. You
-need to be logged in for this to work.
+    my $me = $rh->user();
 
-## `search( ... )`
+Returns a Finance::Robinhood::User object. You need to be logged in for this to
+work.
 
-    my $results = $rh->search('microsoft');
+## `acats_transfers( )`
 
-Returns a set of search results. Depending on the results, you'll get a list of
-Finance::Robinhood::Equity::Instrument objects in a key named `instruments`, a
-list of Finance::Robinhood::Tag objects in a key named `tags`, and a list of
-currency pairs in the aptly named `currency_pairs` key.
+    my $acats = $rh->acats_transfers();
 
-        $rh->search('New on Robinhood')->{tags};
-        $rh->search('bitcoin')->{currency_pairs};
-
-You do not need to be logged in for this to work.
-
-## `news( ... )`
-
-    my $news = $rh->news('MSFT');
-
-An iterator containing Finance::Robinhood::News objects is returned.
-
-You do not need to be logged in for this to work.
-
-## `feed( )`
-
-    my $feed = $rh->feed();
-
-An iterator containing Finance::Robinhood::News objects is returned. This list
-will be filled with news related to instruments in your watchlist and
-portfolio.
+An iterator containing Finance::Robinhood::ACATS::Transfer objects is returned.
 
 You need to be logged in for this to work.
 
-## `fundamentals( )`
+## `equity_positions( )`
 
-    my $fundamentals = $rh->fundamentals('MSFT', 'TSLA');
+    my $positions = $rh->equity_positions( );
 
-An iterator containing Finance::Robinhood::Equity::Fundamentals objects is
+Returns the related paginated list object filled with
+Finance::Robinhood::Equity::Position objects.
+
+You must be logged in.
+
+    my $positions = $rh->equity_positions( nonzero => 1 );
+
+You can filter and modify the results. All options are optional.
+
+- `nonzero` - true or false. Default is false
+- `ordering` - list of equity instruments
+
+## `equity_earnings( ... )`
+
+    my $earnings = $rh->equity_earnings( symbol => 'MSFT' );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Equity::Earnings objects by ticker symbol.
+
+    my $earnings = $rh->equity_earnings( instrument => $rh->equity_instrument_by_symbol('MSFT') );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Equity::Earnings objects by instrument object/url.
+
+    my $earnings = $rh->equity_earnings( range=> 7 );
+
+Returns a paginated list object filled with
+Finance::Robinhood::Equity::Earnings objects for all expected earnings report
+over the next `X` days where `X` is between `-21...-1, 1...21`. Negative
+values are days into the past. Positive are days into the future.
+
+You must be logged in for any of these to work.
+
+# FOREX METHODS
+
+Depending on your jurisdiction, your account may have access to Robinhood
+Crypto. See https://crypto.robinhood.com/ for more.
+
+## `forex_accounts( )`
+
+    my $halts = $rh->forex_accounts;
+
+Returns an iterator full of Finance::Robinhood::Forex::Account objects.
+
+You need to be logged in and have access to Robinhood Crypto for this to work.
+
+## `forex_account_by_id( ... )`
+
+    my $account = $rh->forex_account_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Account object. You need to be logged in
+for this to work.
+
+## `forex_halts( [...] )`
+
+    my $halts = $rh->forex_halts;
+    # or
+    $halts = $rh->forex_halts( active => 1 );
+
+Returns an iterator full of Finance::Robinhood::Forex::Halt objects.
+
+If you pass a true value to a key named `active`, only active halts will be
 returned.
 
-You do not need to be logged in for this to work.
+You need to be logged in and have access to Robinhood Crypto for this to work.
+
+## `forex_currencies( )`
+
+    my $currecies = $rh->forex_currencies();
+
+An iterator containing Finance::Robinhood::Forex::Currency objects is returned.
+You need to be logged in for this to work.
+
+## `forex_currency_by_id( ... )`
+
+    my $currency = $rh->forex_currency_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Currency object. You need to be logged in
+for this to work.
+
+## `forex_pairs( )`
+
+    my $pairs = $rh->forex_pairs();
+
+An iterator containing Finance::Robinhood::Forex::Pair objects is returned. You
+need to be logged in for this to work.
+
+## `forex_pair_by_id( ... )`
+
+    my $watchlist = $rh->forex_pair_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Pair object. You need to be logged in for
+this to work.
+
+## `forex_pair_by_symbol( ... )`
+
+    my $btc = $rh->forex_pair_by_symbol('BTCUSD');
+
+Returns a Finance::Robinhood::Forex::Pair object. You need to be logged in for
+this to work.
+
+## `forex_watchlists( )`
+
+    my $watchlists = $rh->forex_watchlists();
+
+An iterator containing Finance::Robinhood::Forex::Watchlist objects is
+returned. You need to be logged in for this to work.
+
+## `forex_watchlist_by_id( ... )`
+
+    my $watchlist = $rh->forex_watchlist_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Watchlist object. You need to be logged in
+for this to work.
+
+## `forex_activations( )`
+
+    my $activations = $rh->forex_activations();
+
+An iterator containing Finance::Robinhood::Forex::Activation objects is
+returned. You need to be logged in for this to work.
+
+## `forex_activation_by_id( ... )`
+
+    my $activation = $rh->forex_activation_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Activation object. You need to be logged
+in for this to work.
+
+## `forex_portfolios( )`
+
+    my $portfolios = $rh->forex_portfolios();
+
+An iterator containing Finance::Robinhood::Forex::Portfolio objects is
+returned. You need to be logged in for this to work.
+
+## `forex_portfolio_by_id( ... )`
+
+    my $portfolio = $rh->forex_portfolio_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Portfolio object. You need to be logged in
+for this to work.
+
+## `forex_activation_request( ... )`
+
+    my $activation = $rh->forex_activation_request( type => 'new_account' );
+
+Submits an application to activate a new forex account. If successful, a new
+Fiance::Robinhood::Forex::Activation object is returned. You need to be logged
+in for this to work.
+
+The following options are accepted:
+
+- `type`
+
+    This is required and must be one of the following:
+
+    - `new_account`
+    - `reactivation`
+
+- `speculative`
+
+    This is an optional boolean value.
+
+## `forex_orders( )`
+
+    my $orders = $rh->forex_orders( );
+
+An iterator containing Finance::Robinhood::Forex::Order objects is returned.
+You need to be logged in for this to work.
+
+## `forex_order_by_id( ... )`
+
+    my $order = $rh->forex_order_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Order object. You need to be logged in for
+this to work.
+
+## `forex_holdings( )`
+
+    my $holdings = $rh->forex_holdings( );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Forex::Holding objects.
+
+You must be logged in.
+
+    my $holdings = $rh->forex_holdings( nonzero => 1 );
+
+You can filter and modify the results. All options are optional.
+
+- `nonzero` - true or false. Default is false.
+
+## `forex_holding_by_id( ... )`
+
+    my $holding = $rh->forex_holding_by_id($id);
+
+Returns a Finance::Robinhood::Forex::Holding object. You need to be logged in
+for this to work.
 
 # LEGAL
 

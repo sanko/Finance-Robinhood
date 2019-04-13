@@ -14,6 +14,7 @@ Finance::Robinhood::Data::OAuth2::Token - Private Authorization Data
 
 =cut
 
+our $VERSION = '0.92_001';
 use Mojo::Base-base;
 #
 has _rh => undef => weak => 1;
