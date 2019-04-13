@@ -2,6 +2,10 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+0.92_001 2019-04-13T03:59:46Z
+
+    - Progress
+
 0.9.0_001 2018-04-09T00:44:59Z
 
     - Redesigned from the ground up now that Crypto, Options, and OAuth2 are rolled in
