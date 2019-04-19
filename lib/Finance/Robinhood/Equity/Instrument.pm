@@ -176,7 +176,7 @@ sub _test_quote {
 
 	my $prices = $instrument->prices;
 
-Builds a Finance::Robinhood::Equity::Prices object with the instruent's price
+Builds a Finance::Robinhood::Equity::Prices object with the instrument's price
 data. You must be logged in for this to work.
 
 You may modify the type of information returned with the following options:
