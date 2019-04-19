@@ -48,6 +48,7 @@ buy or sell or do almost anything else, you must L<log in|/"login( ... )">.
 has _ua => sub {
     my $x = Mojo::UserAgent->new;
     $x->transactor->name(
+
         sprintf 'Perl/%s (%s) %s/%s', ( $^V =~ m[([\.\d]+)] ), $^O, __PACKAGE__,
         $VERSION
     );
@@ -82,9 +83,15 @@ sub _get ( $s, $url, %data ) {
     );
 
     #use Data::Dump;
-    #warn '  Result: ' . $get->res->code;
-    #use Data::Dump; ddx   $get->res->headers; ddx $get->res->json;
+    #warn '  Result: ' . $retval->res->code;
+    #die if $retval->res->code == 401;
+    #use Data::Dump;
+    #ddx $retval->res->headers;
+
+    #ddx $retval;
     #warn $retval->res->code;
+    #ddx $retval->res;
+    #warn $retval->res->body;
 
     return $s->_get( $url, %data )
         if $retval->res->code == 401 && $s->_refresh_login_token;
@@ -131,6 +138,8 @@ sub _test_options {
 
 sub _post ( $s, $url, %data ) {
 
+    #warn 'POST ' . $url;
+
     #$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
     #warn '  Auth: ' . (($s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]) ? $s->_token->token_type : 'none');
     my $retval = $s->_ua->post(
@@ -146,13 +155,18 @@ sub _post ( $s, $url, %data ) {
     );
 
     #use Data::Dump;
-    #warn '  Result: ' . $post->res->code;    die if $post->res->code ==401;
-    #use Data::Dump; ddx   $post->res->headers;
-    #ddx $post;
+    #warn '  Result: ' . $retval->res->code;
+    #die if $retval->res->code == 401;
+    #use Data::Dump;
+    #ddx $retval->res->headers;
+
+    #ddx $retval;
     #warn $retval->res->code;
+    #ddx $retval->res;
+    #warn $retval->res->body;
     return $s->_post( $url, %data )    # Retry with new auth info
         if $retval->res->code == 401 && $s->_refresh_login_token;
-    $retval->result;
+    $retval->res;
 }
 
 sub _test_post {
@@ -292,17 +306,16 @@ sub _test_login {
 
 # Cannot test this without using the same token for 24hrs and letting it expire
 sub _refresh_login_token ( $s, %opt ) {    # TODO: Store %opt from login and reuse it here
-                                           # OAUTH2
+    $s->_token // return;                  # OAUTH2
     my $res = $s->_post(
         'https://api.robinhood.com/oauth2/token/',
-        no_auth_token => 1,                # NO AUTH INFO SENT!
-
+        no_auth_token => 1,                                    # NO AUTH INFO SENT!
         scope         => 'internal',
         refresh_token => $s->_token->refresh_token,
         grant_type    => ( $opt{grant_type} // 'password' ),
         client_id     => $opt{client_id} // sub {
             my ( @k, $c ) = split //, shift;
-            map {                          # cheap and easy
+            map {                                              # cheap and easy
                 unshift @k, pop @k;
                 $c .= chr( ord ^ ord $k[0] );
             } split //, "\aW];&Y55\35I[\a,6&>[5\34\36\f\2]]\$\x179L\\\x0B4<;,\"*&\5);";
