@@ -26,7 +26,8 @@ my @classes = (
     'Finance::Robinhood::Equity::Split',            'Finance::Robinhood::Equity::Earnings',
     'Finance::Robinhood::Equity::Earnings::Call',   'Finance::Robinhood::Equity::Earnings::EPS',
     'Finance::Robinhood::Equity::Earnings::Report', 'Finance::Robinhood::Equity::Mover',
-    'Finance::Robinhood::Equity::PriceMovement',    'Finance::Robinhood::Equity::Tag',
+    'Finance::Robinhood::Equity::Prices',
+    'Finance::Robinhood::Equity::PriceMovement', 'Finance::Robinhood::Equity::Tag',
     'Finance::Robinhood::Equity::Ratings',
 
     # Equity and Forex watchlists
@@ -64,7 +65,7 @@ for my $class ( sort @classes ) {
         eval <<"T"; bail_out("$class did not compile: $@") if $@;
 use lib '../lib';
 use $class;
-package $class; 
+package $class;
 use Test2::V0 ':DEFAULT', '!call', call => {-as => 'test_call'};
 T
 

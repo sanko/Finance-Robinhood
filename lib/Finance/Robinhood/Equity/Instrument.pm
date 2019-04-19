@@ -172,6 +172,48 @@ sub _test_quote {
     isa_ok( t::Utility::stash('MSFT_AUTH')->quote(), 'Finance::Robinhood::Equity::Quote' );
 }
 
+=head2 C<prices( [...] )>
+
+	my $prices = $instrument->prices;
+
+Builds a Finance::Robinhood::Equity::Prices object with the instruent's price
+data. You must be logged in for this to work.
+
+You may modify the type of information returned with the following options:
+
+=over
+
+=item C<delayed> - Boolean value. If false, real time quote data is returned.
+
+=item C<source> - You may specify C<consolidated> (which is the default) for data from the tape or C<nls> for the Nasdaq last sale price.
+
+=back
+
+	$prices = $instrument->prices(source => 'consolidated', dealyed => 0);
+
+This would return live quote data from the tape.
+
+=cut
+
+sub prices ( $s, %filters ) {
+    $filters{delayed} = !!$filters{delayed} ? 'true' : 'false' if defined $filters{delayed};
+    $filters{source} //= 'consolidated';
+    my $res
+        = $s->_rh->_get(
+        Mojo::URL->new( 'https://api.robinhood.com/marketdata/prices/' . $s->{id} . '/' )
+            ->query( \%filters ) );
+    require Finance::Robinhood::Equity::Prices;
+    $res->is_success
+        ? Finance::Robinhood::Equity::Prices->new( _rh => $s->_rh, %{ $res->json } )
+        : Finance::Robinhood::Error->new(
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
+}
+
+sub _test_prices {
+    t::Utility::stash('MSFT_AUTH') // skip_all();
+    isa_ok( t::Utility::stash('MSFT_AUTH')->prices(), 'Finance::Robinhood::Equity::Prices' );
+}
+
 =head2 C<splits( )>
 
     my @splits = $instrument->splits->all;
@@ -271,7 +313,7 @@ sub _test_ratings {
 }
 
 =head2 C<options_chains( )>
-    
+
     $instrument = $rh->search('MSFT')->equity_instruments->[0];
     my $chains = $instrument->options_chains;
 
@@ -333,7 +375,7 @@ sub _test_tags {
 }
 
 =head2 C<buy( ... )>
- 
+
     my $order = $instrument->buy(34);
 
 Returns a Finance::Robinhood::Equity::OrderBuilder object.
@@ -395,7 +437,7 @@ sub _test_buy {
 }
 
 =head2 C<sell( ... )>
- 
+
     my $order = $instrument->sell(34);
 
 Returns a Finance::Robinhood::Equity::OrderBuilder object.
