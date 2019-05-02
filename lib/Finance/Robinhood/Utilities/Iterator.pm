@@ -1,4 +1,4 @@
-package Finance::Robinhood::Utility::Iterator;
+package Finance::Robinhood::Utilities::Iterator;
 
 =encoding utf-8
 
@@ -6,7 +6,7 @@ package Finance::Robinhood::Utility::Iterator;
 
 =head1 NAME
 
-Finance::Robinhood::Utility::Iterator - Sugary Access to Paginated Data
+Finance::Robinhood::Utilities::Iterator - Sugary Access to Paginated Data
 
 =head1 SYNOPSIS
 

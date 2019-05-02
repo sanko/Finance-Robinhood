@@ -42,7 +42,7 @@ sub _test_stringify {
 has _rh => undef => weak => 1;
 
 =head1 METHODS
- 
+
 =head2 C<brand_color( )>
 
 If defined, this returns a hex color code used for display.
@@ -85,7 +85,7 @@ sub news ($s) { $s->_rh->news( $s->id ) }
 sub _test_news {
     t::Utility::stash('CURRENCY') // skip_all();
     my $news = t::Utility::stash('CURRENCY')->news;
-    isa_ok( $news,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $news->current, 'Finance::Robinhood::News' );
 }
 

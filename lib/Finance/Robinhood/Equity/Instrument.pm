@@ -223,7 +223,7 @@ Returns an iterator with Finance::Robinhood::Equity::Split objects.
 =cut
 
 sub splits ( $s ) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s->_rh,
         _next_page => Mojo::URL->new( $s->{splits} ),
         _class     => 'Finance::Robinhood::Equity::Split'
@@ -233,7 +233,7 @@ sub splits ( $s ) {
 sub _test_splits {
     my $rh     = t::Utility::rh_instance(0);
     my $splits = $rh->equity_instrument_by_symbol('JNUG')->splits;
-    isa_ok( $splits,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $splits,       'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $splits->next, 'Finance::Robinhood::Equity::Split' );
 }
 
@@ -327,7 +327,7 @@ sub options_chains ($s) {
 
 sub _test_options_chains {
     my $chains = t::Utility::stash('MSFT')->options_chains;
-    isa_ok( $chains,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $chains,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $chains->current, 'Finance::Robinhood::Options::Chain' );
 }
 
@@ -343,7 +343,7 @@ sub news ($s) { $s->_rh->news( $s->symbol ) }
 
 sub _test_news {
     my $news = t::Utility::stash('MSFT')->news;
-    isa_ok( $news,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $news->current, 'Finance::Robinhood::News' );
 }
 
@@ -432,7 +432,7 @@ sub _test_buy {
     todo( "Write actual tests!" => sub { pass('ugh') } );
 
     #my $news = t::Utility::stash('MSFT')->news;
-    #isa_ok( $news,          'Finance::Robinhood::Utility::Iterator' );
+    #isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );
     #isa_ok( $news->current, 'Finance::Robinhood::News' );
 }
 
@@ -494,7 +494,7 @@ sub _test_sell {
     todo( "Write actual tests!" => sub { pass('ugh') } );
 
     #my $news = t::Utility::stash('MSFT')->news;
-    #isa_ok( $news,          'Finance::Robinhood::Utility::Iterator' );
+    #isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );
     #isa_ok( $news->current, 'Finance::Robinhood::News' );
 }
 

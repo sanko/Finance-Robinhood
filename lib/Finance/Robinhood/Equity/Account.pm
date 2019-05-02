@@ -14,7 +14,7 @@ Finance::Robinhood::Equity::Account - Represents a Single Robinhood Account
     my $rh = Finance::Robinhood->new->login('user', 'pass');
     my $account = $rh->equity_accounts->current();
 
-    CORE::say sprintf '$%0.2f of $%0.2f can be withdrawn', 
+    CORE::say sprintf '$%0.2f of $%0.2f can be withdrawn',
         $account->cash_available_for_withdrawal,
         $account->cash;
 
@@ -103,8 +103,8 @@ One of several options:
 =item * C<option_level_3>
 
 =back
-     
-=head2 C<rhs_account_number( )>          
+
+=head2 C<rhs_account_number( )>
 
 Internal account number used for official documents (tax forms, etc.)
 
@@ -112,11 +112,11 @@ Internal account number used for official documents (tax forms, etc.)
 
 TODO
 
-=head2 C<sma_held_for_orders( )>          
+=head2 C<sma_held_for_orders( )>
 
 TODO
 
-=head2 C<sweep_enabled( )>          
+=head2 C<sweep_enabled( )>
 
 Returns true if sweep is enabled to move cash between your brokerage account to
 RH's crypto service.
@@ -125,15 +125,15 @@ RH's crypto service.
 
 Simple C<cash> or C<margin> account flag.
 
-=head2 C<uncleared_deposits( )>          
+=head2 C<uncleared_deposits( )>
 
 Incoming ACH deposits that have not cleared yet.
 
-=head2 C<unsettled_debit( )>          
+=head2 C<unsettled_debit( )>
 
 Outgoing funds that are not yet settled.
 
-=head2 C<unsettled_funds( )>          
+=head2 C<unsettled_funds( )>
 
 Funds that are not yet settled but may be used thanks to Gold or Instant margin
 accounts.
@@ -311,7 +311,7 @@ You can filter and modify the results. All options are optional.
 
 sub positions ( $s, %filters ) {
     $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false' if defined $filters{nonzero};
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s->_rh,
         _next_page => Mojo::URL->new( $s->{positions} )->query( \%filters ),
         _class     => 'Finance::Robinhood::Equity::Position'
@@ -321,7 +321,7 @@ sub positions ( $s, %filters ) {
 sub _test_positions {
     t::Utility::stash('ACCT') // skip_all('No account object in stash');
     my $positions = t::Utility::stash('ACCT')->positions;
-    isa_ok( $positions,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $positions,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $positions->current, 'Finance::Robinhood::Equity::Position' );
 }
 

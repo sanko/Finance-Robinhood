@@ -44,6 +44,7 @@ types such as stop limits that are held up to 90 days:
 our $VERSION = '0.92_002';
 use Mojo::Base-base, -signatures;
 use Finance::Robinhood::Forex::Order;
+use Finance::Robinhood::Utilities qw[gen_uuid];
 
 sub _test__init {
     my $rh      = t::Utility::rh_instance(1);
@@ -270,7 +271,7 @@ Use this to change the order's time in force value to Immediate-Or-Cancel.
 
 This may require special permissions.
 
-=cut 
+=cut
 
 sub gtc($s) {
     $s->with_roles('Finance::Robinhood::Forex::OrderBuilder::Role::GTC');
@@ -382,23 +383,8 @@ sub _dump ( $s, $test = 0 ) {
         currency_pair_id => $s->_pair->id,
         account          => $test ? '--private--' : $s->_account->id,
         time_in_force    => 'gtc',
-        ref_id           => $test ? '00000000-0000-0000-0000-000000000000' : _gen_uuid()
+        ref_id           => $test ? '00000000-0000-0000-0000-000000000000' : gen_uuid()
     )
-}
-
-sub _gen_uuid() {
-    CORE::state $srand;
-    $srand = srand() if !$srand;
-    my $retval = join '', map {
-        pack 'I',
-            ( int( rand(0x10000) ) % 0x10000 << 0x10 ) | int( rand(0x10000) ) % 0x10000
-    } 1 .. 4;
-    substr $retval, 6, 1, chr( ord( substr( $retval, 6, 1 ) ) & 0x0f | 0x40 );    # v4
-    return join '-', map { unpack 'H*', $_ } map { substr $retval, 0, $_, '' } ( 4, 2, 2, 2, 6 );
-}
-
-sub _test__gen_uuid {
-    like( _gen_uuid(), qr[^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}\-[0-9a-f]{12}$]i, 'generated uuid' );
 }
 
 =head1 LEGAL

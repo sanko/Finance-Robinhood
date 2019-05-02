@@ -26,7 +26,7 @@ sub _test__init {
     isa_ok( $watchlist, __PACKAGE__ );
     t::Utility::stash( 'WATCHLIST', $watchlist );    #  Store it for later
 }
-use Mojo::Base 'Finance::Robinhood::Utility::Iterator', -signatures;
+use Mojo::Base 'Finance::Robinhood::Utilities::Iterator', -signatures;
 use Mojo::URL;
 use overload '""' => sub ( $s, @ ) { $s->{_next_page} // $s->{_first_page} }, fallback => 1;
 use Finance::Robinhood::Equity::Watchlist::Element;
@@ -38,7 +38,7 @@ sub _test_stringify {
 
 =head1 METHODS
 
-This is a subclass of Finance::Robinhood::Utility::Iterator. All the sweet,
+This is a subclass of Finance::Robinhood::Utilities::Iterator. All the sweet,
 sugary goodness from there works here. Note that C<next( )>, C<current( )>,
 etc. return  Finance::Robinhood::Equity::Watchlist::Element objects.
 

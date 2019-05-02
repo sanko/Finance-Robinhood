@@ -24,7 +24,7 @@ use Mojo::URL;
 #
 
 use Finance::Robinhood::Error;
-use Finance::Robinhood::Utility::Iterator;
+use Finance::Robinhood::Utilities::Iterator;
 
 =head1 METHODS
 
@@ -373,7 +373,7 @@ An iterator containing Finance::Robinhood::News objects is returned.
 =cut
 
 sub news ( $s, $symbol_or_id ) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://midlands.robinhood.com/news/')->query(
             {
@@ -392,13 +392,13 @@ sub news ( $s, $symbol_or_id ) {
 sub _test_news {
     my $rh   = t::Utility::rh_instance();
     my $msft = $rh->news('MSFT');
-    isa_ok( $msft, 'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $msft, 'Finance::Robinhood::Utilities::Iterator' );
     $msft->has_next
         ? isa_ok( $msft->next, 'Finance::Robinhood::News' )
         : pass('Fake it... Might not be any news on the weekend');
 
     my $btc = $rh->news('d674efea-e623-4396-9026-39574b92b093');
-    isa_ok( $btc, 'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $btc, 'Finance::Robinhood::Utilities::Iterator' );
     $btc->has_next
         ? isa_ok( $btc->next, 'Finance::Robinhood::News' )
         : pass('Fake it... Might not be any news on the weekend');
@@ -417,7 +417,7 @@ You need to be logged in for this to work.
 =cut
 
 sub feed ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://midlands.robinhood.com/feed/',
         _class     => 'Finance::Robinhood::News'
@@ -426,7 +426,7 @@ sub feed ($s) {
 
 sub _test_feed {
     my $feed = t::Utility::rh_instance(1)->feed;
-    isa_ok( $feed,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $feed,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $feed->current, 'Finance::Robinhood::News' );
 }
 
@@ -441,7 +441,7 @@ You need to be logged in for this to work.
 =cut
 
 sub notifications ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://midlands.robinhood.com/notifications/stack/',
         _class     => 'Finance::Robinhood::Notification'
@@ -450,7 +450,7 @@ sub notifications ($s) {
 
 sub _test_notifications {
     my $cards = t::Utility::rh_instance(1)->notifications;
-    isa_ok( $cards,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $cards,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $cards->current, 'Finance::Robinhood::Notification' );
 }
 
@@ -519,7 +519,7 @@ this way.
 
 sub equity_instruments ( $s, %filter ) {
     $filter{ids} = join ',', @{ $filter{ids} } if $filter{ids};    # Has to be done manually
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://api.robinhood.com/instruments/')->query( \%filter ),
         _class     => 'Finance::Robinhood::Equity::Instrument'
@@ -529,7 +529,7 @@ sub equity_instruments ( $s, %filter ) {
 sub _test_equity_instruments {
     my $rh          = t::Utility::rh_instance(0);
     my $instruments = $rh->equity_instruments;
-    isa_ok( $instruments,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $instruments,       'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $instruments->next, 'Finance::Robinhood::Equity::Instrument' );
     #
     {
@@ -644,7 +644,7 @@ sub equity_orders ( $s, %opts ) {
     #- `updated_at[gte]` - greater than or equal to a date; timestamp or ISO 8601
     #- `updated_at[lte]` - less than or equal to a date; timestamp or ISO 8601
     #- `instrument` - equity instrument URL
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://api.robinhood.com/orders/')->query(
             {
@@ -660,7 +660,7 @@ sub equity_orders ( $s, %opts ) {
 sub _test_equity_orders {
     my $rh     = t::Utility::rh_instance(1);
     my $orders = $rh->equity_orders;
-    isa_ok( $orders,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $orders,       'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $orders->next, 'Finance::Robinhood::Equity::Order' );
 }
 
@@ -698,7 +698,7 @@ You need to be logged in for this to work.
 =cut
 
 sub equity_accounts ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://api.robinhood.com/accounts/',
         _class     => 'Finance::Robinhood::Equity::Account'
@@ -708,7 +708,7 @@ sub equity_accounts ($s) {
 sub _test_equity_accounts {
     my $rh       = t::Utility::rh_instance(1);
     my $accounts = $rh->equity_accounts;
-    isa_ok( $accounts,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $accounts,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $accounts->current, 'Finance::Robinhood::Equity::Account' );
 }
 
@@ -747,7 +747,7 @@ is returned. You need to be logged in for this to work.
 =cut
 
 sub equity_portfolios ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://api.robinhood.com/portfolios/',
         _class     => 'Finance::Robinhood::Equity::Account::Portfolio'
@@ -757,7 +757,7 @@ sub equity_portfolios ($s) {
 sub _test_equity_portfolios {
     my $rh                = t::Utility::rh_instance(1);
     my $equity_portfolios = $rh->equity_portfolios;
-    isa_ok( $equity_portfolios,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $equity_portfolios,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $equity_portfolios->current, 'Finance::Robinhood::Equity::Account::Portfolio' );
 }
 
@@ -771,7 +771,7 @@ returned. You need to be logged in for this to work.
 =cut
 
 sub equity_watchlists ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://api.robinhood.com/watchlists/',
         _class     => 'Finance::Robinhood::Equity::Watchlist'
@@ -781,7 +781,7 @@ sub equity_watchlists ($s) {
 sub _test_equity_watchlists {
     my $rh         = t::Utility::rh_instance(1);
     my $watchlists = $rh->equity_watchlists;
-    isa_ok( $watchlists,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $watchlists,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $watchlists->current, 'Finance::Robinhood::Equity::Watchlist' );
 }
 
@@ -822,7 +822,7 @@ You do not need to be logged in for this to work.
 =cut
 
 sub equity_fundamentals ( $s, @symbols_or_ids_or_urls ) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://api.robinhood.com/fundamentals/')->query(
             {
@@ -866,7 +866,7 @@ Returns an iterator containing Finance::Robinhood::Equity::Market objects.
 =cut
 
 sub equity_markets ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://api.robinhood.com/markets/',
         _class     => 'Finance::Robinhood::Equity::Market'
@@ -875,7 +875,7 @@ sub equity_markets ($s) {
 
 sub _test_equity_markets {
     my $markets = t::Utility::rh_instance(0)->equity_markets;
-    isa_ok( $markets, 'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $markets, 'Finance::Robinhood::Utilities::Iterator' );
     skip_all('No equity markets found') if !$markets->has_next;
     isa_ok( $markets->current, 'Finance::Robinhood::Equity::Market' );
 }
@@ -935,7 +935,7 @@ Returns the worst performing members.
 
 sub top_movers ( $s, %filter ) {
     $filter{direction} //= 'up';
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh => $s,
         _next_page =>
             Mojo::URL->new('https://midlands.robinhood.com/movers/sp500/')->query( \%filter ),
@@ -946,7 +946,7 @@ sub top_movers ( $s, %filter ) {
 sub _test_top_movers {
     my $rh     = t::Utility::rh_instance(0);
     my $movers = $rh->top_movers;
-    isa_ok( $movers,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $movers,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $movers->current, 'Finance::Robinhood::Equity::Mover' );
 }
 
@@ -959,7 +959,7 @@ Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
 =cut
 
 sub tags ( $s, @slugs ) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://midlands.robinhood.com/tags/')
             ->query( { slugs => join ',', @slugs } ),
@@ -970,7 +970,7 @@ sub tags ( $s, @slugs ) {
 sub _test_tags {
     my $rh   = t::Utility::rh_instance(0);
     my $tags = $rh->tags('food');
-    isa_ok( $tags,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $tags,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $tags->current, 'Finance::Robinhood::Equity::Tag' );
 }
 
@@ -983,7 +983,7 @@ Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
 =cut
 
 sub tags_discovery ( $s ) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://midlands.robinhood.com/tags/discovery/'),
         _class     => 'Finance::Robinhood::Equity::Tag'
@@ -993,7 +993,7 @@ sub tags_discovery ( $s ) {
 sub _test_tags_discovery {
     my $rh   = t::Utility::rh_instance(0);
     my $tags = $rh->tags_discovery();
-    isa_ok( $tags,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $tags,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $tags->current, 'Finance::Robinhood::Equity::Tag' );
 }
 
@@ -1006,7 +1006,7 @@ Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
 =cut
 
 sub tags_popular ( $s ) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://midlands.robinhood.com/tags/discovery/'),
         _class     => 'Finance::Robinhood::Equity::Tag'
@@ -1016,7 +1016,7 @@ sub tags_popular ( $s ) {
 sub _test_tags_popular {
     my $rh   = t::Utility::rh_instance(0);
     my $tags = $rh->tags_popular();
-    isa_ok( $tags,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $tags,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $tags->current, 'Finance::Robinhood::Equity::Tag' );
 }
 
@@ -1060,7 +1060,7 @@ equity instruments.
 =cut
 
 sub options_chains ( $s, @filter ) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://api.robinhood.com/options/chains/')->query(
             {
@@ -1078,12 +1078,12 @@ sub options_chains ( $s, @filter ) {
 sub _test_options_chains {
     my $rh     = t::Utility::rh_instance(0);
     my $chains = $rh->options_chains;
-    isa_ok( $chains,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $chains,       'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $chains->next, 'Finance::Robinhood::Options::Chain' );
 
     # Get by equity instrument
     $chains = $rh->options_chains( $rh->search('MSFT')->equity_instruments );
-    isa_ok( $chains,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $chains,       'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $chains->next, 'Finance::Robinhood::Options::Chain' );
     is( $chains->current->symbol, 'MSFT' );
 
@@ -1094,7 +1094,7 @@ sub _test_options_chains {
         tradability => 'tradable'
     );
     $chains = $rh->options_chains( $options->next );
-    isa_ok( $chains,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $chains,       'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $chains->next, 'Finance::Robinhood::Options::Chain' );
     is( $chains->current->symbol, 'MSFT' );
 }
@@ -1131,7 +1131,7 @@ sub options_instruments ( $s, %filters ) {
     #    - type - 'put' or 'call' (optional)
     #    - expiration_dates - comma separated list of days (optional; YYYY-MM-DD)
     #    - chain_id - related options chain id (optional; UUID)
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh => $s,
         _next_page =>
             Mojo::URL->new('https://api.robinhood.com/options/instruments/')->query( \%filters ),
@@ -1145,7 +1145,7 @@ sub _test_options_instruments {
         chain_id    => $rh->equity_instrument_by_symbol('MSFT')->tradable_chain_id,
         tradability => 'tradable'
     );
-    isa_ok( $options,       'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $options,       'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $options->next, 'Finance::Robinhood::Options::Instrument' );
     is( $options->current->chain_symbol, 'MSFT' );
 }
@@ -1188,7 +1188,7 @@ You need to be logged in for this to work.
 =cut
 
 sub acats_transfers ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://api.robinhood.com/acats/',
         _class     => 'Finance::Robinhood::ACATS::Transfer'
@@ -1197,7 +1197,7 @@ sub acats_transfers ($s) {
 
 sub _test_acats_transfers {
     my $transfers = t::Utility::rh_instance(1)->acats_transfers;
-    isa_ok( $transfers, 'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $transfers, 'Finance::Robinhood::Utilities::Iterator' );
     skip_all('No ACATS transfers found') if !$transfers->has_next;
     isa_ok( $transfers->current, 'Finance::Robinhood::ACATS::Transfer' );
 }
@@ -1227,7 +1227,7 @@ You can filter and modify the results. All options are optional.
 
 sub equity_positions ( $s, %filters ) {
     $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false' if defined $filters{nonzero};
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://api.robinhood.com/positions/')->query( \%filters ),
         _class     => 'Finance::Robinhood::Equity::Position'
@@ -1236,7 +1236,7 @@ sub equity_positions ( $s, %filters ) {
 
 sub _test_equity_positions {
     my $positions = t::Utility::rh_instance(1)->equity_positions;
-    isa_ok( $positions,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $positions,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $positions->current, 'Finance::Robinhood::Equity::Position' );
 }
 
@@ -1266,7 +1266,7 @@ You must be logged in for any of these to work.
 sub equity_earnings ( $s, %filters ) {
     $filters{range} = $filters{range} . 'day'
         if defined $filters{range} && $filters{range} =~ m[^\-?\d+$];
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh => $s,
         _next_page =>
             Mojo::URL->new('https://api.robinhood.com/marketdata/earnings/')->query( \%filters ),
@@ -1279,23 +1279,23 @@ sub _test_equity_earnings {
         = t::Utility::rh_instance(1)
         ->equity_earnings(
         instrument => t::Utility::rh_instance(1)->equity_instrument_by_symbol('MSFT') );
-    isa_ok( $by_instrument,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $by_instrument,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $by_instrument->current, 'Finance::Robinhood::Equity::Earnings' );
     is( $by_instrument->current->symbol, 'MSFT', 'correct symbol (by instrument)' );
     #
     my $by_symbol = t::Utility::rh_instance(1)->equity_earnings( symbol => 'MSFT' );
-    isa_ok( $by_symbol,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $by_symbol,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $by_symbol->current, 'Finance::Robinhood::Equity::Earnings' );
     is( $by_symbol->current->symbol, 'MSFT', 'correct symbol (by symbol)' );
 
     # Positive range
     my $p_range = t::Utility::rh_instance(1)->equity_earnings( range => 7 );
-    isa_ok( $p_range,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $p_range,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $p_range->current, 'Finance::Robinhood::Equity::Earnings' );
 
     # Negative range
     my $n_range = t::Utility::rh_instance(1)->equity_earnings( range => -7 );
-    isa_ok( $n_range,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $n_range,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $n_range->current, 'Finance::Robinhood::Equity::Earnings' );
 }
 
@@ -1316,7 +1316,7 @@ You need to be logged in and have access to Robinhood Crypto for this to work.
 =cut
 
 sub forex_accounts( $s ) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://nummus.robinhood.com/accounts/'),
         _class     => 'Finance::Robinhood::Forex::Account'
@@ -1325,7 +1325,7 @@ sub forex_accounts( $s ) {
 
 sub _test_forex_accounts {
     my $halts = t::Utility::rh_instance(1)->forex_accounts;
-    isa_ok( $halts,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $halts,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $halts->current, 'Finance::Robinhood::Forex::Account' );
 }
 
@@ -1370,7 +1370,7 @@ You need to be logged in and have access to Robinhood Crypto for this to work.
 
 sub forex_halts ( $s, %filters ) {
     $filters{active} = $filters{active} ? 'true' : 'false' if defined $filters{active};
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://nummus.robinhood.com/halts/')->query( \%filters ),
         _class     => 'Finance::Robinhood::Forex::Halt'
@@ -1379,7 +1379,7 @@ sub forex_halts ( $s, %filters ) {
 
 sub _test_forex_halts {
     my $halts = t::Utility::rh_instance(1)->forex_halts;
-    isa_ok( $halts,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $halts,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $halts->current, 'Finance::Robinhood::Forex::Halt' );
     #
     is(
@@ -1398,7 +1398,7 @@ You need to be logged in for this to work.
 =cut
 
 sub forex_currencies ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://nummus.robinhood.com/currencies/',
         _class     => 'Finance::Robinhood::Forex::Currency'
@@ -1408,7 +1408,7 @@ sub forex_currencies ($s) {
 sub _test_forex_currencies {
     my $rh         = t::Utility::rh_instance(1);
     my $currencies = $rh->forex_currencies;
-    isa_ok( $currencies,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $currencies,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $currencies->current, 'Finance::Robinhood::Forex::Currency' );
 }
 
@@ -1446,7 +1446,7 @@ need to be logged in for this to work.
 =cut
 
 sub forex_pairs ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://nummus.robinhood.com/currency_pairs/',
         _class     => 'Finance::Robinhood::Forex::Pair'
@@ -1456,7 +1456,7 @@ sub forex_pairs ($s) {
 sub _test_forex_pairs {
     my $rh         = t::Utility::rh_instance(1);
     my $watchlists = $rh->forex_pairs;
-    isa_ok( $watchlists,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $watchlists,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $watchlists->current, 'Finance::Robinhood::Forex::Pair' );
 }
 
@@ -1518,7 +1518,7 @@ returned. You need to be logged in for this to work.
 =cut
 
 sub forex_watchlists ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://nummus.robinhood.com/watchlists/',
         _class     => 'Finance::Robinhood::Forex::Watchlist'
@@ -1528,7 +1528,7 @@ sub forex_watchlists ($s) {
 sub _test_forex_watchlists {
     my $rh         = t::Utility::rh_instance(1);
     my $watchlists = $rh->forex_watchlists;
-    isa_ok( $watchlists,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $watchlists,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $watchlists->current, 'Finance::Robinhood::Forex::Watchlist' );
 }
 
@@ -1566,7 +1566,7 @@ returned. You need to be logged in for this to work.
 =cut
 
 sub forex_activations ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://nummus.robinhood.com/activations/',
         _class     => 'Finance::Robinhood::Forex::Activation'
@@ -1576,7 +1576,7 @@ sub forex_activations ($s) {
 sub _test_forex_activations {
     my $rh         = t::Utility::rh_instance(1);
     my $watchlists = $rh->forex_activations;
-    isa_ok( $watchlists,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $watchlists,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $watchlists->current, 'Finance::Robinhood::Forex::Activation' );
 }
 
@@ -1615,7 +1615,7 @@ returned. You need to be logged in for this to work.
 =cut
 
 sub forex_portfolios ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => 'https://nummus.robinhood.com/portfolios/',
         _class     => 'Finance::Robinhood::Forex::Portfolio'
@@ -1625,7 +1625,7 @@ sub forex_portfolios ($s) {
 sub _test_forex_portfolios {
     my $rh         = t::Utility::rh_instance(1);
     my $portfolios = $rh->forex_portfolios;
-    isa_ok( $portfolios,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $portfolios,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $portfolios->current, 'Finance::Robinhood::Forex::Portfolio' );
 }
 
@@ -1711,7 +1711,7 @@ You need to be logged in for this to work.
 =cut
 
 sub forex_orders ($s) {
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://nummus.robinhood.com/orders/'),
         _class     => 'Finance::Robinhood::Forex::Order'
@@ -1721,7 +1721,7 @@ sub forex_orders ($s) {
 sub _test_forex_orders {
     my $rh     = t::Utility::rh_instance(1);
     my $orders = $rh->forex_orders;
-    isa_ok( $orders,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $orders,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $orders->current, 'Finance::Robinhood::Forex::Order' );
 }
 
@@ -1773,7 +1773,7 @@ You can filter and modify the results. All options are optional.
 
 sub forex_holdings ( $s, %filters ) {
     $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false' if defined $filters{nonzero};
-    Finance::Robinhood::Utility::Iterator->new(
+    Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
         _next_page => Mojo::URL->new('https://nummus.robinhood.com/holdings/')->query( \%filters ),
         _class     => 'Finance::Robinhood::Forex::Holding'
@@ -1782,7 +1782,7 @@ sub forex_holdings ( $s, %filters ) {
 
 sub _test_forex_holdings {
     my $positions = t::Utility::rh_instance(1)->forex_holdings;
-    isa_ok( $positions,          'Finance::Robinhood::Utility::Iterator' );
+    isa_ok( $positions,          'Finance::Robinhood::Utilities::Iterator' );
     isa_ok( $positions->current, 'Finance::Robinhood::Forex::Holding' );
 }
 

@@ -44,7 +44,7 @@ sub _test_stringify {
 has _rh => undef => weak => 1;
 
 =head1 METHODS
- 
+
 
 =head2 C<id( )>
 
@@ -220,7 +220,7 @@ sub _test_historicals {
 }
 
 =head2 C<buy( ... )>
- 
+
     my $order = $pair->buy(34);
 
 Returns a Finance::Robinhood::Forex::OrderBuilder object.
@@ -273,12 +273,12 @@ sub _test_buy {
     todo( "Write actual tests!" => sub { pass('ugh') } );
 
     #my $news = t::Utility::stash('MSFT')->news;
-    #isa_ok( $news,          'Finance::Robinhood::Utility::Iterator' );
+    #isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );
     #isa_ok( $news->current, 'Finance::Robinhood::News' );
 }
 
 =head2 C<sell( ... )>
- 
+
     my $order = $btc->sell(34);
 
 Returns a Finance::Robinhood::Forex::OrderBuilder object.
@@ -331,7 +331,7 @@ sub _test_sell {
     todo( "Write actual tests!" => sub { pass('ugh') } );
 
     #my $news = t::Utility::stash('MSFT')->news;
-    #isa_ok( $news,          'Finance::Robinhood::Utility::Iterator' );
+    #isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );
     #isa_ok( $news->current, 'Finance::Robinhood::News' );
 }
 
