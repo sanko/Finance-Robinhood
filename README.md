@@ -74,19 +74,41 @@ your account.
 
 This callback should return the six digit code sent to you via sms or email.
 
-## `device_token( )`
+## `device_token( [...] )`
+
+        my $token = $rh->device_token;
+        # Store it
 
 To prevent your client from having to be reauthorized to access your account
 every time it is run, call this method which returns the device token which
 should be passed to `new( ... )`.
 
-## `oauth2_token( )`
+        # Reload token from storage
+        my $device = ...;
+        $rh->device_token($device);
+
+To prevent your client from having to reauthorize every time it is run, call
+this to reload the same ID.
+
+## `oauth2_token( [...] )`
+
+        my $token $rh->oauth2_token;
+        # Store it
 
 To prevent your client from having to log in every time it is run, call this
 method which returns the authorization tokens which should be passed to `new(
 ... )`.
 
 This method returns a Finance::Robinhood::OAuth2::Token object.
+
+        # Load token object from storage
+        my $oauth = ...;
+        $rh->oauth2_token($token);
+
+Reload OAuth2 tokens. You can skip logging in with your username and password
+if this is successful.
+
+This method expects a Finance::Robinhood::OAuth2::Token object.
 
 ## `search( ... )`
 
