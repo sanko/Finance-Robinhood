@@ -45,7 +45,7 @@ later. For now, let's create a client object...
 A new Finance::Robinhood object is created without credentials. Before you can
 buy or sell or do almost anything else, you must L<log in|/"login( ... )">.
 
-=head3 C<token => ...>
+=head3 C<token =E<gt> ...>
 
 If you have previously authorized this package to access your account, passing
 the OAuth2 tokens here will prevent you from having to C<login( ... )> with
@@ -53,7 +53,7 @@ your user data.
 
 These tokens should be kept private.
 
-=head3 C<device_token => ...>
+=head3 C<device_token =E<gt> ...>
 
 If you have previously authorized this package to access your account, passing
 the assigned device ID here will prevent you from having to authorize it again
@@ -268,7 +268,7 @@ sub _test_delete {
 A new Finance::Robinhood object is created without credentials. Before you can
 buy or sell or do almost anything else, you must L<log in|/"login( ... )">.
 
-=head3 C<mfa_callback => ...>
+=head3 C<mfa_callback =E<gt> ...>
 
     my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_callback => sub {
         # Do something like pop open an inputbox in TK, read from shell or whatever
@@ -279,14 +279,18 @@ is called, a ref will be passed that will contain C<mfa_required> (a boolean
 value) and C<mfa_type> which might be C<app>, C<sms>, etc. Your return value
 must be the MFA code.
 
-=head3 C<mfa_code => ...>
+=head3 C<mfa_code =E<gt> ...>
 
     my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_code => 980385);
 
 If you already know the MFA code (for example if you have MFA enabled through
 an app), you can pass that code directly and log in.
 
-=head3 C<challenge_callback => ...>
+=head3 C<challenge_callback =E<gt> ...>
+
+	my $rh = Finance::Robinhood->new()->login($user, $pass, challenge_callback => sub {
+		# Do something like pop open an inputbox in TK, read from shell or whatever
+	} );
 
 When logging in with a new client, you are required to authorize it to access
 your account.
