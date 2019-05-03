@@ -28,8 +28,8 @@ use Finance::Robinhood::Equity::Instrument;
 sub _test__init {
     my $rh    = t::Utility::rh_instance(1);
     my $price = $rh->equity_instrument_by_symbol('MSFT')->prices();
-    isa_ok( $price, __PACKAGE__ );
-    t::Utility::stash( 'PRICES', $price );    #  Store it for later
+    isa_ok($price, __PACKAGE__);
+    t::Utility::stash('PRICES', $price);    #  Store it for later
 }
 #
 has _rh => undef => weak => 1;
@@ -62,12 +62,7 @@ Size of the last trade.
 
 =cut
 
-has [
-    'ask_price', 'ask_size',
-    'bid_price', 'bid_size',
-
-    'price', 'size'
-];
+has ['ask_price', 'ask_size', 'bid_price', 'bid_size', 'price', 'size'];
 
 =head2 C<ask_source( )>
 
@@ -79,19 +74,16 @@ represents the source for the C<ask_price( )> and C<ask_size( )>.
 =cut
 
 sub ask_source ($s) {
-    $s->_rh->equity_market_by_mic( $s->{ask_mic} ) if defined $s->{ask_mic};
+    $s->_rh->equity_market_by_mic($s->{ask_mic}) if defined $s->{ask_mic};
 }
 
 sub _test_ask_source {
-
     t::Utility::stash('PRICES') // skip_all();
     my $source = t::Utility::stash('PRICES')->ask_source();
 SKIP: {
-        skip( 'Bad mic', 1 ) if !$source;
-
-        isa_ok( $source, 'Finance::Robinhood::Equity::Market' );
+        skip('Bad mic', 1) if !$source;
+        isa_ok($source, 'Finance::Robinhood::Equity::Market');
     }
-
 }
 
 =head2 C<bid_source( )>
@@ -104,19 +96,16 @@ represents the source for the C<bid_price( )> and C<bid_size( )>.
 =cut
 
 sub bid_source ($s) {
-    $s->_rh->equity_market_by_mic( $s->{bid_mic} ) if defined $s->{bid_mic};
+    $s->_rh->equity_market_by_mic($s->{bid_mic}) if defined $s->{bid_mic};
 }
 
 sub _test_bid_source {
-
     t::Utility::stash('PRICES') // skip_all();
     my $source = t::Utility::stash('PRICES')->bid_source();
 SKIP: {
-        skip( 'Bad mic', 1 ) if !$source;
-
-        isa_ok( $source, 'Finance::Robinhood::Equity::Market' );
+        skip('Bad mic', 1) if !$source;
+        isa_ok($source, 'Finance::Robinhood::Equity::Market');
     }
-
 }
 
 =head2 C<source( )>
@@ -129,16 +118,15 @@ represents the source for the C<price( )> and C<size( )>.
 =cut
 
 sub source ($s) {
-    $s->_rh->equity_market_by_mic( $s->{mic} ) if defined $s->{mic};
+    $s->_rh->equity_market_by_mic($s->{mic}) if defined $s->{mic};
 }
 
 sub _test_source {
     t::Utility::stash('PRICES') // skip_all();
     my $source = t::Utility::stash('PRICES')->source();
 SKIP: {
-        skip( 'Bad mic', 1 ) if !$source;
-
-        isa_ok( $source, 'Finance::Robinhood::Equity::Market' );
+        skip('Bad mic', 1) if !$source;
+        isa_ok($source, 'Finance::Robinhood::Equity::Market');
     }
 }
 
@@ -151,12 +139,12 @@ Returns a Time::Moment object.
 =cut
 
 sub updated_at ($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
     t::Utility::stash('PRICES') // skip_all();
-    isa_ok( t::Utility::stash('PRICES')->updated_at(), 'Time::Moment' );
+    isa_ok(t::Utility::stash('PRICES')->updated_at(), 'Time::Moment');
 }
 
 =head2 C<instrument( )>
@@ -168,12 +156,13 @@ Loops back to a Finance::Robinhood::Equity::Instrument object.
 =cut
 
 sub instrument ($s) {
-    $s->_rh->equity_instrument_by_id( $s->{instrument_id} );
+    $s->_rh->equity_instrument_by_id($s->{instrument_id});
 }
 
 sub _test_instrument {
     t::Utility::stash('PRICES') // skip_all();
-    isa_ok( t::Utility::stash('PRICES')->instrument(), 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok(t::Utility::stash('PRICES')->instrument(),
+           'Finance::Robinhood::Equity::Instrument');
 }
 
 =head1 LEGAL

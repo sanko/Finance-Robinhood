@@ -30,16 +30,15 @@ sub _test__init {
     my $rh       = t::Utility::rh_instance(1);
     my $acct     = $rh->equity_accounts->current;
     my $position = $acct->positions->current;
-    isa_ok( $position, __PACKAGE__ );
-    t::Utility::stash( 'POSITION', $position );    #  Store it for later
+    isa_ok($position, __PACKAGE__);
+    t::Utility::stash('POSITION', $position);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('POSITION') // skip_all();
-    like(
-        +t::Utility::stash('POSITION'), qr'https://api.robinhood.com/accounts/.+/positions/.+/',
-    );
+    like(+t::Utility::stash('POSITION'),
+         qr'https://api.robinhood.com/accounts/.+/positions/.+/',);
 }
 ##
 
@@ -88,13 +87,12 @@ they can be sold.
 
 =cut
 
-has [
-    'average_buy_price',                  'intraday_average_buy_price',
-    'intraday_quantity',                  'pending_average_buy_price',
-    'quantity',                           'shares_held_for_buys',
-    'shares_held_for_options_collateral', 'shares_held_for_options_events',
-    'shares_held_for_sells',              'shares_held_for_stock_grants',
-    'shares_pending_from_options_events',
+has ['average_buy_price',                  'intraday_average_buy_price',
+     'intraday_quantity',                  'pending_average_buy_price',
+     'quantity',                           'shares_held_for_buys',
+     'shares_held_for_options_collateral', 'shares_held_for_options_events',
+     'shares_held_for_sells',              'shares_held_for_stock_grants',
+     'shares_pending_from_options_events',
 ];
 
 =head2 C<created_at( )>
@@ -104,12 +102,12 @@ Returns a Time::Moment object.
 =cut
 
 sub created_at ($s) {
-    Time::Moment->from_string( $s->{created_at} );
+    Time::Moment->from_string($s->{created_at});
 }
 
 sub _test_created_at {
     t::Utility::stash('POSITION') // skip_all('No position object in stash');
-    isa_ok( t::Utility::stash('POSITION')->created_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('POSITION')->created_at, 'Time::Moment');
 }
 
 =head2 C<updated_at( )>
@@ -119,12 +117,12 @@ Returns a Time::Moment object.
 =cut
 
 sub updated_at ($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
     t::Utility::stash('POSITION') // skip_all('No position object in stash');
-    isa_ok( t::Utility::stash('POSITION')->updated_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('POSITION')->updated_at, 'Time::Moment');
 }
 
 =head2 C<instrument( )>
@@ -134,16 +132,18 @@ Returns the related Finance::Robinhood::Equity::Instrument object.
 =cut
 
 sub instrument ($s) {
-    my $res = $s->_rh->_get( $s->{instrument} );
+    my $res = $s->_rh->_get($s->{instrument});
     return $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
+                                                      %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_instrument {
     t::Utility::stash('POSITION') // skip_all('No position object in stash');
-    isa_ok( t::Utility::stash('POSITION')->instrument, 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok(t::Utility::stash('POSITION')->instrument,
+           'Finance::Robinhood::Equity::Instrument');
 }
 
 =head2 C<account( )>
@@ -153,16 +153,18 @@ Returns the related Finance::Robinhood::Equity::Account object.
 =cut
 
 sub account ($s) {
-    my $res = $s->_rh->_get( $s->{account} );
+    my $res = $s->_rh->_get($s->{account});
     return $res->is_success
-        ? Finance::Robinhood::Equity::Account->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Account->new(_rh => $s->_rh,
+                                                   %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_account {
     t::Utility::stash('POSITION') // skip_all('No position object in stash');
-    isa_ok( t::Utility::stash('POSITION')->account, 'Finance::Robinhood::Equity::Account' );
+    isa_ok(t::Utility::stash('POSITION')->account,
+           'Finance::Robinhood::Equity::Account');
 }
 
 =head1 LEGAL

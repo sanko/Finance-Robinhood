@@ -25,25 +25,21 @@ Equity Instrument has Moved
 =cut
 
 our $VERSION = '0.92_002';
-
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 
 sub _test__init {
     my $rh  = t::Utility::rh_instance(1);
-    my $top = $rh->top_movers( direction => 'up' )->current->price_movement;
-    isa_ok( $top, __PACKAGE__ );
-    t::Utility::stash( 'MOVEMENT', $top );    #  Store it for later
+    my $top = $rh->top_movers(direction => 'up')->current->price_movement;
+    isa_ok($top, __PACKAGE__);
+    t::Utility::stash('MOVEMENT', $top);    #  Store it for later
 }
-
-use overload '""' => sub ( $s, @ ) { $s->{market_hours_last_movement_pct} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{market_hours_last_movement_pct} },
+    fallback      => 1;
 
 sub _test_stringify {
     t::Utility::stash('MOVEMENT') // skip_all();
-    like(
-        +t::Utility::stash('MOVEMENT'),
-        qr[^\-?\d+\.\d+$],
-    );
+    like(+t::Utility::stash('MOVEMENT'), qr[^\-?\d+\.\d+$],);
 }
 #
 has _rh => undef => weak => 1;
@@ -58,10 +54,7 @@ Returns the actual price.
 
 =cut
 
-has [
-    'market_hours_last_movement_pct',
-    'market_hours_last_price'
-];
+has ['market_hours_last_movement_pct', 'market_hours_last_price'];
 
 =head1 LEGAL
 

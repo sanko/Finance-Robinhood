@@ -27,16 +27,15 @@ use Time::Moment;
 sub _test__init {
     my $rh      = t::Utility::rh_instance(1);
     my $holding = $rh->forex_holdings->current;
-    isa_ok( $holding, __PACKAGE__ );
-    t::Utility::stash( 'HOLDING', $holding );    #  Store it for later
+    isa_ok($holding, __PACKAGE__);
+    t::Utility::stash('HOLDING', $holding);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{id} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{id} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('HOLDING') // skip_all();
-    like(
-        +t::Utility::stash('HOLDING'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    like(+t::Utility::stash('HOLDING'),
+         qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
     );
 }
 #
@@ -67,7 +66,10 @@ Amount being held for outstanding sell orders.
 
 =cut
 
-has [ 'id', 'quantity', 'quantity_available', 'quantity_held_for_buy', 'quantity_held_for_sell' ];
+has ['id',                 'quantity',
+     'quantity_available', 'quantity_held_for_buy',
+     'quantity_held_for_sell'
+];
 
 =head2 C<currency( )>
 
@@ -76,12 +78,14 @@ Returns a Finance::Robinhood::Forex::Currency object.
 =cut
 
 sub currency ($s) {
-    Finance::Robinhood::Forex::Currency->new( _rh => $s->_rh, %{ $s->{currency} } );
+    Finance::Robinhood::Forex::Currency->new(_rh => $s->_rh,
+                                             %{$s->{currency}});
 }
 
 sub _test_currency {
     t::Utility::stash('HOLDING') // skip_all();
-    isa_ok( t::Utility::stash('HOLDING')->currency, 'Finance::Robinhood::Forex::Currency' );
+    isa_ok(t::Utility::stash('HOLDING')->currency,
+           'Finance::Robinhood::Forex::Currency');
 }
 
 =head2 C<created_at( )>
@@ -91,12 +95,12 @@ Returns a Time::Moment object.
 =cut
 
 sub created_at ($s) {
-    Time::Moment->from_string( $s->{created_at} );
+    Time::Moment->from_string($s->{created_at});
 }
 
 sub _test_created_at {
     t::Utility::stash('HOLDING') // skip_all();
-    isa_ok( t::Utility::stash('HOLDING')->created_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('HOLDING')->created_at, 'Time::Moment');
 }
 
 =head2 C<updated_at( )>
@@ -106,12 +110,12 @@ Returns a Time::Moment object.
 =cut
 
 sub updated_at ($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
     t::Utility::stash('PAIR') // skip_all();
-    isa_ok( t::Utility::stash('PAIR')->updated_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('PAIR')->updated_at, 'Time::Moment');
 }
 
 =head2 C<account( )>
@@ -123,12 +127,13 @@ Returns a Finance::Robinhood::Forex::Account object.
 =cut
 
 sub account ($s) {
-    $s->_rh->forex_account_by_id( $s->{account_id} );
+    $s->_rh->forex_account_by_id($s->{account_id});
 }
 
 sub _test_account {
     t::Utility::stash('HOLDING') // skip_all();
-    isa_ok( t::Utility::stash('HOLDING')->account(), 'Finance::Robinhood::Forex::Account' );
+    isa_ok(t::Utility::stash('HOLDING')->account(),
+           'Finance::Robinhood::Forex::Account');
 }
 
 =head2 C<cost_bases( )>
@@ -138,14 +143,15 @@ Returns a list of Finance::Robinhood::Forex::Holding::Cost objects.
 =cut
 
 sub cost_bases ($s) {
-    map { Finance::Robinhood::Forex::Cost->new( _rh => $s->_rh, %{$_} ); } @{ $s->{cost_bases} };
+    map { Finance::Robinhood::Forex::Cost->new(_rh => $s->_rh, %{$_}); }
+        @{$s->{cost_bases}};
 }
 
 sub _test_cost_bases {
     t::Utility::stash('HOLDING') // skip_all();
     my ($cost_base) = t::Utility::stash('HOLDING')->cost_bases();
     $cost_base || skip_all('No currency holdings with defined cost bases.');
-    isa_ok( $cost_base, 'Finance::Robinhood::Forex::Cost' );
+    isa_ok($cost_base, 'Finance::Robinhood::Forex::Cost');
 }
 
 =head1 LEGAL

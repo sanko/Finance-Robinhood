@@ -29,10 +29,10 @@ sub _test__init {
     my $rh       = t::Utility::rh_instance(1);
     my $transfer = $rh->acats_transfers->current;
     skip_all('No ACATS transfers found') if !defined $transfer;
-    isa_ok( $transfer, __PACKAGE__ );
-    t::Utility::stash( 'TRANSFER', $transfer );    #  Store it for later
+    isa_ok($transfer, __PACKAGE__);
+    t::Utility::stash('TRANSFER', $transfer);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('TRANSFER') // skip_all();
@@ -87,12 +87,11 @@ has _rh => undef => weak => 1;
 
 =cut
 
-has [
-    'cash_value',            'contra_account_number',
-    'contra_brokerage_name', 'failure_reason',
-    'fees_reimbursed',       'id',
-    'replaced_by',           'state',
-    'transfer_type'
+has ['cash_value',            'contra_account_number',
+     'contra_brokerage_name', 'failure_reason',
+     'fees_reimbursed',       'id',
+     'replaced_by',           'state',
+     'transfer_type'
 ];
 
 =head2 C<cancel( )>
@@ -103,11 +102,11 @@ If the transfer can be cancelled, this method will do it.
 
 sub cancel($s) {
     $s->{cancel} // return !1;
-    my $res = $s->_rh->_post( $s->{cancel} );
+    my $res = $s->_rh->_post($s->{cancel});
     return $res->is_success
         ? !0
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 =head2 C<updated_at( )>
@@ -117,7 +116,7 @@ Returns a Time::Moment object.
 =cut
 
 sub updated_at ($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 =head2 C<expected_landing_date( )>
@@ -127,7 +126,7 @@ Returns a Time::Moment object.
 =cut
 
 sub expected_landing_date ($s) {
-    Time::Moment->from_string( $s->{expected_landing_date} . 'T00:00:00Z' );
+    Time::Moment->from_string($s->{expected_landing_date} . 'T00:00:00Z');
 }
 
 =head2 C<positions( )>
@@ -140,8 +139,10 @@ this transfer's data.
 =cut
 
 sub positions ($s) {
-    map { Finance::Robinhood::ACATS::Transfer::Position->new( _rh => $s->_rh, %$_ ) }
-        %{ $s->{positions} };
+    map {
+        Finance::Robinhood::ACATS::Transfer::Position->new(_rh => $s->_rh,
+                                                           %$_)
+    } %{$s->{positions}};
 }
 
 =head1 LEGAL

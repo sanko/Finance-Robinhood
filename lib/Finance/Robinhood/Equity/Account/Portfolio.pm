@@ -27,17 +27,18 @@ sub _test__init {
     my $rh        = t::Utility::rh_instance(1);
     my $acct      = $rh->equity_accounts->current;
     my $portfolio = $acct->portfolio;
-    isa_ok( $portfolio, __PACKAGE__ );
-    t::Utility::stash( 'PORTFOLIO', $portfolio );    #  Store it for later
+    isa_ok($portfolio, __PACKAGE__);
+    t::Utility::stash('PORTFOLIO', $portfolio);    #  Store it for later
 }
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
-use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
 use Finance::Robinhood::Equity::Instrument;
 
 sub _test_stringify {
     t::Utility::stash('PORTFOLIO') // skip_all();
-    like( +t::Utility::stash('PORTFOLIO'), qr'https://api.robinhood.com/portfolios/.+/' );
+    like(+t::Utility::stash('PORTFOLIO'),
+         qr'https://api.robinhood.com/portfolios/.+/');
 }
 
 =head1 METHODS
@@ -79,15 +80,14 @@ has _rh => undef => weak => 1;
 
 =cut
 
-has [
-    'adjusted_equity_previous_close',             'equity',
-    'equity_previous_close',                      'excess_maintenance',
-    'excess_maintenance_with_uncleared_deposits', 'excess_margin',
-    'excess_margin_with_uncleared_deposits',      'extended_hours_equity',
-    'extended_hours_market_value',                'last_core_equity',
-    'last_core_market_value',                     'market_value',
-    'unwithdrawable_deposits',                    'unwithdrawable_grants',
-    'withdrawable_amount'
+has ['adjusted_equity_previous_close',             'equity',
+     'equity_previous_close',                      'excess_maintenance',
+     'excess_maintenance_with_uncleared_deposits', 'excess_margin',
+     'excess_margin_with_uncleared_deposits',      'extended_hours_equity',
+     'extended_hours_market_value',                'last_core_equity',
+     'last_core_market_value',                     'market_value',
+     'unwithdrawable_deposits',                    'unwithdrawable_grants',
+     'withdrawable_amount'
 ];
 
 =head2 C<start_date( )>
@@ -97,12 +97,13 @@ Returns a Time::Moment object.
 =cut
 
 sub start_date ($s) {
-    Time::Moment->from_string( $s->{start_date} . 'T00:00:00Z' );
+    Time::Moment->from_string($s->{start_date} . 'T00:00:00Z');
 }
 
 sub _test_start_date {
-    t::Utility::stash('PORTFOLIO') // skip_all('No portfolio object in stash');
-    isa_ok( t::Utility::stash('PORTFOLIO')->start_date, 'Time::Moment' );
+    t::Utility::stash('PORTFOLIO')
+        // skip_all('No portfolio object in stash');
+    isa_ok(t::Utility::stash('PORTFOLIO')->start_date, 'Time::Moment');
 }
 
 =head2 C<account( )>
@@ -112,16 +113,18 @@ Returns the related Finance::Robinhood::Equity::Account object.
 =cut
 
 sub account ($s) {
-    my $res = $s->_rh->_get( $s->{account} );
+    my $res = $s->_rh->_get($s->{account});
     return $res->is_success
-        ? Finance::Robinhood::Equity::Account->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Account->new(_rh => $s->_rh,
+                                                   %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_account {
     t::Utility::stash('POSITION') // skip_all('No position object in stash');
-    isa_ok( t::Utility::stash('POSITION')->account, 'Finance::Robinhood::Equity::Account' );
+    isa_ok(t::Utility::stash('POSITION')->account,
+           'Finance::Robinhood::Equity::Account');
 }
 
 =head1 LEGAL

@@ -34,22 +34,19 @@ use Time::Moment;
 sub _test__init {
     my $rh   = t::Utility::rh_instance(0);
     my $msft = $rh->equity_instrument_by_symbol('MSFT');
-    isa_ok( $msft, __PACKAGE__ );
-    t::Utility::stash( 'MSFT', $msft );    #  Store it for later
-
+    isa_ok($msft, __PACKAGE__);
+    t::Utility::stash('MSFT', $msft);    #  Store it for later
     t::Utility::rh_instance(1) // skip_all();
     $rh   = t::Utility::rh_instance(1);
     $msft = $rh->equity_instrument_by_symbol('MSFT');
-    isa_ok( $msft, __PACKAGE__ );
-
-    t::Utility::stash( 'MSFT_AUTH', $msft );
+    isa_ok($msft, __PACKAGE__);
+    t::Utility::stash('MSFT_AUTH', $msft);
 }
-use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('MSFT') // skip_all();
-    is(
-        +t::Utility::stash('MSFT'),
+    is( +t::Utility::stash('MSFT'),
         'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
     );
 }
@@ -82,12 +79,12 @@ publically.
 =cut
 
 sub list_date ($s) {
-    Time::Moment->from_string( $s->{list_date} . 'T00:00:00.000Z' );
+    Time::Moment->from_string($s->{list_date} . 'T00:00:00.000Z');
 }
 
 sub _test_list_date {
     t::Utility::stash('MSFT') // skip_all();
-    isa_ok( t::Utility::stash('MSFT')->list_date(), 'Time::Moment' );
+    isa_ok(t::Utility::stash('MSFT')->list_date(), 'Time::Moment');
 }
 
 =head2 C<maintenance_ratio( )>
@@ -140,12 +137,15 @@ C<adr>, C<cef>, C<reit>, or C<etp>.
 
 =cut
 
-has [
-    'bloomberg_unique',  'country',              'day_trade_ratio', 'id',
-    'maintenance_ratio', 'margin_initial_ratio', 'min_tick_size',   'name',
-    'rhs_tradability',   'simple_name',          'state',           'symbol',
-    'tradability',       'tradable_chain_id',    'tradeable',       'type',
-    'url'
+has ['bloomberg_unique',  'country',
+     'day_trade_ratio',   'id',
+     'maintenance_ratio', 'margin_initial_ratio',
+     'min_tick_size',     'name',
+     'rhs_tradability',   'simple_name',
+     'state',             'symbol',
+     'tradability',       'tradable_chain_id',
+     'tradeable',         'type',
+     'url'
 ];
 
 =head2 C<quote( )>
@@ -160,16 +160,18 @@ You do not need to be logged in for this to work.
 =cut
 
 sub quote ($s) {
-    my $res = $s->_rh->_get( $s->{quote} );
+    my $res = $s->_rh->_get($s->{quote});
     $res->is_success
-        ? Finance::Robinhood::Equity::Quote->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Quote->new(_rh => $s->_rh,
+                                                 %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_quote {
     t::Utility::stash('MSFT_AUTH') // skip_all();
-    isa_ok( t::Utility::stash('MSFT_AUTH')->quote(), 'Finance::Robinhood::Equity::Quote' );
+    isa_ok(t::Utility::stash('MSFT_AUTH')->quote(),
+           'Finance::Robinhood::Equity::Quote');
 }
 
 =head2 C<prices( [...] )>
@@ -195,23 +197,27 @@ This would return live quote data from the tape.
 
 =cut
 
-sub prices ( $s, %filters ) {
-    $filters{delayed} = !!$filters{delayed} ? 'true' : 'false' if defined $filters{delayed};
+sub prices ($s, %filters) {
+    $filters{delayed} = !!$filters{delayed} ? 'true' : 'false'
+        if defined $filters{delayed};
     $filters{source} //= 'consolidated';
-    my $res
-        = $s->_rh->_get(
-        Mojo::URL->new( 'https://api.robinhood.com/marketdata/prices/' . $s->{id} . '/' )
-            ->query( \%filters ) );
+    my $res = $s->_rh->_get(
+           Mojo::URL->new(
+               'https://api.robinhood.com/marketdata/prices/' . $s->{id} . '/'
+           )->query(\%filters)
+    );
     require Finance::Robinhood::Equity::Prices;
     $res->is_success
-        ? Finance::Robinhood::Equity::Prices->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Prices->new(_rh => $s->_rh,
+                                                  %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_prices {
     t::Utility::stash('MSFT_AUTH') // skip_all();
-    isa_ok( t::Utility::stash('MSFT_AUTH')->prices(), 'Finance::Robinhood::Equity::Prices' );
+    isa_ok(t::Utility::stash('MSFT_AUTH')->prices(),
+           'Finance::Robinhood::Equity::Prices');
 }
 
 =head2 C<splits( )>
@@ -224,17 +230,17 @@ Returns an iterator with Finance::Robinhood::Equity::Split objects.
 
 sub splits ( $s ) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s->_rh,
-        _next_page => Mojo::URL->new( $s->{splits} ),
-        _class     => 'Finance::Robinhood::Equity::Split'
+                                 _rh        => $s->_rh,
+                                 _next_page => Mojo::URL->new($s->{splits}),
+                                 _class => 'Finance::Robinhood::Equity::Split'
     );
 }
 
 sub _test_splits {
     my $rh     = t::Utility::rh_instance(0);
     my $splits = $rh->equity_instrument_by_symbol('JNUG')->splits;
-    isa_ok( $splits,       'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $splits->next, 'Finance::Robinhood::Equity::Split' );
+    isa_ok($splits,       'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($splits->next, 'Finance::Robinhood::Equity::Split');
 }
 
 =head2 C<market( )>
@@ -249,18 +255,19 @@ You do not need to be logged in for this to work.
 =cut
 
 sub market ($s) {
-    my $res = $s->_rh->_get( $s->{market} );
+    my $res = $s->_rh->_get($s->{market});
     $res->is_success
-        ? Finance::Robinhood::Equity::Market->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Market->new(_rh => $s->_rh,
+                                                  %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_market {
     my $rh   = t::Utility::rh_instance(0);
     my $msft = $rh->equity_instrument_by_symbol('MSFT');
     $msft // skip_all();
-    isa_ok( $msft->market(), 'Finance::Robinhood::Equity::Market' );
+    isa_ok($msft->market(), 'Finance::Robinhood::Equity::Market');
 }
 
 =head2 C<fundamentals( )>
@@ -275,19 +282,18 @@ You do not need to be logged in for this to work.
 =cut
 
 sub fundamentals ($s) {
-    my $res = $s->_rh->_get( $s->{fundamentals} );
+    my $res = $s->_rh->_get($s->{fundamentals});
     $res->is_success
-        ? Finance::Robinhood::Equity::Fundamentals->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Fundamentals->new(_rh => $s->_rh,
+                                                        %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_fundamentals {
     t::Utility::stash('MSFT_AUTH') // skip_all();
-    isa_ok(
-        t::Utility::stash('MSFT_AUTH')->fundamentals(),
-        'Finance::Robinhood::Equity::Fundamentals'
-    );
+    isa_ok(t::Utility::stash('MSFT_AUTH')->fundamentals(),
+           'Finance::Robinhood::Equity::Fundamentals');
 }
 
 =head2 C<ratings( )>
@@ -300,16 +306,19 @@ data.
 =cut
 
 sub ratings ($s) {
-    my $res = $s->_rh->_get( 'https://midlands.robinhood.com/ratings/' . $s->id . '/' );
+    my $res = $s->_rh->_get(
+                    'https://midlands.robinhood.com/ratings/' . $s->id . '/');
     $res->is_success
-        ? Finance::Robinhood::Equity::Ratings->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Ratings->new(_rh => $s->_rh,
+                                                   %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_ratings {
     t::Utility::stash('MSFT_AUTH') // skip_all();
-    isa_ok( t::Utility::stash('MSFT_AUTH')->ratings(), 'Finance::Robinhood::Equity::Ratings' );
+    isa_ok(t::Utility::stash('MSFT_AUTH')->ratings(),
+           'Finance::Robinhood::Equity::Ratings');
 }
 
 =head2 C<options_chains( )>
@@ -327,8 +336,8 @@ sub options_chains ($s) {
 
 sub _test_options_chains {
     my $chains = t::Utility::stash('MSFT')->options_chains;
-    isa_ok( $chains,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $chains->current, 'Finance::Robinhood::Options::Chain' );
+    isa_ok($chains,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($chains->current, 'Finance::Robinhood::Options::Chain');
 }
 
 =head2 C<news( )>
@@ -339,12 +348,12 @@ Returns an iterator containing Finance::Robinhood::News elements.
 
 =cut
 
-sub news ($s) { $s->_rh->news( $s->symbol ) }
+sub news ($s) { $s->_rh->news($s->symbol) }
 
 sub _test_news {
     my $news = t::Utility::stash('MSFT')->news;
-    isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $news->current, 'Finance::Robinhood::News' );
+    isa_ok($news,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($news->current, 'Finance::Robinhood::News');
 }
 
 =head2 C<tags( )>
@@ -357,21 +366,20 @@ Finance::Robinhood::Equity::Tag objects.
 =cut
 
 sub tags ( $s ) {
-    my $res = $s->_rh->_get( 'https://midlands.robinhood.com/tags/instrument/' . $s->id . '/' );
+    my $res = $s->_rh->_get(
+            'https://midlands.robinhood.com/tags/instrument/' . $s->id . '/');
     return $res->is_success
-        ? map { Finance::Robinhood::Equity::Tag->new( _rh => $s, %{$_} ) }
-        @{ $res->json->{tags} }
+        ?
+        map { Finance::Robinhood::Equity::Tag->new(_rh => $s, %{$_}) }
+        @{$res->json->{tags}}
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_tags {
     my @tags = t::Utility::stash('MSFT')->tags;
     ok(@tags);
-    isa_ok(
-        $tags[0],
-        'Finance::Robinhood::Equity::Tag'
-    );
+    isa_ok($tags[0], 'Finance::Robinhood::Equity::Tag');
 }
 
 =head2 C<buy( ... )>
@@ -397,12 +405,11 @@ this:
 
 =cut
 
-sub buy ( $s, $quantity, $account = $s->_rh->equity_accounts->next ) {
-    Finance::Robinhood::Equity::OrderBuilder->new(
-        _rh         => $s->_rh,
-        _instrument => $s,
-        _account    => $account,
-        quantity    => $quantity
+sub buy ($s, $quantity, $account = $s->_rh->equity_accounts->next) {
+    Finance::Robinhood::Equity::OrderBuilder->new(_rh         => $s->_rh,
+                                                  _instrument => $s,
+                                                  _account    => $account,
+                                                  quantity    => $quantity
     )->buy;
 }
 
@@ -410,26 +417,24 @@ sub _test_buy {
     t::Utility::stash('MSFT_AUTH') // skip_all();
     #
     my $market = t::Utility::stash('MSFT_AUTH')->buy(4);
-    is(
-        { $market->_dump(1) },
-        {
-            account => '--private--',
-            instrument =>
-                'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
-            quantity      => 4,
-            side          => 'buy',
-            trigger       => 'immediate',
-            type          => 'market',
-            time_in_force => 'gfd',
-            ref_id        => '00000000-0000-0000-0000-000000000000',
-            symbol        => 'MSFT',
-            price         => '5.00'
+    is( {$market->_dump(1)},
+        {account => '--private--',
+         instrument =>
+             'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
+         quantity      => 4,
+         side          => 'buy',
+         trigger       => 'immediate',
+         type          => 'market',
+         time_in_force => 'gfd',
+         ref_id        => '00000000-0000-0000-0000-000000000000',
+         symbol        => 'MSFT',
+         price         => '5.00'
         }
     );
 
     #->stop(43)->limit(55);#->submit;
     #ddx \{$order->_dump};
-    todo( "Write actual tests!" => sub { pass('ugh') } );
+    todo("Write actual tests!" => sub { pass('ugh') });
 
     #my $news = t::Utility::stash('MSFT')->news;
     #isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );
@@ -459,12 +464,11 @@ this:
 
 =cut
 
-sub sell ( $s, $quantity, $account = $s->_rh->equity_accounts->next ) {
-    Finance::Robinhood::Equity::OrderBuilder->new(
-        _rh         => $s->_rh,
-        _instrument => $s,
-        _account    => $account,
-        quantity    => $quantity
+sub sell ($s, $quantity, $account = $s->_rh->equity_accounts->next) {
+    Finance::Robinhood::Equity::OrderBuilder->new(_rh         => $s->_rh,
+                                                  _instrument => $s,
+                                                  _account    => $account,
+                                                  quantity    => $quantity
     )->sell;
 }
 
@@ -472,26 +476,24 @@ sub _test_sell {
     t::Utility::stash('MSFT_AUTH') // skip_all();
     #
     my $market = t::Utility::stash('MSFT_AUTH')->sell(4);
-    is(
-        { $market->_dump(1) },
-        {
-            account => '--private--',
-            instrument =>
-                'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
-            quantity      => 4,
-            side          => 'sell',
-            trigger       => 'immediate',
-            type          => 'market',
-            time_in_force => 'gfd',
-            ref_id        => '00000000-0000-0000-0000-000000000000',
-            symbol        => 'MSFT',
-            price         => '5.00'
+    is( {$market->_dump(1)},
+        {account => '--private--',
+         instrument =>
+             'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
+         quantity      => 4,
+         side          => 'sell',
+         trigger       => 'immediate',
+         type          => 'market',
+         time_in_force => 'gfd',
+         ref_id        => '00000000-0000-0000-0000-000000000000',
+         symbol        => 'MSFT',
+         price         => '5.00'
         }
     );
 
     #->stop(43)->limit(55);#->submit;
     #ddx \{$order->_dump};
-    todo( "Write actual tests!" => sub { pass('ugh') } );
+    todo("Write actual tests!" => sub { pass('ugh') });
 
     #my $news = t::Utility::stash('MSFT')->news;
     #isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );

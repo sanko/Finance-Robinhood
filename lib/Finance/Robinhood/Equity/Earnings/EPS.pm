@@ -26,9 +26,9 @@ our $VERSION = '0.92_002';
 
 sub _test__init {
     my $rh  = t::Utility::rh_instance(1);
-    my $eps = $rh->equity_earnings( range => -7 )->current->eps;
-    isa_ok( $eps, __PACKAGE__ );
-    t::Utility::stash( 'EPS', $eps );
+    my $eps = $rh->equity_earnings(range => -7)->current->eps;
+    isa_ok($eps, __PACKAGE__);
+    t::Utility::stash('EPS', $eps);
 }
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
@@ -49,7 +49,7 @@ Reality.
 
 =cut
 
-has [ 'estimate', 'actual' ];
+has ['estimate', 'actual'];
 
 =head1 LEGAL
 

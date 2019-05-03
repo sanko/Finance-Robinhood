@@ -26,16 +26,15 @@ use Time::Moment;
 sub _test__init {
     my $rh        = t::Utility::rh_instance(1);
     my $watchlist = $rh->forex_watchlists->current;
-    isa_ok( $watchlist, __PACKAGE__ );
-    t::Utility::stash( 'WATCHLIST', $watchlist );    #  Store it for later
+    isa_ok($watchlist, __PACKAGE__);
+    t::Utility::stash('WATCHLIST', $watchlist);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{id} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{id} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('WATCHLIST') // skip_all();
-    like(
-        +t::Utility::stash('WATCHLIST'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    like(+t::Utility::stash('WATCHLIST'),
+         qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
     );
 }
 #
@@ -61,24 +60,24 @@ Returns a Time::Moment object.
 
 =cut
 
-has [ 'id', 'name' ];
+has ['id', 'name'];
 
 sub created_at ($s) {
-    Time::Moment->from_string( $s->{created_at} );
+    Time::Moment->from_string($s->{created_at});
 }
 
 sub _test_created_at {
     t::Utility::stash('WATCHLIST') // skip_all();
-    isa_ok( t::Utility::stash('WATCHLIST')->created_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('WATCHLIST')->created_at, 'Time::Moment');
 }
 
 sub updated_at ($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
     t::Utility::stash('WATCHLIST') // skip_all();
-    isa_ok( t::Utility::stash('WATCHLIST')->updated_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('WATCHLIST')->updated_at, 'Time::Moment');
 }
 
 =head2 C<pair_ids( [...] )>
@@ -95,23 +94,25 @@ Updates the watchlist with a list of currency pairs.
 
 =cut
 
-sub pair_ids ( $s, @ids ) {
+sub pair_ids ($s, @ids) {
     return $s->{pair_ids} if !@ids;
-    my $res = $s->_rh->_patch(
-        'https://nummus.robinhood.com/watchlists/' . $s->{id} . '/',
-        pair_ids => @ids
-    );
-    return $_[0] = Finance::Robinhood::Forex::Watchlist->new( _rh => $s->_rh, %{ $res->json } )
-        if $res->is_success;
+    my $res
+        = $s->_rh->_patch(
+                  'https://nummus.robinhood.com/watchlists/' . $s->{id} . '/',
+                  pair_ids => @ids);
+    return $_[0]
+        = Finance::Robinhood::Forex::Watchlist->new(_rh => $s->_rh,
+                                                    %{$res->json}
+        ) if $res->is_success;
     Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_pair_ids {
     t::Utility::stash('WATCHLIST') // skip_all();
     my @ids = t::Utility::stash('WATCHLIST')->pair_ids;
-    ok( t::Utility::stash('WATCHLIST')->pair_ids( reverse @ids ) );
-    is( t::Utility::stash('WATCHLIST')->pair_ids(), reverse @ids );
+    ok(t::Utility::stash('WATCHLIST')->pair_ids(reverse @ids));
+    is(t::Utility::stash('WATCHLIST')->pair_ids(), reverse @ids);
 }
 
 =head1 LEGAL

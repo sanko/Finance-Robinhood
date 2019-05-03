@@ -27,14 +27,15 @@ use Finance::Robinhood::Equity::Market::Hours;
 sub _test__init {
     my $rh     = t::Utility::rh_instance(0);
     my $market = $rh->equity_market_by_mic('XNAS');    # NASDAQ
-    isa_ok( $market, __PACKAGE__ );
-    t::Utility::stash( 'MARKET', $market );            #  Store it for later
+    isa_ok($market, __PACKAGE__);
+    t::Utility::stash('MARKET', $market);              #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('MARKET') // skip_all();
-    is( +t::Utility::stash('MARKET'), 'https://api.robinhood.com/markets/XNAS/' );
+    is(+t::Utility::stash('MARKET'),
+        'https://api.robinhood.com/markets/XNAS/');
 }
 #
 has _rh => undef => weak => 1;
@@ -72,7 +73,8 @@ Timezone of the exchange/market.
 
 =cut
 
-has [ 'acronym', 'city', 'country', 'mic', 'name', 'operating_mic', 'timezone' ];
+has ['acronym', 'city', 'country', 'mic', 'name', 'operating_mic',
+     'timezone'];
 
 =head2 C<website()>
 
@@ -81,13 +83,13 @@ Website of the exchange in a Mojo::URL object.
 =cut
 
 sub website ($s) {
-    Mojo::URL->new( $s->{website} );
+    Mojo::URL->new($s->{website});
 }
 
 sub _test_website {
     t::Utility::stash('MARKET') // skip_all();
-    isa_ok( t::Utility::stash('MARKET')->website, 'Mojo::URL' );
-    is( +t::Utility::stash('MARKET')->website, 'www.nasdaq.com' );
+    isa_ok(t::Utility::stash('MARKET')->website, 'Mojo::URL');
+    is(+t::Utility::stash('MARKET')->website, 'www.nasdaq.com');
 }
 
 =head2 C<todays_hours( )>
@@ -99,18 +101,19 @@ Return a Finance::Robinhood::Equity::Market::Hours object with today's data.
 =cut
 
 sub todays_hours ( $s ) {
-    my $res = $s->_rh->_get( $s->{todays_hours} );
+    my $res = $s->_rh->_get($s->{todays_hours});
     $res->is_success
-        ? Finance::Robinhood::Equity::Market::Hours->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Market::Hours->new(_rh => $s->_rh,
+                                                         %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_todays_hours {
     t::Utility::stash('MARKET') // skip_all();
     my $hours = t::Utility::stash('MARKET')->todays_hours();
-    isa_ok( $hours, 'Finance::Robinhood::Equity::Market::Hours' );
-    ok( $hours->date <= Time::Moment->now_utc );
+    isa_ok($hours, 'Finance::Robinhood::Equity::Market::Hours');
+    ok($hours->date <= Time::Moment->now_utc);
 }
 
 =head2 C<hours( ... )>
@@ -122,19 +125,22 @@ date. This method expects C<$date> to be a Time::Moment object.
 
 =cut
 
-sub hours ( $s, $date ) {
-    my $res = $s->_rh->_get( $s->{url} . 'hours/' . $date->strftime('%Y-%m-%d') . '/' );
+sub hours ($s, $date) {
+    my $res = $s->_rh->_get(
+                    $s->{url} . 'hours/' . $date->strftime('%Y-%m-%d') . '/');
     $res->is_success
-        ? Finance::Robinhood::Equity::Market::Hours->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Market::Hours->new(_rh => $s->_rh,
+                                                         %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_hours {
     t::Utility::stash('MARKET') // skip_all();
-    my $hours = t::Utility::stash('MARKET')->hours( Time::Moment->now );
-    isa_ok( $hours, 'Finance::Robinhood::Equity::Market::Hours' );
-    is( $hours->date->strftime('%Y-%m-%d'), Time::Moment->now->strftime('%Y-%m-%d') );
+    my $hours = t::Utility::stash('MARKET')->hours(Time::Moment->now);
+    isa_ok($hours, 'Finance::Robinhood::Equity::Market::Hours');
+    is($hours->date->strftime('%Y-%m-%d'),
+        Time::Moment->now->strftime('%Y-%m-%d'));
 }
 
 =head1 LEGAL

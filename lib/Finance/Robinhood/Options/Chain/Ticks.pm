@@ -22,25 +22,20 @@ Options Chain
 =cut
 
 our $VERSION = '0.92_002';
-
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 
 sub _test__init {
     my $rh    = t::Utility::rh_instance(0);
     my $ticks = $rh->options_chains->current->min_ticks;
-    isa_ok( $ticks, __PACKAGE__ );
-    t::Utility::stash( 'TICKS', $ticks );    #  Store it for later
+    isa_ok($ticks, __PACKAGE__);
+    t::Utility::stash('TICKS', $ticks);    #  Store it for later
 }
-
-use overload '""' => sub ( $s, @ ) { $s->{below_tick} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{below_tick} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('TICKS') // skip_all();
-    like(
-        +t::Utility::stash('TICKS'),
-        qr[^\d+\.\d+$],
-    );
+    like(+t::Utility::stash('TICKS'), qr[^\d+\.\d+$],);
 }
 #
 has _rh => undef => weak => 1;
@@ -60,7 +55,7 @@ ignore them.
 
 =cut
 
-has [ 'above_tick', 'below_tick', 'cutoff_price' ];
+has ['above_tick', 'below_tick', 'cutoff_price'];
 
 =head1 LEGAL
 

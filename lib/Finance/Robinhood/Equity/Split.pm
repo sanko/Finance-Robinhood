@@ -27,16 +27,15 @@ use Finance::Robinhood::Equity::Market::Hours;
 sub _test__init {
     my $rh    = t::Utility::rh_instance(0);
     my $split = $rh->equity_instrument_by_symbol('JNUG')->splits->current;
-    isa_ok( $split, __PACKAGE__ );
-    t::Utility::stash( 'SPLIT', $split );    #  Store it for later
+    isa_ok($split, __PACKAGE__);
+    t::Utility::stash('SPLIT', $split);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('SPLIT') // skip_all();
-    like(
-        +t::Utility::stash('SPLIT'),
-        qr'^https://api.robinhood.com/instruments/66ec1551-e033-4f9a-a46f-2b73aa529977/splits/.+/$'
+    like(+t::Utility::stash('SPLIT'),
+         qr'^https://api.robinhood.com/instruments/66ec1551-e033-4f9a-a46f-2b73aa529977/splits/.+/$'
     );
 }
 #
@@ -53,7 +52,7 @@ has _rh => undef => weak => 1;
 
 =cut
 
-has [ 'divisor', 'multiplier' ];
+has ['divisor', 'multiplier'];
 
 =head2 C<execution_date()>
 
@@ -62,12 +61,12 @@ Returns a Time::Moment object.
 =cut
 
 sub execution_date ($s) {
-    Time::Moment->from_string( $s->{execution_date} . 'T00:00:00Z' );
+    Time::Moment->from_string($s->{execution_date} . 'T00:00:00Z');
 }
 
 sub _test_website {
     t::Utility::stash('SPLIT') // skip_all();
-    isa_ok( t::Utility::stash('SPLIT')->execution_date, 'Time::Moment' );
+    isa_ok(t::Utility::stash('SPLIT')->execution_date, 'Time::Moment');
 }
 
 =head2 C<instrument( )>
@@ -79,17 +78,18 @@ Returns the related Finance::Robinhood::Equity::Instrument object.
 =cut
 
 sub instrument ( $s ) {
-    my $res = $s->_rh->_get( $s->{instrument} );
+    my $res = $s->_rh->_get($s->{instrument});
     $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
+                                                      %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_instrument {
     t::Utility::stash('SPLIT') // skip_all();
     my $inst = t::Utility::stash('SPLIT')->instrument();
-    isa_ok( $inst, 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok($inst, 'Finance::Robinhood::Equity::Instrument');
 }
 
 =head1 LEGAL

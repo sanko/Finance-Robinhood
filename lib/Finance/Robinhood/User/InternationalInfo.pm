@@ -26,13 +26,13 @@ our $VERSION = '0.92_002';
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $user = $rh->user;
-    isa_ok( $user, 'Finance::Robinhood::User' );
-    t::Utility::stash( 'USER', $user );    #  Store it for later
+    isa_ok($user, 'Finance::Robinhood::User');
+    t::Utility::stash('USER', $user);    #  Store it for later
     my $intl_info = $user->international_info();
-    todo(                                  # Might fail
+    todo(                                # Might fail
         'International data only available to non-US citizens' => sub {
-            isa_ok( $ntl_info, __PACKAGE__ );
-            t::Utility::stash( 'USER_INTL_INFO', $intl_info ) if $intl_info;
+            isa_ok($ntl_info, __PACKAGE__);
+            t::Utility::stash('USER_INTL_INFO', $intl_info) if $intl_info;
         }
     );
 }
@@ -86,10 +86,11 @@ Returns a true value if the user is allowed to withdrawal funds via ACH.
 
 =cut
 
-has [
-    'birthCountry',        'businessNature',     'expectedWithdrawals', 'foreignTaxId',
-    'howReferredToBroker', 'initialDepositType', 'primaryBanking',      'valueInitialDeposit',
-    'withdrawalsAllowed'
+has ['birthCountry',        'businessNature',
+     'expectedWithdrawals', 'foreignTaxId',
+     'howReferredToBroker', 'initialDepositType',
+     'primaryBanking',      'valueInitialDeposit',
+     'withdrawalsAllowed'
 ];
 
 =head1 LEGAL

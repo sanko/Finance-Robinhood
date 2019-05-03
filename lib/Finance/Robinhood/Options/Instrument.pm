@@ -26,23 +26,23 @@ use Mojo::Base-base, -signatures;
 use Mojo::URL;
 
 sub _test__init {
-    my $rh         = t::Utility::rh_instance(1);
-    my $instrument = $rh->options_instruments(
-        chain_id    => $rh->equity_instrument_by_symbol('MSFT')->tradable_chain_id,
-        tradability => 'tradable'
+    my $rh = t::Utility::rh_instance(1);
+    my $instrument =
+        $rh->options_instruments(
+              chain_id =>
+                  $rh->equity_instrument_by_symbol('MSFT')->tradable_chain_id,
+              tradability => 'tradable'
     )->current;
-    isa_ok( $instrument, __PACKAGE__ );
-    t::Utility::stash( 'INSTRUMENT', $instrument );    #  Store it for later
+    isa_ok($instrument, __PACKAGE__);
+    t::Utility::stash('INSTRUMENT', $instrument);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('INSTRUMENT') // skip_all();
-    is(
-        +t::Utility::stash('INSTRUMENT'),
-        'https://api.robinhood.com/options/instruments/'
-            . t::Utility::stash('INSTRUMENT')->id . '/'
-    );
+    is(+t::Utility::stash('INSTRUMENT'),
+        'https://api.robinhood.com/options/instruments/' .
+            t::Utility::stash('INSTRUMENT')->id . '/');
 }
 #
 has _rh => undef => weak => 1;
@@ -96,10 +96,9 @@ Indicated whether this is a C<call> or C<put>.
 
 =cut
 
-has [
-    'chain_id',        'chain_symbol', 'id',           'min_ticks',
-    'rhs_tradability', 'state',        'strike_price', 'tradability',
-    'type',
+has ['chain_id',        'chain_symbol', 'id',           'min_ticks',
+     'rhs_tradability', 'state',        'strike_price', 'tradability',
+     'type',
 ];
 
 =head2 C<expiration_date( )> 
@@ -109,12 +108,12 @@ Returns a Time::Moment object.
 =cut
 
 sub expiration_date ($s) {
-    Time::Moment->from_string( $s->{expiration_date} . 'T00:00:00Z' );
+    Time::Moment->from_string($s->{expiration_date} . 'T00:00:00Z');
 }
 
 sub _test_expiration_date {
     t::Utility::stash('INSTRUMENT') // skip_all();
-    isa_ok( t::Utility::stash('INSTRUMENT')->expiration_date, 'Time::Moment' );
+    isa_ok(t::Utility::stash('INSTRUMENT')->expiration_date, 'Time::Moment');
 }
 
 =head2 C<issue_date( )> 
@@ -124,12 +123,12 @@ Returns a Time::Moment object.
 =cut
 
 sub issue_date ($s) {
-    Time::Moment->from_string( $s->{issue_date} . 'T00:00:00Z' );
+    Time::Moment->from_string($s->{issue_date} . 'T00:00:00Z');
 }
 
 sub _test_issue_date {
     t::Utility::stash('INSTRUMENT') // skip_all();
-    isa_ok( t::Utility::stash('INSTRUMENT')->issue_date, 'Time::Moment' );
+    isa_ok(t::Utility::stash('INSTRUMENT')->issue_date, 'Time::Moment');
 }
 
 =head2 C<created_at( )> 
@@ -139,12 +138,12 @@ Returns a Time::Moment object.
 =cut
 
 sub created_at ($s) {
-    Time::Moment->from_string( $s->{created_at} );
+    Time::Moment->from_string($s->{created_at});
 }
 
 sub _test_created_at {
     t::Utility::stash('INSTRUMENT') // skip_all();
-    isa_ok( t::Utility::stash('INSTRUMENT')->created_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('INSTRUMENT')->created_at, 'Time::Moment');
 }
 
 =head2 C<updated_at( )> 
@@ -154,12 +153,12 @@ Returns a Time::Moment object.
 =cut
 
 sub updated_at ($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
     t::Utility::stash('INSTRUMENT') // skip_all();
-    isa_ok( t::Utility::stash('INSTRUMENT')->updated_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('INSTRUMENT')->updated_at, 'Time::Moment');
 }
 
 =head1 LEGAL

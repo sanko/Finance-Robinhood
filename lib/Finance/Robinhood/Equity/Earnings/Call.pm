@@ -25,15 +25,15 @@ our $VERSION = '0.92_002';
 
 sub _test__init {
     my $rh       = t::Utility::rh_instance(1);
-    my $earnings = $rh->equity_earnings( range => -7 );
+    my $earnings = $rh->equity_earnings(range => -7);
     my $call;
-    while ( $earnings->next ) {
+    while ($earnings->next) {
         next if !$earnings->current->call;
         $call = $earnings->current->call;
         last;
     }
-    isa_ok( $call, __PACKAGE__ );
-    t::Utility::stash( 'CALL', $call );
+    isa_ok($call, __PACKAGE__);
+    t::Utility::stash('CALL', $call);
 }
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
@@ -52,14 +52,15 @@ join a call in progress.
 =cut
 
 sub broadcast_url ($s) {
-    $s->{broadcast_url} ? Mojo::URL->new( $s->{broadcast_url} ) : ();
+    $s->{broadcast_url} ? Mojo::URL->new($s->{broadcast_url}) : ();
 }
 
 sub _test_broadcast_url {
     t::Utility::stash('CALL') // skip_all();
     todo(
-        'Nearly impossible to catch a call in progress in a unscheduled test' => sub {
-            isa_ok( t::Utility::stash('CALL')->broadcast_url(), 'Mojo::URL' );
+        'Nearly impossible to catch a call in progress in a unscheduled test'
+            => sub {
+            isa_ok(t::Utility::stash('CALL')->broadcast_url(), 'Mojo::URL');
         }
     );
 }
@@ -71,12 +72,12 @@ Returns a Time::Moment object.
 =cut
 
 sub datetime ($s) {
-    Time::Moment->from_string( $s->{datetime} );
+    Time::Moment->from_string($s->{datetime});
 }
 
 sub _test_datetime {
     t::Utility::stash('CALL') // skip_all();
-    isa_ok( t::Utility::stash('CALL')->datetime(), 'Time::Moment' );
+    isa_ok(t::Utility::stash('CALL')->datetime(), 'Time::Moment');
 }
 
 =head2 C<replay_url( )>
@@ -87,12 +88,12 @@ replay an archived call.
 =cut
 
 sub replay_url ($s) {
-    $s->{replay_url} ? Mojo::URL->new( $s->{replay_url} ) : ();
+    $s->{replay_url} ? Mojo::URL->new($s->{replay_url}) : ();
 }
 
 sub _test_replay_url {
     t::Utility::stash('CALL') // skip_all();
-    isa_ok( t::Utility::stash('CALL')->replay_url(), 'Mojo::URL' );
+    isa_ok(t::Utility::stash('CALL')->replay_url(), 'Mojo::URL');
 }
 
 =head1 LEGAL

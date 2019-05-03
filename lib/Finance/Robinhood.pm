@@ -22,7 +22,6 @@ use Mojo::Base-base, -signatures;
 use Mojo::UserAgent;
 use Mojo::URL;
 #
-
 use Finance::Robinhood::Error;
 use Finance::Robinhood::Utilities qw[gen_uuid];
 use Finance::Robinhood::Utilities::Iterator;
@@ -65,39 +64,38 @@ Like authorization tokens, this UUID should be kept private.
 
 has _ua => sub {
     my $x = Mojo::UserAgent->new;
-    $x->transactor->name(
-        sprintf 'Perl/%s (%s) %s/%s', ( $^V =~ m[([\.\d]+)] ), $^O, __PACKAGE__,
-        $VERSION
-    );
+    $x->transactor->name(sprintf 'Perl/%s (%s) %s/%s',
+                         ($^V =~ m[([\.\d]+)]),
+                         $^O, __PACKAGE__, $VERSION);
     $x;
 };
 has 'oauth2_token';
 has 'device_token' => sub { gen_uuid() };
 
 sub _test_new {
-    ok( t::Utility::rh_instance(1) );
+    ok(t::Utility::rh_instance(1));
 }
 
-sub _get ( $s, $url, %data ) {
-
-    $data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
+sub _get ($s, $url, %data) {
+    $data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{$data{$_}} : $data{$_}
+        for keys %data;
     $url = Mojo::URL->new($url);
-    $url->query( \%data );
+    $url->query(\%data);
 
-    #warn 'GET  ' . $url;
-
-    #warn '  Auth: ' . (
-    #    ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] ) ? $s->oauth2_token->token_type :
-    #        'none' );
+#warn 'GET  ' . $url;
+#warn '  Auth: ' . (
+#    ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] ) ? $s->oauth2_token->token_type :
+#        'none' );
     my $retval = $s->_ua->get(
-        $url => {
-            ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
-            ? (
-                'Authorization' => ucfirst join ' ',
-                $s->oauth2_token->token_type, $s->oauth2_token->access_token
-                )
-            : ()
-        }
+           $url => {
+               ($s->oauth2_token &&
+                    $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]
+                   )
+               ? ('Authorization' => ucfirst join ' ',
+                  $s->oauth2_token->token_type, $s->oauth2_token->access_token
+                   )
+               : ()
+           }
     );
 
     #use Data::Dump;
@@ -105,77 +103,73 @@ sub _get ( $s, $url, %data ) {
     #die if $retval->res->code == 401;
     #use Data::Dump;
     #ddx $retval->res->headers;
-
     #ddx $retval;
     #warn $retval->res->code;
     #ddx $retval->res;
     #warn $retval->res->body;
-
-    return $s->_get( $url, %data )
+    return $s->_get($url, %data)
         if $retval->res->code == 401 && $s->_refresh_login_token;
-
     $retval->result;
 }
 
 sub _test_get {
     my $rh  = t::Utility::rh_instance(0);
     my $res = $rh->_get('https://jsonplaceholder.typicode.com/todos/1');
-    isa_ok( $res, 'Mojo::Message::Response' );
-    is( $res->json->{title}, 'delectus aut autem', '_post(...) works!' );
-
+    isa_ok($res, 'Mojo::Message::Response');
+    is($res->json->{title}, 'delectus aut autem', '_post(...) works!');
     #
     $res = $rh->_get('https://httpstat.us/500');
-    isa_ok( $res, 'Mojo::Message::Response' );
-    ok( !$res->is_success );
+    isa_ok($res, 'Mojo::Message::Response');
+    ok(!$res->is_success);
 }
 
-sub _options ( $s, $url, %data ) {
+sub _options ($s, $url, %data) {
     my $retval = $s->_ua->options(
-        Mojo::URL->new($url) => {
-            ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
-            ? (
-                'Authorization' => ucfirst join ' ',
-                $s->oauth2_token->token_type, $s->oauth2_token->access_token
-                )
-            : ()
-        } => json => \%data
+           Mojo::URL->new($url) => {
+               ($s->oauth2_token &&
+                    $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]
+                   )
+               ? ('Authorization' => ucfirst join ' ',
+                  $s->oauth2_token->token_type, $s->oauth2_token->access_token
+                   )
+               : ()
+           } => json => \%data
     );
-
-    return $s->_options( $url, %data )
+    return $s->_options($url, %data)
         if $retval->res->code == 401 && $s->_refresh_login_token;
-
     $retval->result;
 }
 
 sub _test_options {
     my $rh  = t::Utility::rh_instance(0);
     my $res = $rh->_options('https://jsonplaceholder.typicode.com/');
-    isa_ok( $res, 'Mojo::Message::Response' );
-    is( $res->json, () );
+    isa_ok($res, 'Mojo::Message::Response');
+    is($res->json, ());
 }
 
-sub _post ( $s, $url, %data ) {
+sub _post ($s, $url, %data) {
 
-    #warn 'POST ' . $url;
-    #use Data::Dump;
-    #ddx \%data;
-    #$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
-    #warn '  Auth: ' . (($s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]) ? $s->oauth2_token->token_type : 'none');
+#warn 'POST ' . $url;
+#use Data::Dump;
+#ddx \%data;
+#$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
+#warn '  Auth: ' . (($s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]) ? $s->oauth2_token->token_type : 'none');
     my $retval = $s->_ua->post(
-        Mojo::URL->new($url) => {
-            ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
-                && !delete $data{'no_auth_token'}
-            ? (
-                'Authorization' => ucfirst join ' ',
-                $s->oauth2_token->token_type, $s->oauth2_token->access_token
-                )
-            : (),
-            (
-                $data{challenge_id}
-                ? ( 'X-Robinhood-Challenge-Response-ID' => delete $data{challenge_id} )
+           Mojo::URL->new($url) => {
+               ($s->oauth2_token &&
+                    $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]
+                   ) &&
+                   !delete $data{'no_auth_token'}
+               ? ('Authorization' => ucfirst join ' ',
+                  $s->oauth2_token->token_type, $s->oauth2_token->access_token
+                   )
+               : (),
+               ($data{challenge_id}
+                ? ('X-Robinhood-Challenge-Response-ID' =>
+                   delete $data{challenge_id})
                 : ()
-            )
-        } => json => \%data
+               )
+           } => json => \%data
     );
 
     #use Data::Dump;
@@ -183,82 +177,80 @@ sub _post ( $s, $url, %data ) {
     #die if $retval->res->code == 401;
     #use Data::Dump;
     #ddx $retval->res->headers;
-
     #ddx $retval;
     #warn $retval->res->code;
     #ddx $retval->res;
     #warn $retval->res->body;
-    return $s->_post( $url, %data )    # Retry with new auth info
+    return $s->_post($url, %data)    # Retry with new auth info
         if $retval->res->code == 401 && $s->_refresh_login_token;
     $retval->res;
 }
 
 sub _test_post {
-    my $rh  = t::Utility::rh_instance(0);
-    my $res = $rh->_post(
-        'https://jsonplaceholder.typicode.com/posts/',
-        title  => 'Whoa',
-        body   => 'This is a test',
-        userId => 13
+    my $rh = t::Utility::rh_instance(0);
+    my $res = $rh->_post('https://jsonplaceholder.typicode.com/posts/',
+                         title  => 'Whoa',
+                         body   => 'This is a test',
+                         userId => 13
     );
-    isa_ok( $res, 'Mojo::Message::Response' );
-    is( $res->json, { body => 'This is a test', title => 'Whoa', userId => 13, id => 101 } );
+    isa_ok($res, 'Mojo::Message::Response');
+    is($res->json,
+        {body => 'This is a test', title => 'Whoa', userId => 13, id => 101});
 }
 
-sub _patch ( $s, $url, %data ) {
+sub _patch ($s, $url, %data) {
 
-    #$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
+#$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
     my $retval = $s->_ua->patch(
-        Mojo::URL->new($url) => {
-            ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
-                && !delete $data{'no_auth_token'}
-            ? (
-                'Authorization' => ucfirst join ' ',
-                $s->oauth2_token->token_type, $s->oauth2_token->access_token
-                )
-            : ()
-        } => json => \%data
+           Mojo::URL->new($url) => {
+               ($s->oauth2_token &&
+                    $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]
+                   ) &&
+                   !delete $data{'no_auth_token'}
+               ? ('Authorization' => ucfirst join ' ',
+                  $s->oauth2_token->token_type, $s->oauth2_token->access_token
+                   )
+               : ()
+           } => json => \%data
     );
-
-    return $s->_post( $url, %data )
+    return $s->_post($url, %data)
         if $retval->res->code == 401 && $s->_refresh_login_token;
-
     $retval->result;
 }
 
 sub _test_patch {
     my $rh  = t::Utility::rh_instance(0);
-    my $res = $rh->_patch( 'https://jsonplaceholder.typicode.com/posts/9/', title => 'Updated' );
-    isa_ok( $res, 'Mojo::Message::Response' );
-    is( $res->json->{title}, 'Updated' );
+    my $res = $rh->_patch('https://jsonplaceholder.typicode.com/posts/9/',
+                          title => 'Updated');
+    isa_ok($res, 'Mojo::Message::Response');
+    is($res->json->{title}, 'Updated');
 }
 
-sub _delete ( $s, $url, %data ) {
+sub _delete ($s, $url, %data) {
 
-    #$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
+#$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
     my $retval = $s->_ua->delete(
-        Mojo::URL->new($url) => {
-            ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
-                && !delete $data{'no_auth_token'}
-            ? (
-                'Authorization' => ucfirst join ' ',
-                $s->oauth2_token->token_type, $s->oauth2_token->access_token
-                )
-            : ()
-        } => json => \%data
+           Mojo::URL->new($url) => {
+               ($s->oauth2_token &&
+                    $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]
+                   ) &&
+                   !delete $data{'no_auth_token'}
+               ? ('Authorization' => ucfirst join ' ',
+                  $s->oauth2_token->token_type, $s->oauth2_token->access_token
+                   )
+               : ()
+           } => json => \%data
     );
-
-    return $s->_delete( $url, %data )
+    return $s->_delete($url, %data)
         if $retval->res->code == 401 && $s->_refresh_login_token;
-
     $retval->result;
 }
 
 sub _test_delete {
     my $rh  = t::Utility::rh_instance(0);
     my $res = $rh->_patch('https://jsonplaceholder.typicode.com/posts/1/');
-    isa_ok( $res, 'Mojo::Message::Response' );
-    ok( $res->is_success, 'Deleted' );    # Lies
+    isa_ok($res, 'Mojo::Message::Response');
+    ok($res->is_success, 'Deleted');    # Lies
 }
 
 =head2 C<login( ... )>
@@ -335,101 +327,105 @@ This method expects a Finance::Robinhood::OAuth2::Token object.
 
 =cut
 
-sub login ( $s, $u, $p, %opt ) {
+sub login ($s, $u, $p, %opt) {
 
     # OAUTH2
     my $res = $s->_post(
         'https://api.robinhood.com/oauth2/token/',
         no_auth_token  => 1,         # NO AUTH INFO SENT!
         challenge_type => 'email',
-        ( $opt{challenge_id} ? ( challenge_id => $opt{challenge_id} ) : () ),
+        ($opt{challenge_id} ? (challenge_id => $opt{challenge_id}) : ()),
         device_token => $s->device_token,
         expires_in   => 86400,
         scope        => 'internal',
         username     => $u,
         password     => $p,
-        ( $opt{mfa_code} ? ( mfa_code => $opt{mfa_code} ) : () ),
-        grant_type => ( $opt{grant_type} // 'password' ),
+        ($opt{mfa_code} ? (mfa_code => $opt{mfa_code}) : ()),
+        grant_type => ($opt{grant_type} // 'password'),
         client_id  => $opt{client_id} // sub {
-            my ( @k, $c ) = split //, shift;
-            map {                    # cheap and easy
+            my (@k, $c) = split //, shift;
+            map {    # cheap and easy
                 unshift @k, pop @k;
-                $c .= chr( ord ^ ord $k[0] );
-            } split //, "\aW];&Y55\35I[\a,6&>[5\34\36\f\2]]\$\x179L\\\x0B4<;,\"*&\5);";
+                $c .= chr(ord ^ ord $k[0]);
+                } split //,
+                "\aW];&Y55\35I[\a,6&>[5\34\36\f\2]]\$\x179L\\\x0B4<;,\"*&\5);";
             $c;
         }
             ->(__PACKAGE__)
     );
-    if ( $res->is_success ) {
-        if ( $res->json->{mfa_required} ) {
+    if ($res->is_success) {
+        if ($res->json->{mfa_required}) {
             return $opt{mfa_callback}
-                ? Finance::Robinhood::Error->new( description => 'You must pass an mfa_callback.' )
-                : $s->login( $u, $p, %opt, mfa_code => $opt{mfa_callback}->( $res->json ) );
+                ? Finance::Robinhood::Error->new(
+                              description => 'You must pass an mfa_callback.')
+                : $s->login($u, $p, %opt,
+                            mfa_code => $opt{mfa_callback}->($res->json));
         }
         else {
             require Finance::Robinhood::OAuth2::Token;
-            $s->oauth2_token( Finance::Robinhood::OAuth2::Token->new( $res->json ) );
+            $s->oauth2_token(
+                          Finance::Robinhood::OAuth2::Token->new($res->json));
         }
     }
-    elsif ( $res->json->{challenge} ) {    # 400
+    elsif ($res->json->{challenge}) {    # 400
         return Finance::Robinhood::Error->new(
-            description => 'You must pass a challenge_callback.' )
+                         description => 'You must pass a challenge_callback.')
             if !$opt{challenge_callback};
         my $id = $res->json->{challenge}{id};
-        return $s->_challenge_response( $id, $opt{challenge_callback}->( $res->json->{challenge} ) )
+        return
+            $s->_challenge_response($id,
+                          $opt{challenge_callback}->($res->json->{challenge}))
             ->is_success
-            ? $s->login( $u, $p, %opt, challenge_id => $id )
+            ? $s->login($u, $p, %opt, challenge_id => $id)
             : Finance::Robinhood::Error->new(
-            $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
     }
     else {
         return Finance::Robinhood::Error->new(
-            $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
     }
     $s;
 }
 
 sub _test_login {
     my $rh = t::Utility::rh_instance(1);
-    isa_ok( $rh->oauth2_token, 'Finance::Robinhood::OAuth2::Token' );
+    isa_ok($rh->oauth2_token, 'Finance::Robinhood::OAuth2::Token');
 }
 
 # Cannot test this without logging in, getting a challenge, and then entering the private data
-sub _challenge_response ( $s, $id, $response ) {
-    $s->_post(
-        sprintf( 'https://api.robinhood.com/challenge/%s/respond/', $id ),
-        response => $response
-    );
+sub _challenge_response ($s, $id, $response) {
+    $s->_post(sprintf('https://api.robinhood.com/challenge/%s/respond/', $id),
+              response => $response);
 }
 
 # Cannot test this without using the same token for 24hrs and letting it expire
-sub _refresh_login_token ( $s, %opt ) {    # TODO: Store %opt from login and reuse it here
-    $s->oauth2_token // return;            # OAUTH2
+sub _refresh_login_token ($s, %opt)
+{    # TODO: Store %opt from login and reuse it here
+    $s->oauth2_token // return;    # OAUTH2
     my $res = $s->_post(
         'https://api.robinhood.com/oauth2/token/',
-        no_auth_token => 1,                                    # NO AUTH INFO SENT!
+        no_auth_token => 1,                               # NO AUTH INFO SENT!
         scope         => 'internal',
         refresh_token => $s->oauth2_token->refresh_token,
-        grant_type    => ( $opt{grant_type} // 'password' ),
+        grant_type    => ($opt{grant_type} // 'password'),
         client_id     => $opt{client_id} // sub {
-            my ( @k, $c ) = split //, shift;
-            map {                                              # cheap and easy
+            my (@k, $c) = split //, shift;
+            map {                                         # cheap and easy
                 unshift @k, pop @k;
-                $c .= chr( ord ^ ord $k[0] );
-            } split //, "\aW];&Y55\35I[\a,6&>[5\34\36\f\2]]\$\x179L\\\x0B4<;,\"*&\5);";
+                $c .= chr(ord ^ ord $k[0]);
+                } split //,
+                "\aW];&Y55\35I[\a,6&>[5\34\36\f\2]]\$\x179L\\\x0B4<;,\"*&\5);";
             $c;
         }
             ->(__PACKAGE__),
     );
-    if ( $res->is_success ) {
-
+    if ($res->is_success) {
         require Finance::Robinhood::OAuth2::Token;
-        $s->oauth2_token( Finance::Robinhood::OAuth2::Token->new( $res->json ) );
-
+        $s->oauth2_token(Finance::Robinhood::OAuth2::Token->new($res->json));
     }
     else {
         return Finance::Robinhood::Error->new(
-            $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
     }
     $s;
 }
@@ -444,21 +440,19 @@ You do not need to be logged in for this to work.
 
 =cut
 
-sub search ( $s, $keyword ) {
-    my $res = $s->_get( 'https://midlands.robinhood.com/search/', query => $keyword );
+sub search ($s, $keyword) {
+    my $res = $s->_get('https://midlands.robinhood.com/search/',
+                       query => $keyword);
     require Finance::Robinhood::Search;
     $res->is_success
-        ? Finance::Robinhood::Search->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Search->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_search {
     my $rh = t::Utility::rh_instance(1);
-    isa_ok(
-        $rh->search('tesla'),
-        'Finance::Robinhood::Search'
-    );
+    isa_ok($rh->search('tesla'), 'Finance::Robinhood::Search');
 }
 
 =head2 C<news( ... )>
@@ -470,19 +464,18 @@ An iterator containing Finance::Robinhood::News objects is returned.
 
 =cut
 
-sub news ( $s, $symbol_or_id ) {
+sub news ($s, $symbol_or_id) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://midlands.robinhood.com/news/')->query(
-            {
-                (
-                    $symbol_or_id
+        _rh => $s,
+        _next_page =>
+            Mojo::URL->new('https://midlands.robinhood.com/news/')->query(
+            {   (   $symbol_or_id
                         =~ /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
                     ? 'currency_id'
                     : 'symbol'
                 ) => $symbol_or_id
             }
-        ),
+            ),
         _class => 'Finance::Robinhood::News'
     );
 }
@@ -490,15 +483,14 @@ sub news ( $s, $symbol_or_id ) {
 sub _test_news {
     my $rh   = t::Utility::rh_instance();
     my $msft = $rh->news('MSFT');
-    isa_ok( $msft, 'Finance::Robinhood::Utilities::Iterator' );
+    isa_ok($msft, 'Finance::Robinhood::Utilities::Iterator');
     $msft->has_next
-        ? isa_ok( $msft->next, 'Finance::Robinhood::News' )
+        ? isa_ok($msft->next, 'Finance::Robinhood::News')
         : pass('Fake it... Might not be any news on the weekend');
-
     my $btc = $rh->news('d674efea-e623-4396-9026-39574b92b093');
-    isa_ok( $btc, 'Finance::Robinhood::Utilities::Iterator' );
+    isa_ok($btc, 'Finance::Robinhood::Utilities::Iterator');
     $btc->has_next
-        ? isa_ok( $btc->next, 'Finance::Robinhood::News' )
+        ? isa_ok($btc->next, 'Finance::Robinhood::News')
         : pass('Fake it... Might not be any news on the weekend');
 }
 
@@ -516,16 +508,16 @@ You need to be logged in for this to work.
 
 sub feed ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://midlands.robinhood.com/feed/',
-        _class     => 'Finance::Robinhood::News'
+                         _rh        => $s,
+                         _next_page => 'https://midlands.robinhood.com/feed/',
+                         _class     => 'Finance::Robinhood::News'
     );
 }
 
 sub _test_feed {
     my $feed = t::Utility::rh_instance(1)->feed;
-    isa_ok( $feed,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $feed->current, 'Finance::Robinhood::News' );
+    isa_ok($feed,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($feed->current, 'Finance::Robinhood::News');
 }
 
 =head2 C<notifications( )>
@@ -540,16 +532,16 @@ You need to be logged in for this to work.
 
 sub notifications ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://midlands.robinhood.com/notifications/stack/',
-        _class     => 'Finance::Robinhood::Notification'
+          _rh        => $s,
+          _next_page => 'https://midlands.robinhood.com/notifications/stack/',
+          _class     => 'Finance::Robinhood::Notification'
     );
 }
 
 sub _test_notifications {
     my $cards = t::Utility::rh_instance(1)->notifications;
-    isa_ok( $cards,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $cards->current, 'Finance::Robinhood::Notification' );
+    isa_ok($cards,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($cards->current, 'Finance::Robinhood::Notification');
 }
 
 =head2 C<notification_by_id( ... )>
@@ -561,19 +553,20 @@ this to work.
 
 =cut
 
-sub notification_by_id ( $s, $id ) {
-    my $res = $s->_get( 'https://midlands.robinhood.com/notifications/stack/' . $id . '/' );
+sub notification_by_id ($s, $id) {
+    my $res = $s->_get(
+           'https://midlands.robinhood.com/notifications/stack/' . $id . '/');
     require Finance::Robinhood::Notification if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Notification->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Notification->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_notification_by_id {
     my $rh   = t::Utility::rh_instance(1);
-    my $card = $rh->notification_by_id( $rh->notifications->current->id );
-    isa_ok( $card, 'Finance::Robinhood::Notification' );
+    my $card = $rh->notification_by_id($rh->notifications->current->id);
+    isa_ok($card, 'Finance::Robinhood::Notification');
 }
 
 =head1 EQUITY METHODS
@@ -615,41 +608,50 @@ this way.
 
 =cut
 
-sub equity_instruments ( $s, %filter ) {
-    $filter{ids} = join ',', @{ $filter{ids} } if $filter{ids};    # Has to be done manually
+sub equity_instruments ($s, %filter) {
+    $filter{ids} = join ',', @{$filter{ids}}
+        if $filter{ids};    # Has to be done manually
     Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
-        _next_page => Mojo::URL->new('https://api.robinhood.com/instruments/')->query( \%filter ),
-        _class     => 'Finance::Robinhood::Equity::Instrument'
+        _next_page => Mojo::URL->new('https://api.robinhood.com/instruments/')
+            ->query(\%filter),
+        _class => 'Finance::Robinhood::Equity::Instrument'
     );
 }
 
 sub _test_equity_instruments {
     my $rh          = t::Utility::rh_instance(0);
     my $instruments = $rh->equity_instruments;
-    isa_ok( $instruments,       'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $instruments->next, 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok($instruments,       'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($instruments->next, 'Finance::Robinhood::Equity::Instrument');
     #
     {
-        my $msft = $rh->equity_instruments( symbol => 'MSFT' )->current;
-        isa_ok( $msft, 'Finance::Robinhood::Equity::Instrument' );
-        is( $msft->symbol, 'MSFT', 'equity_instruments(symbol => "MSFT") returned Microsoft' );
+        my $msft = $rh->equity_instruments(symbol => 'MSFT')->current;
+        isa_ok($msft, 'Finance::Robinhood::Equity::Instrument');
+        is($msft->symbol, 'MSFT',
+            'equity_instruments(symbol => "MSFT") returned Microsoft');
     }
     #
     {
-        my $tsla = $rh->equity_instruments( query => 'tesla' )->current;
-        isa_ok( $tsla, 'Finance::Robinhood::Equity::Instrument' );
-        is( $tsla->symbol, 'TSLA', 'equity_instruments(query => "tesla") returned Tesla' );
+        my $tsla = $rh->equity_instruments(query => 'tesla')->current;
+        isa_ok($tsla, 'Finance::Robinhood::Equity::Instrument');
+        is($tsla->symbol, 'TSLA',
+            'equity_instruments(query => "tesla") returned Tesla');
     }
     {
-        my ( $msft, $tsla )
-            = $rh->equity_instruments( ids =>
-                [ '50810c35-d215-4866-9758-0ada4ac79ffa', 'e39ed23a-7bd1-4587-b060-71988d9ef483' ] )
-            ->all;
-        isa_ok( $msft, 'Finance::Robinhood::Equity::Instrument' );
-        is( $msft->symbol, 'MSFT', 'equity_instruments( ids => ... ) returned Microsoft' );
-        isa_ok( $tsla, 'Finance::Robinhood::Equity::Instrument' );
-        is( $tsla->symbol, 'TSLA', 'equity_instruments( ids => ... ) also returned Tesla' );
+        my ($msft, $tsla)
+            = $rh->equity_instruments(
+                                   ids => [
+                                       '50810c35-d215-4866-9758-0ada4ac79ffa',
+                                       'e39ed23a-7bd1-4587-b060-71988d9ef483'
+                                   ]
+        )->all;
+        isa_ok($msft, 'Finance::Robinhood::Equity::Instrument');
+        is($msft->symbol, 'MSFT',
+            'equity_instruments( ids => ... ) returned Microsoft');
+        isa_ok($tsla, 'Finance::Robinhood::Equity::Instrument');
+        is($tsla->symbol, 'TSLA',
+            'equity_instruments( ids => ... ) also returned Tesla');
     }
 }
 
@@ -662,14 +664,14 @@ Finance::Robinhood::Equity::Instrument.
 
 =cut
 
-sub equity_instrument_by_symbol ( $s, $symbol ) {
-    $s->equity_instruments( symbol => $symbol )->current;
+sub equity_instrument_by_symbol ($s, $symbol) {
+    $s->equity_instruments(symbol => $symbol)->current;
 }
 
 sub _test_equity_instrument_by_symbol {
     my $rh         = t::Utility::rh_instance(0);
     my $instrument = $rh->equity_instrument_by_symbol('MSFT');
-    isa_ok( $instrument, 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok($instrument, 'Finance::Robinhood::Equity::Instrument');
 }
 
 =head2 C<equity_instrument_by_id( ... )>
@@ -681,15 +683,17 @@ Finance::Robinhood::Equity::Instrument object.
 
 =cut
 
-sub equity_instrument_by_id ( $s, $id ) {
-    $s->equity_instruments( ids => [$id] )->next();
+sub equity_instrument_by_id ($s, $id) {
+    $s->equity_instruments(ids => [$id])->next();
 }
 
 sub _test_equity_instrument_by_id {
-    my $rh         = t::Utility::rh_instance(0);
-    my $instrument = $rh->equity_instrument_by_id('50810c35-d215-4866-9758-0ada4ac79ffa');
-    isa_ok( $instrument, 'Finance::Robinhood::Equity::Instrument' );
-    is( $instrument->symbol, 'MSFT', 'equity_instruments( ids => ... ) returned Microsoft' );
+    my $rh = t::Utility::rh_instance(0);
+    my $instrument = $rh->equity_instrument_by_id(
+                                      '50810c35-d215-4866-9758-0ada4ac79ffa');
+    isa_ok($instrument, 'Finance::Robinhood::Equity::Instrument');
+    is($instrument->symbol, 'MSFT',
+        'equity_instruments( ids => ... ) returned Microsoft');
 }
 
 =head2 C<equity_instruments_by_id( ... )>
@@ -701,19 +705,23 @@ list of Finance::Robinhood::Equity::Instrument objects.
 
 =cut
 
-sub equity_instruments_by_id ( $s, @ids ) {
+sub equity_instruments_by_id ($s, @ids) {
 
     # Split ids into groups of 75 to keep URL length down
     my @retval;
-    push @retval, $s->equity_instruments( ids => [ splice @ids, 0, 75 ] )->all() while @ids;
+    push @retval, $s->equity_instruments(ids => [splice @ids, 0, 75])->all()
+        while @ids;
     @retval;
 }
 
 sub _test_equity_instruments_by_id {
     my $rh = t::Utility::rh_instance(0);
-    my ($instrument) = $rh->equity_instruments_by_id('50810c35-d215-4866-9758-0ada4ac79ffa');
-    isa_ok( $instrument, 'Finance::Robinhood::Equity::Instrument' );
-    is( $instrument->symbol, 'MSFT', 'equity_instruments( ids => ... ) returned Microsoft' );
+    my ($instrument)
+        = $rh->equity_instruments_by_id(
+                                      '50810c35-d215-4866-9758-0ada4ac79ffa');
+    isa_ok($instrument, 'Finance::Robinhood::Equity::Instrument');
+    is($instrument->symbol, 'MSFT',
+        'equity_instruments( ids => ... ) returned Microsoft');
 }
 
 =head2 C<equity_orders( [...] )>
@@ -737,29 +745,31 @@ If you would only like orders before a certain date, you can do that!
 
 =cut
 
-sub equity_orders ( $s, %opts ) {
+sub equity_orders ($s, %opts) {
 
-    #- `updated_at[gte]` - greater than or equal to a date; timestamp or ISO 8601
-    #- `updated_at[lte]` - less than or equal to a date; timestamp or ISO 8601
-    #- `instrument` - equity instrument URL
+ #- `updated_at[gte]` - greater than or equal to a date; timestamp or ISO 8601
+ #- `updated_at[lte]` - less than or equal to a date; timestamp or ISO 8601
+ #- `instrument` - equity instrument URL
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://api.robinhood.com/orders/')->query(
-            {
-                $opts{instrument} ? ( instrument        => $opts{instrument}->url ) : (),
-                $opts{before}     ? ( 'updated_at[lte]' => +$opts{before} )         : (),
-                $opts{after}      ? ( 'updated_at[gte]' => +$opts{after} )          : ()
-            }
-        ),
-        _class => 'Finance::Robinhood::Equity::Order'
+           _rh => $s,
+           _next_page =>
+               Mojo::URL->new('https://api.robinhood.com/orders/')->query(
+               {$opts{instrument}
+                ? (instrument => $opts{instrument}->url)
+                : (),
+                $opts{before} ? ('updated_at[lte]' => +$opts{before}) : (),
+                $opts{after}  ? ('updated_at[gte]' => +$opts{after})  : ()
+               }
+               ),
+           _class => 'Finance::Robinhood::Equity::Order'
     );
 }
 
 sub _test_equity_orders {
     my $rh     = t::Utility::rh_instance(1);
     my $orders = $rh->equity_orders;
-    isa_ok( $orders,       'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $orders->next, 'Finance::Robinhood::Equity::Order' );
+    isa_ok($orders,       'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($orders->next, 'Finance::Robinhood::Equity::Order');
 }
 
 =head2 C<equity_order_by_id( ... )>
@@ -771,19 +781,19 @@ for this to work.
 
 =cut
 
-sub equity_order_by_id ( $s, $id ) {
-    my $res = $s->_get( 'https://api.robinhood.com/orders/' . $id . '/' );
+sub equity_order_by_id ($s, $id) {
+    my $res = $s->_get('https://api.robinhood.com/orders/' . $id . '/');
     require Finance::Robinhood::Equity::Order if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Equity::Order->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Order->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_equity_order_by_id {
     my $rh    = t::Utility::rh_instance(1);
-    my $order = $rh->equity_order_by_id( $rh->equity_orders->current->id );
-    isa_ok( $order, 'Finance::Robinhood::Equity::Order' );
+    my $order = $rh->equity_order_by_id($rh->equity_orders->current->id);
+    isa_ok($order, 'Finance::Robinhood::Equity::Order');
 }
 
 =head2 C<equity_accounts( )>
@@ -797,17 +807,17 @@ You need to be logged in for this to work.
 
 sub equity_accounts ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://api.robinhood.com/accounts/',
-        _class     => 'Finance::Robinhood::Equity::Account'
+                          _rh        => $s,
+                          _next_page => 'https://api.robinhood.com/accounts/',
+                          _class     => 'Finance::Robinhood::Equity::Account'
     );
 }
 
 sub _test_equity_accounts {
     my $rh       = t::Utility::rh_instance(1);
     my $accounts = $rh->equity_accounts;
-    isa_ok( $accounts,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $accounts->current, 'Finance::Robinhood::Equity::Account' );
+    isa_ok($accounts,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($accounts->current, 'Finance::Robinhood::Equity::Account');
 }
 
 =head2 C<equity_account_by_account_number( ... )>
@@ -819,20 +829,20 @@ for this to work.
 
 =cut
 
-sub equity_account_by_account_number ( $s, $id ) {
-    my $res = $s->_get( 'https://api.robinhood.com/accounts/' . $id . '/' );
+sub equity_account_by_account_number ($s, $id) {
+    my $res = $s->_get('https://api.robinhood.com/accounts/' . $id . '/');
     require Finance::Robinhood::Equity::Account if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Equity::Account->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Account->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_equity_account_by_account_number {
     my $rh = t::Utility::rh_instance(1);
-    my $acct
-        = $rh->equity_account_by_account_number( $rh->equity_accounts->current->account_number );
-    isa_ok( $acct, 'Finance::Robinhood::Equity::Account' );
+    my $acct = $rh->equity_account_by_account_number(
+                               $rh->equity_accounts->current->account_number);
+    isa_ok($acct, 'Finance::Robinhood::Equity::Account');
 }
 
 =head2 C<equity_portfolios( )>
@@ -846,17 +856,18 @@ is returned. You need to be logged in for this to work.
 
 sub equity_portfolios ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://api.robinhood.com/portfolios/',
-        _class     => 'Finance::Robinhood::Equity::Account::Portfolio'
+                    _rh        => $s,
+                    _next_page => 'https://api.robinhood.com/portfolios/',
+                    _class => 'Finance::Robinhood::Equity::Account::Portfolio'
     );
 }
 
 sub _test_equity_portfolios {
     my $rh                = t::Utility::rh_instance(1);
     my $equity_portfolios = $rh->equity_portfolios;
-    isa_ok( $equity_portfolios,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $equity_portfolios->current, 'Finance::Robinhood::Equity::Account::Portfolio' );
+    isa_ok($equity_portfolios, 'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($equity_portfolios->current,
+           'Finance::Robinhood::Equity::Account::Portfolio');
 }
 
 =head2 C<equity_watchlists( )>
@@ -870,17 +881,17 @@ returned. You need to be logged in for this to work.
 
 sub equity_watchlists ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://api.robinhood.com/watchlists/',
-        _class     => 'Finance::Robinhood::Equity::Watchlist'
+                        _rh        => $s,
+                        _next_page => 'https://api.robinhood.com/watchlists/',
+                        _class     => 'Finance::Robinhood::Equity::Watchlist'
     );
 }
 
 sub _test_equity_watchlists {
     my $rh         = t::Utility::rh_instance(1);
     my $watchlists = $rh->equity_watchlists;
-    isa_ok( $watchlists,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $watchlists->current, 'Finance::Robinhood::Equity::Watchlist' );
+    isa_ok($watchlists,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($watchlists->current, 'Finance::Robinhood::Equity::Watchlist');
 }
 
 =head2 C<equity_watchlist_by_name( ... )>
@@ -892,20 +903,20 @@ in for this to work.
 
 =cut
 
-sub equity_watchlist_by_name ( $s, $name ) {
+sub equity_watchlist_by_name ($s, $name) {
     require Finance::Robinhood::Equity::Watchlist;    # Subclass of Iterator
     Finance::Robinhood::Equity::Watchlist->new(
-        _rh        => $s,
-        _next_page => 'https://api.robinhood.com/watchlists/' . $name . '/',
-        _class     => 'Finance::Robinhood::Equity::Watchlist::Element',
-        name       => $name
+          _rh        => $s,
+          _next_page => 'https://api.robinhood.com/watchlists/' . $name . '/',
+          _class     => 'Finance::Robinhood::Equity::Watchlist::Element',
+          name       => $name
     );
 }
 
 sub _test_equity_watchlist_by_name {
     my $rh        = t::Utility::rh_instance(1);
     my $watchlist = $rh->equity_watchlist_by_name('Default');
-    isa_ok( $watchlist, 'Finance::Robinhood::Equity::Watchlist' );
+    isa_ok($watchlist, 'Finance::Robinhood::Equity::Watchlist');
 }
 
 =head2 C<equity_fundamentals( )>
@@ -919,20 +930,19 @@ You do not need to be logged in for this to work.
 
 =cut
 
-sub equity_fundamentals ( $s, @symbols_or_ids_or_urls ) {
+sub equity_fundamentals ($s, @symbols_or_ids_or_urls) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://api.robinhood.com/fundamentals/')->query(
-            {
-                (
-                    grep {
+        _rh => $s,
+        _next_page =>
+            Mojo::URL->new('https://api.robinhood.com/fundamentals/')->query(
+            {   (   grep {
                         /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i
                     } @symbols_or_ids_or_urls
                     )
-                ? ( grep {/^https?/i} @symbols_or_ids_or_urls )
+                ? (grep {/^https?/i} @symbols_or_ids_or_urls)
                         ? 'instruments'
                         : 'ids'
-                : 'symbols' => join( ',', @symbols_or_ids_or_urls )
+                : 'symbols' => join(',', @symbols_or_ids_or_urls)
             }
             ),
             _class => 'Finance::Robinhood::Equity::Fundamentals'
@@ -941,16 +951,16 @@ sub equity_fundamentals ( $s, @symbols_or_ids_or_urls ) {
 
 sub _test_equity_fundamentals {
     my $rh = t::Utility::rh_instance(1);
-    isa_ok(
-        $rh->equity_fundamentals('MSFT')->current, 'Finance::Robinhood::Equity::Fundamentals',
-    );
-    isa_ok(
-        $rh->equity_fundamentals('50810c35-d215-4866-9758-0ada4ac79ffa')->current,
-        'Finance::Robinhood::Equity::Fundamentals',
+    isa_ok($rh->equity_fundamentals('MSFT')->current,
+           'Finance::Robinhood::Equity::Fundamentals',);
+    isa_ok($rh->equity_fundamentals('50810c35-d215-4866-9758-0ada4ac79ffa')
+               ->current,
+           'Finance::Robinhood::Equity::Fundamentals',
     );
     isa_ok(
         $rh->equity_fundamentals(
-            'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/')->current,
+            'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/'
+        )->current,
         'Finance::Robinhood::Equity::Fundamentals',
     );
 }
@@ -965,17 +975,17 @@ Returns an iterator containing Finance::Robinhood::Equity::Market objects.
 
 sub equity_markets ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://api.robinhood.com/markets/',
-        _class     => 'Finance::Robinhood::Equity::Market'
+                           _rh        => $s,
+                           _next_page => 'https://api.robinhood.com/markets/',
+                           _class     => 'Finance::Robinhood::Equity::Market'
     );
 }
 
 sub _test_equity_markets {
     my $markets = t::Utility::rh_instance(0)->equity_markets;
-    isa_ok( $markets, 'Finance::Robinhood::Utilities::Iterator' );
+    isa_ok($markets, 'Finance::Robinhood::Utilities::Iterator');
     skip_all('No equity markets found') if !$markets->has_next;
-    isa_ok( $markets->current, 'Finance::Robinhood::Equity::Market' );
+    isa_ok($markets->current, 'Finance::Robinhood::Equity::Market');
 }
 
 =head2 C<equity_market_by_mic( )>
@@ -989,20 +999,18 @@ See also https://en.wikipedia.org/wiki/Market_Identifier_Code
 
 =cut
 
-sub equity_market_by_mic ( $s, $mic ) {
-    my $res = $s->_get( 'https://api.robinhood.com/markets/' . $mic . '/' );
+sub equity_market_by_mic ($s, $mic) {
+    my $res = $s->_get('https://api.robinhood.com/markets/' . $mic . '/');
     require Finance::Robinhood::Equity::Market if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Equity::Market->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Market->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_equity_market_by_mic {
-    isa_ok(
-        t::Utility::rh_instance(0)->equity_market_by_mic('XNAS'),
-        'Finance::Robinhood::Equity::Market'
-    );
+    isa_ok(t::Utility::rh_instance(0)->equity_market_by_mic('XNAS'),
+           'Finance::Robinhood::Equity::Market');
 }
 
 =head2 C<top_movers( [...] )>
@@ -1031,21 +1039,22 @@ Returns the worst performing members.
 
 =cut
 
-sub top_movers ( $s, %filter ) {
+sub top_movers ($s, %filter) {
     $filter{direction} //= 'up';
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh => $s,
-        _next_page =>
-            Mojo::URL->new('https://midlands.robinhood.com/movers/sp500/')->query( \%filter ),
-        _class => 'Finance::Robinhood::Equity::Mover'
+            _rh => $s,
+            _next_page =>
+                Mojo::URL->new('https://midlands.robinhood.com/movers/sp500/')
+                ->query(\%filter),
+            _class => 'Finance::Robinhood::Equity::Mover'
     );
 }
 
 sub _test_top_movers {
     my $rh     = t::Utility::rh_instance(0);
     my $movers = $rh->top_movers;
-    isa_ok( $movers,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $movers->current, 'Finance::Robinhood::Equity::Mover' );
+    isa_ok($movers,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($movers->current, 'Finance::Robinhood::Equity::Mover');
 }
 
 =head2 C<tags( ... )>
@@ -1056,20 +1065,20 @@ Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
 
 =cut
 
-sub tags ( $s, @slugs ) {
+sub tags ($s, @slugs) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://midlands.robinhood.com/tags/')
-            ->query( { slugs => join ',', @slugs } ),
-        _class => 'Finance::Robinhood::Equity::Tag'
+          _rh        => $s,
+          _next_page => Mojo::URL->new('https://midlands.robinhood.com/tags/')
+              ->query({slugs => join ',', @slugs}),
+          _class => 'Finance::Robinhood::Equity::Tag'
     );
 }
 
 sub _test_tags {
     my $rh   = t::Utility::rh_instance(0);
     my $tags = $rh->tags('food');
-    isa_ok( $tags,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $tags->current, 'Finance::Robinhood::Equity::Tag' );
+    isa_ok($tags,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($tags->current, 'Finance::Robinhood::Equity::Tag');
 }
 
 =head2 C<tags_discovery( ... )>
@@ -1082,17 +1091,18 @@ Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
 
 sub tags_discovery ( $s ) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://midlands.robinhood.com/tags/discovery/'),
-        _class     => 'Finance::Robinhood::Equity::Tag'
+         _rh => $s,
+         _next_page =>
+             Mojo::URL->new('https://midlands.robinhood.com/tags/discovery/'),
+         _class => 'Finance::Robinhood::Equity::Tag'
     );
 }
 
 sub _test_tags_discovery {
     my $rh   = t::Utility::rh_instance(0);
     my $tags = $rh->tags_discovery();
-    isa_ok( $tags,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $tags->current, 'Finance::Robinhood::Equity::Tag' );
+    isa_ok($tags,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($tags->current, 'Finance::Robinhood::Equity::Tag');
 }
 
 =head2 C<tags_popular( ... )>
@@ -1105,17 +1115,18 @@ Returns an iterator containing Finance::Robinhood::Equity::Tag objects.
 
 sub tags_popular ( $s ) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://midlands.robinhood.com/tags/discovery/'),
-        _class     => 'Finance::Robinhood::Equity::Tag'
+         _rh => $s,
+         _next_page =>
+             Mojo::URL->new('https://midlands.robinhood.com/tags/discovery/'),
+         _class => 'Finance::Robinhood::Equity::Tag'
     );
 }
 
 sub _test_tags_popular {
     my $rh   = t::Utility::rh_instance(0);
     my $tags = $rh->tags_popular();
-    isa_ok( $tags,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $tags->current, 'Finance::Robinhood::Equity::Tag' );
+    isa_ok($tags,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($tags->current, 'Finance::Robinhood::Equity::Tag');
 }
 
 =head2 C<tag( ... )>
@@ -1126,20 +1137,19 @@ Locates a tag by its slug and returns a Finance::Robinhood::Equity::Tag object.
 
 =cut
 
-sub tag ( $s, $slug ) {
-    my $res = $s->_get( 'https://midlands.robinhood.com/tags/tag/' . $slug . '/' );
+sub tag ($s, $slug) {
+    my $res
+        = $s->_get('https://midlands.robinhood.com/tags/tag/' . $slug . '/');
     require Finance::Robinhood::Equity::Tag if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Equity::Tag->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Tag->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_tag {
-    isa_ok(
-        t::Utility::rh_instance(0)->tag('food'),
-        'Finance::Robinhood::Equity::Tag'
-    );
+    isa_ok(t::Utility::rh_instance(0)->tag('food'),
+           'Finance::Robinhood::Equity::Tag');
 }
 
 =head1 OPTIONS METHODS
@@ -1157,18 +1167,23 @@ equity instruments.
 
 =cut
 
-sub options_chains ( $s, @filter ) {
+sub options_chains ($s, @filter) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://api.robinhood.com/options/chains/')->query(
-            {
-                  ( grep { ref $_ eq 'Finance::Robinhood::Equity::Instrument' } @filter )
-                ? ( equity_instrument_ids => [ map { $_->id } @filter ] )
-                : ( grep { ref $_ eq 'Finance::Robinhood::Options::Instrument' } @filter )
-                ? ( ids => [ map { $_->chain_id } @filter ] )
-                : ()
+        _rh => $s,
+        _next_page =>
+            Mojo::URL->new('https://api.robinhood.com/options/chains/')
+            ->query(
+            {   (   grep {
+                        ref $_ eq 'Finance::Robinhood::Equity::Instrument'
+                    } @filter
+                    )
+                ? (equity_instrument_ids => [map { $_->id } @filter])
+                : (grep {
+                       ref $_ eq 'Finance::Robinhood::Options::Instrument'
+                   } @filter
+                ) ? (ids => [map { $_->chain_id } @filter]) : ()
             }
-        ),
+            ),
         _class => 'Finance::Robinhood::Options::Chain'
     );
 }
@@ -1176,25 +1191,24 @@ sub options_chains ( $s, @filter ) {
 sub _test_options_chains {
     my $rh     = t::Utility::rh_instance(0);
     my $chains = $rh->options_chains;
-    isa_ok( $chains,       'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $chains->next, 'Finance::Robinhood::Options::Chain' );
+    isa_ok($chains,       'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($chains->next, 'Finance::Robinhood::Options::Chain');
 
     # Get by equity instrument
-    $chains = $rh->options_chains( $rh->search('MSFT')->equity_instruments );
-    isa_ok( $chains,       'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $chains->next, 'Finance::Robinhood::Options::Chain' );
-    is( $chains->current->symbol, 'MSFT' );
+    $chains = $rh->options_chains($rh->search('MSFT')->equity_instruments);
+    isa_ok($chains,       'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($chains->next, 'Finance::Robinhood::Options::Chain');
+    is($chains->current->symbol, 'MSFT');
 
     # Get by options instrument
     my ($instrument) = $rh->search('MSFT')->equity_instruments;
-    my $options = $rh->options_instruments(
-        chain_id    => $instrument->tradable_chain_id,
-        tradability => 'tradable'
-    );
-    $chains = $rh->options_chains( $options->next );
-    isa_ok( $chains,       'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $chains->next, 'Finance::Robinhood::Options::Chain' );
-    is( $chains->current->symbol, 'MSFT' );
+    my $options =
+        $rh->options_instruments(chain_id => $instrument->tradable_chain_id,
+                                 tradability => 'tradable');
+    $chains = $rh->options_chains($options->next);
+    isa_ok($chains,       'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($chains->next, 'Finance::Robinhood::Options::Chain');
+    is($chains->current->symbol, 'MSFT');
 }
 
 =head2 C<options_instruments( )>
@@ -1219,33 +1233,36 @@ You can filter the results several ways. All of them are optional.
 
 =cut
 
-sub options_instruments ( $s, %filters ) {
+sub options_instruments ($s, %filters) {
 
-    #$filters{chain_id} = $filters{chain}->chain_id if $filters{chain};
-    #    - ids - comma separated list of options ids (optional)
-    #    - cursor - paginated list position (optional)
-    #    - tradability - 'tradable' or 'untradable' (optional)
-    #    - state - 'active', 'inactive', or 'expired' (optional)
-    #    - type - 'put' or 'call' (optional)
-    #    - expiration_dates - comma separated list of days (optional; YYYY-MM-DD)
-    #    - chain_id - related options chain id (optional; UUID)
+ #$filters{chain_id} = $filters{chain}->chain_id if $filters{chain};
+ #    - ids - comma separated list of options ids (optional)
+ #    - cursor - paginated list position (optional)
+ #    - tradability - 'tradable' or 'untradable' (optional)
+ #    - state - 'active', 'inactive', or 'expired' (optional)
+ #    - type - 'put' or 'call' (optional)
+ #    - expiration_dates - comma separated list of days (optional; YYYY-MM-DD)
+ #    - chain_id - related options chain id (optional; UUID)
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh => $s,
-        _next_page =>
-            Mojo::URL->new('https://api.robinhood.com/options/instruments/')->query( \%filters ),
-        _class => 'Finance::Robinhood::Options::Instrument'
+          _rh => $s,
+          _next_page =>
+              Mojo::URL->new('https://api.robinhood.com/options/instruments/')
+              ->query(\%filters),
+          _class => 'Finance::Robinhood::Options::Instrument'
     );
 }
 
 sub _test_options_instruments {
-    my $rh      = t::Utility::rh_instance(1);
-    my $options = $rh->options_instruments(
-        chain_id    => $rh->equity_instrument_by_symbol('MSFT')->tradable_chain_id,
-        tradability => 'tradable'
-    );
-    isa_ok( $options,       'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $options->next, 'Finance::Robinhood::Options::Instrument' );
-    is( $options->current->chain_symbol, 'MSFT' );
+    my $rh = t::Utility::rh_instance(1);
+    my $options =
+        $rh->options_instruments(
+              chain_id =>
+                  $rh->equity_instrument_by_symbol('MSFT')->tradable_chain_id,
+              tradability => 'tradable'
+        );
+    isa_ok($options,       'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($options->next, 'Finance::Robinhood::Options::Instrument');
+    is($options->current->chain_symbol, 'MSFT');
 }
 
 =head1 UNSORTED
@@ -1264,15 +1281,15 @@ sub user ( $s ) {
     my $res = $s->_get('https://api.robinhood.com/user/');
     require Finance::Robinhood::User if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::User->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::User->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_user {
     my $rh = t::Utility::rh_instance(1);
     my $me = $rh->user();
-    isa_ok( $me, 'Finance::Robinhood::User' );
+    isa_ok($me, 'Finance::Robinhood::User');
 }
 
 =head2 C<acats_transfers( )>
@@ -1287,17 +1304,17 @@ You need to be logged in for this to work.
 
 sub acats_transfers ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://api.robinhood.com/acats/',
-        _class     => 'Finance::Robinhood::ACATS::Transfer'
+                             _rh        => $s,
+                             _next_page => 'https://api.robinhood.com/acats/',
+                             _class => 'Finance::Robinhood::ACATS::Transfer'
     );
 }
 
 sub _test_acats_transfers {
     my $transfers = t::Utility::rh_instance(1)->acats_transfers;
-    isa_ok( $transfers, 'Finance::Robinhood::Utilities::Iterator' );
+    isa_ok($transfers, 'Finance::Robinhood::Utilities::Iterator');
     skip_all('No ACATS transfers found') if !$transfers->has_next;
-    isa_ok( $transfers->current, 'Finance::Robinhood::ACATS::Transfer' );
+    isa_ok($transfers->current, 'Finance::Robinhood::ACATS::Transfer');
 }
 
 =head2 C<equity_positions( )>
@@ -1323,19 +1340,21 @@ You can filter and modify the results. All options are optional.
 
 =cut
 
-sub equity_positions ( $s, %filters ) {
-    $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false' if defined $filters{nonzero};
+sub equity_positions ($s, %filters) {
+    $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false'
+        if defined $filters{nonzero};
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://api.robinhood.com/positions/')->query( \%filters ),
-        _class     => 'Finance::Robinhood::Equity::Position'
+          _rh        => $s,
+          _next_page => Mojo::URL->new('https://api.robinhood.com/positions/')
+              ->query(\%filters),
+          _class => 'Finance::Robinhood::Equity::Position'
     );
 }
 
 sub _test_equity_positions {
     my $positions = t::Utility::rh_instance(1)->equity_positions;
-    isa_ok( $positions,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $positions->current, 'Finance::Robinhood::Equity::Position' );
+    isa_ok($positions,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($positions->current, 'Finance::Robinhood::Equity::Position');
 }
 
 =head2 C<equity_earnings( ... )>
@@ -1361,40 +1380,43 @@ You must be logged in for any of these to work.
 
 =cut
 
-sub equity_earnings ( $s, %filters ) {
+sub equity_earnings ($s, %filters) {
     $filters{range} = $filters{range} . 'day'
         if defined $filters{range} && $filters{range} =~ m[^\-?\d+$];
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh => $s,
-        _next_page =>
-            Mojo::URL->new('https://api.robinhood.com/marketdata/earnings/')->query( \%filters ),
-        _class => 'Finance::Robinhood::Equity::Earnings'
+          _rh => $s,
+          _next_page =>
+              Mojo::URL->new('https://api.robinhood.com/marketdata/earnings/')
+              ->query(\%filters),
+          _class => 'Finance::Robinhood::Equity::Earnings'
     );
 }
 
 sub _test_equity_earnings {
     my $by_instrument
         = t::Utility::rh_instance(1)
-        ->equity_earnings(
-        instrument => t::Utility::rh_instance(1)->equity_instrument_by_symbol('MSFT') );
-    isa_ok( $by_instrument,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $by_instrument->current, 'Finance::Robinhood::Equity::Earnings' );
-    is( $by_instrument->current->symbol, 'MSFT', 'correct symbol (by instrument)' );
+        ->equity_earnings(instrument =>
+             t::Utility::rh_instance(1)->equity_instrument_by_symbol('MSFT'));
+    isa_ok($by_instrument, 'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($by_instrument->current, 'Finance::Robinhood::Equity::Earnings');
+    is($by_instrument->current->symbol,
+        'MSFT', 'correct symbol (by instrument)');
     #
-    my $by_symbol = t::Utility::rh_instance(1)->equity_earnings( symbol => 'MSFT' );
-    isa_ok( $by_symbol,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $by_symbol->current, 'Finance::Robinhood::Equity::Earnings' );
-    is( $by_symbol->current->symbol, 'MSFT', 'correct symbol (by symbol)' );
+    my $by_symbol
+        = t::Utility::rh_instance(1)->equity_earnings(symbol => 'MSFT');
+    isa_ok($by_symbol,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($by_symbol->current, 'Finance::Robinhood::Equity::Earnings');
+    is($by_symbol->current->symbol, 'MSFT', 'correct symbol (by symbol)');
 
     # Positive range
-    my $p_range = t::Utility::rh_instance(1)->equity_earnings( range => 7 );
-    isa_ok( $p_range,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $p_range->current, 'Finance::Robinhood::Equity::Earnings' );
+    my $p_range = t::Utility::rh_instance(1)->equity_earnings(range => 7);
+    isa_ok($p_range,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($p_range->current, 'Finance::Robinhood::Equity::Earnings');
 
     # Negative range
-    my $n_range = t::Utility::rh_instance(1)->equity_earnings( range => -7 );
-    isa_ok( $n_range,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $n_range->current, 'Finance::Robinhood::Equity::Earnings' );
+    my $n_range = t::Utility::rh_instance(1)->equity_earnings(range => -7);
+    isa_ok($n_range,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($n_range->current, 'Finance::Robinhood::Equity::Earnings');
 }
 
 =head1 FOREX METHODS
@@ -1415,16 +1437,17 @@ You need to be logged in and have access to Robinhood Crypto for this to work.
 
 sub forex_accounts( $s ) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://nummus.robinhood.com/accounts/'),
-        _class     => 'Finance::Robinhood::Forex::Account'
+                 _rh => $s,
+                 _next_page =>
+                     Mojo::URL->new('https://nummus.robinhood.com/accounts/'),
+                 _class => 'Finance::Robinhood::Forex::Account'
     );
 }
 
 sub _test_forex_accounts {
     my $halts = t::Utility::rh_instance(1)->forex_accounts;
-    isa_ok( $halts,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $halts->current, 'Finance::Robinhood::Forex::Account' );
+    isa_ok($halts,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($halts->current, 'Finance::Robinhood::Forex::Account');
 }
 
 =head2 C<forex_account_by_id( ... )>
@@ -1436,19 +1459,19 @@ for this to work.
 
 =cut
 
-sub forex_account_by_id ( $s, $id ) {
-    my $res = $s->_get( 'https://nummus.robinhood.com/accounts/' . $id . '/' );
+sub forex_account_by_id ($s, $id) {
+    my $res = $s->_get('https://nummus.robinhood.com/accounts/' . $id . '/');
     require Finance::Robinhood::Forex::Account if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Forex::Account->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Account->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_forex_account_by_id {
     my $rh   = t::Utility::rh_instance(1);
-    my $acct = $rh->forex_account_by_id( $rh->forex_accounts->current->id );
-    isa_ok( $acct, 'Finance::Robinhood::Forex::Account' );
+    my $acct = $rh->forex_account_by_id($rh->forex_accounts->current->id);
+    isa_ok($acct, 'Finance::Robinhood::Forex::Account');
 }
 
 =head2 C<forex_halts( [...] )>
@@ -1466,23 +1489,27 @@ You need to be logged in and have access to Robinhood Crypto for this to work.
 
 =cut
 
-sub forex_halts ( $s, %filters ) {
-    $filters{active} = $filters{active} ? 'true' : 'false' if defined $filters{active};
+sub forex_halts ($s, %filters) {
+    $filters{active} = $filters{active} ? 'true' : 'false'
+        if defined $filters{active};
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://nummus.robinhood.com/halts/')->query( \%filters ),
-        _class     => 'Finance::Robinhood::Forex::Halt'
+           _rh        => $s,
+           _next_page => Mojo::URL->new('https://nummus.robinhood.com/halts/')
+               ->query(\%filters),
+           _class => 'Finance::Robinhood::Forex::Halt'
     );
 }
 
 sub _test_forex_halts {
     my $halts = t::Utility::rh_instance(1)->forex_halts;
-    isa_ok( $halts,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $halts->current, 'Finance::Robinhood::Forex::Halt' );
+    isa_ok($halts,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($halts->current, 'Finance::Robinhood::Forex::Halt');
     #
-    is(
-        scalar $halts->all > scalar t::Utility::rh_instance(1)->forex_halts( active => 1 )->all,
-        1, 'active => 1 works'
+    is( scalar $halts->all
+            > scalar t::Utility::rh_instance(1)->forex_halts(active => 1)
+            ->all,
+        1,
+        'active => 1 works'
     );
 }
 
@@ -1497,17 +1524,17 @@ You need to be logged in for this to work.
 
 sub forex_currencies ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://nummus.robinhood.com/currencies/',
-        _class     => 'Finance::Robinhood::Forex::Currency'
+                     _rh        => $s,
+                     _next_page => 'https://nummus.robinhood.com/currencies/',
+                     _class     => 'Finance::Robinhood::Forex::Currency'
     );
 }
 
 sub _test_forex_currencies {
     my $rh         = t::Utility::rh_instance(1);
     my $currencies = $rh->forex_currencies;
-    isa_ok( $currencies,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $currencies->current, 'Finance::Robinhood::Forex::Currency' );
+    isa_ok($currencies,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($currencies->current, 'Finance::Robinhood::Forex::Currency');
 }
 
 =head2 C<forex_currency_by_id( ... )>
@@ -1519,19 +1546,21 @@ for this to work.
 
 =cut
 
-sub forex_currency_by_id ( $s, $id ) {
-    my $res = $s->_get( 'https://nummus.robinhood.com/currencies/' . $id . '/' );
+sub forex_currency_by_id ($s, $id) {
+    my $res
+        = $s->_get('https://nummus.robinhood.com/currencies/' . $id . '/');
     require Finance::Robinhood::Forex::Currency if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Forex::Currency->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Currency->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_forex_currency_by_id {
-    my $rh  = t::Utility::rh_instance(1);
-    my $usd = $rh->forex_currency_by_id('1072fc76-1862-41ab-82c2-485837590762');
-    isa_ok( $usd, 'Finance::Robinhood::Forex::Currency' );
+    my $rh = t::Utility::rh_instance(1);
+    my $usd
+        = $rh->forex_currency_by_id('1072fc76-1862-41ab-82c2-485837590762');
+    isa_ok($usd, 'Finance::Robinhood::Forex::Currency');
 }
 
 =head2 C<forex_pairs( )>
@@ -1545,17 +1574,17 @@ need to be logged in for this to work.
 
 sub forex_pairs ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://nummus.robinhood.com/currency_pairs/',
-        _class     => 'Finance::Robinhood::Forex::Pair'
+                 _rh        => $s,
+                 _next_page => 'https://nummus.robinhood.com/currency_pairs/',
+                 _class     => 'Finance::Robinhood::Forex::Pair'
     );
 }
 
 sub _test_forex_pairs {
     my $rh         = t::Utility::rh_instance(1);
     my $watchlists = $rh->forex_pairs;
-    isa_ok( $watchlists,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $watchlists->current, 'Finance::Robinhood::Forex::Pair' );
+    isa_ok($watchlists,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($watchlists->current, 'Finance::Robinhood::Forex::Pair');
 }
 
 =head2 C<forex_pair_by_id( ... )>
@@ -1567,19 +1596,22 @@ this to work.
 
 =cut
 
-sub forex_pair_by_id ( $s, $id ) {
-    my $res = $s->_get( 'https://nummus.robinhood.com/currency_pairs/' . $id . '/' );
+sub forex_pair_by_id ($s, $id) {
+    my $res = $s->_get(
+                  'https://nummus.robinhood.com/currency_pairs/' . $id . '/');
     require Finance::Robinhood::Forex::Pair if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Forex::Pair->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Pair->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_forex_pair_by_id {
-    my $rh      = t::Utility::rh_instance(1);
-    my $btc_usd = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');    # BTC-USD
-    isa_ok( $btc_usd, 'Finance::Robinhood::Forex::Pair' );
+    my $rh = t::Utility::rh_instance(1);
+    my $btc_usd
+        = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511')
+        ;    # BTC-USD
+    isa_ok($btc_usd, 'Finance::Robinhood::Forex::Pair');
 }
 
 =head2 C<forex_pair_by_symbol( ... )>
@@ -1591,19 +1623,20 @@ this to work.
 
 =cut
 
-sub forex_pair_by_symbol ( $s, $id ) {
-    my $res = $s->_get( 'https://nummus.robinhood.com/currency_pairs/?symbols=' . $id );
+sub forex_pair_by_symbol ($s, $id) {
+    my $res = $s->_get(
+               'https://nummus.robinhood.com/currency_pairs/?symbols=' . $id);
     require Finance::Robinhood::Forex::Pair if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Forex::Pair->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Pair->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_forex_pair_by_symbol {
     my $rh      = t::Utility::rh_instance(1);
     my $btc_usd = $rh->forex_pair_by_symbol('BTCUSD');    # BTC-USD
-    isa_ok( $btc_usd, 'Finance::Robinhood::Forex::Pair' );
+    isa_ok($btc_usd, 'Finance::Robinhood::Forex::Pair');
 }
 
 =head2 C<forex_watchlists( )>
@@ -1617,17 +1650,17 @@ returned. You need to be logged in for this to work.
 
 sub forex_watchlists ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://nummus.robinhood.com/watchlists/',
-        _class     => 'Finance::Robinhood::Forex::Watchlist'
+                     _rh        => $s,
+                     _next_page => 'https://nummus.robinhood.com/watchlists/',
+                     _class     => 'Finance::Robinhood::Forex::Watchlist'
     );
 }
 
 sub _test_forex_watchlists {
     my $rh         = t::Utility::rh_instance(1);
     my $watchlists = $rh->forex_watchlists;
-    isa_ok( $watchlists,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $watchlists->current, 'Finance::Robinhood::Forex::Watchlist' );
+    isa_ok($watchlists,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($watchlists->current, 'Finance::Robinhood::Forex::Watchlist');
 }
 
 =head2 C<forex_watchlist_by_id( ... )>
@@ -1639,19 +1672,21 @@ for this to work.
 
 =cut
 
-sub forex_watchlist_by_id ( $s, $id ) {
-    my $res = $s->_get( 'https://nummus.robinhood.com/watchlists/' . $id . '/' );
+sub forex_watchlist_by_id ($s, $id) {
+    my $res
+        = $s->_get('https://nummus.robinhood.com/watchlists/' . $id . '/');
     require Finance::Robinhood::Forex::Watchlist if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Forex::Watchlist->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Watchlist->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_forex_watchlist_by_id {
-    my $rh        = t::Utility::rh_instance(1);
-    my $watchlist = $rh->forex_watchlist_by_id( $rh->forex_watchlists->current->id );
-    isa_ok( $watchlist, 'Finance::Robinhood::Forex::Watchlist' );
+    my $rh = t::Utility::rh_instance(1);
+    my $watchlist
+        = $rh->forex_watchlist_by_id($rh->forex_watchlists->current->id);
+    isa_ok($watchlist, 'Finance::Robinhood::Forex::Watchlist');
 }
 
 =head2 C<forex_activations( )>
@@ -1665,17 +1700,17 @@ returned. You need to be logged in for this to work.
 
 sub forex_activations ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://nummus.robinhood.com/activations/',
-        _class     => 'Finance::Robinhood::Forex::Activation'
+                    _rh        => $s,
+                    _next_page => 'https://nummus.robinhood.com/activations/',
+                    _class     => 'Finance::Robinhood::Forex::Activation'
     );
 }
 
 sub _test_forex_activations {
     my $rh         = t::Utility::rh_instance(1);
     my $watchlists = $rh->forex_activations;
-    isa_ok( $watchlists,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $watchlists->current, 'Finance::Robinhood::Forex::Activation' );
+    isa_ok($watchlists,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($watchlists->current, 'Finance::Robinhood::Forex::Activation');
 }
 
 =head2 C<forex_activation_by_id( ... )>
@@ -1687,20 +1722,21 @@ in for this to work.
 
 =cut
 
-sub forex_activation_by_id ( $s, $id ) {
-    my $res = $s->_get( 'https://nummus.robinhood.com/activations/' . $id . '/' );
+sub forex_activation_by_id ($s, $id) {
+    my $res
+        = $s->_get('https://nummus.robinhood.com/activations/' . $id . '/');
     require Finance::Robinhood::Forex::Activation if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Forex::Activation->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Activation->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_forex_activation_by_id {
     my $rh         = t::Utility::rh_instance(1);
     my $activation = $rh->forex_activations->current;
-    my $forex      = $rh->forex_activation_by_id( $activation->id );    # Cheat
-    isa_ok( $forex, 'Finance::Robinhood::Forex::Activation' );
+    my $forex      = $rh->forex_activation_by_id($activation->id);    # Cheat
+    isa_ok($forex, 'Finance::Robinhood::Forex::Activation');
 }
 
 =head2 C<forex_portfolios( )>
@@ -1714,17 +1750,17 @@ returned. You need to be logged in for this to work.
 
 sub forex_portfolios ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => 'https://nummus.robinhood.com/portfolios/',
-        _class     => 'Finance::Robinhood::Forex::Portfolio'
+                     _rh        => $s,
+                     _next_page => 'https://nummus.robinhood.com/portfolios/',
+                     _class     => 'Finance::Robinhood::Forex::Portfolio'
     );
 }
 
 sub _test_forex_portfolios {
     my $rh         = t::Utility::rh_instance(1);
     my $portfolios = $rh->forex_portfolios;
-    isa_ok( $portfolios,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $portfolios->current, 'Finance::Robinhood::Forex::Portfolio' );
+    isa_ok($portfolios,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($portfolios->current, 'Finance::Robinhood::Forex::Portfolio');
 }
 
 =head2 C<forex_portfolio_by_id( ... )>
@@ -1736,20 +1772,21 @@ for this to work.
 
 =cut
 
-sub forex_portfolio_by_id ( $s, $id ) {
-    my $res = $s->_get( 'https://nummus.robinhood.com/portfolios/' . $id . '/' );
+sub forex_portfolio_by_id ($s, $id) {
+    my $res
+        = $s->_get('https://nummus.robinhood.com/portfolios/' . $id . '/');
     require Finance::Robinhood::Forex::Portfolio if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Forex::Portfolio->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Portfolio->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_forex_portfolio_by_id {
     my $rh        = t::Utility::rh_instance(1);
     my $portfolio = $rh->forex_portfolios->current;
-    my $forex     = $rh->forex_portfolio_by_id( $portfolio->id );    # Cheat
-    isa_ok( $forex, 'Finance::Robinhood::Forex::Portfolio' );
+    my $forex     = $rh->forex_portfolio_by_id($portfolio->id);    # Cheat
+    isa_ok($forex, 'Finance::Robinhood::Forex::Portfolio');
 }
 
 =head2 C<forex_activation_request( ... )>
@@ -1784,19 +1821,25 @@ This is an optional boolean value.
 
 =cut
 
-sub forex_activation_request ( $s, %filters ) {
-    $filters{type} = $filters{type} ? 'true' : 'false' if defined $filters{type};
-    my $res = $s->_post('https://nummus.robinhood.com/activations/')->query( \%filters );
+sub forex_activation_request ($s, %filters) {
+    $filters{type} = $filters{type} ? 'true' : 'false'
+        if defined $filters{type};
+    my $res = $s->_post('https://nummus.robinhood.com/activations/')
+        ->query(\%filters);
     require Finance::Robinhood::Forex::Activation if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Forex::Activation->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Activation->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_forex_activation_request {
-    diag('This is one of those methods that is almost impossible to test from this side.');
-    pass('Rather not have a million activation attempts attached to my account');
+    diag(
+        'This is one of those methods that is almost impossible to test from this side.'
+    );
+    pass(
+        'Rather not have a million activation attempts attached to my account'
+    );
 }
 
 =head2 C<forex_orders( )>
@@ -1810,17 +1853,17 @@ You need to be logged in for this to work.
 
 sub forex_orders ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://nummus.robinhood.com/orders/'),
-        _class     => 'Finance::Robinhood::Forex::Order'
+         _rh        => $s,
+         _next_page => Mojo::URL->new('https://nummus.robinhood.com/orders/'),
+         _class     => 'Finance::Robinhood::Forex::Order'
     );
 }
 
 sub _test_forex_orders {
     my $rh     = t::Utility::rh_instance(1);
     my $orders = $rh->forex_orders;
-    isa_ok( $orders,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $orders->current, 'Finance::Robinhood::Forex::Order' );
+    isa_ok($orders,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($orders->current, 'Finance::Robinhood::Forex::Order');
 }
 
 =head2 C<forex_order_by_id( ... )>
@@ -1832,20 +1875,20 @@ this to work.
 
 =cut
 
-sub forex_order_by_id ( $s, $id ) {
-    my $res = $s->_get( 'https://nummus.robinhood.com/orders/' . $id . '/' );
+sub forex_order_by_id ($s, $id) {
+    my $res = $s->_get('https://nummus.robinhood.com/orders/' . $id . '/');
     require Finance::Robinhood::Forex::Order if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Forex::Order->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Order->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_forex_order_by_id {
     my $rh    = t::Utility::rh_instance(1);
     my $order = $rh->forex_orders->current;
-    my $forex = $rh->forex_order_by_id( $order->id );    # Cheat
-    isa_ok( $forex, 'Finance::Robinhood::Forex::Order' );
+    my $forex = $rh->forex_order_by_id($order->id);    # Cheat
+    isa_ok($forex, 'Finance::Robinhood::Forex::Order');
 }
 
 =head2 C<forex_holdings( )>
@@ -1869,19 +1912,21 @@ You can filter and modify the results. All options are optional.
 
 =cut
 
-sub forex_holdings ( $s, %filters ) {
-    $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false' if defined $filters{nonzero};
+sub forex_holdings ($s, %filters) {
+    $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false'
+        if defined $filters{nonzero};
     Finance::Robinhood::Utilities::Iterator->new(
         _rh        => $s,
-        _next_page => Mojo::URL->new('https://nummus.robinhood.com/holdings/')->query( \%filters ),
-        _class     => 'Finance::Robinhood::Forex::Holding'
+        _next_page => Mojo::URL->new('https://nummus.robinhood.com/holdings/')
+            ->query(\%filters),
+        _class => 'Finance::Robinhood::Forex::Holding'
     );
 }
 
 sub _test_forex_holdings {
     my $positions = t::Utility::rh_instance(1)->forex_holdings;
-    isa_ok( $positions,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $positions->current, 'Finance::Robinhood::Forex::Holding' );
+    isa_ok($positions,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($positions->current, 'Finance::Robinhood::Forex::Holding');
 }
 
 =head2 C<forex_holding_by_id( ... )>
@@ -1893,19 +1938,19 @@ for this to work.
 
 =cut
 
-sub forex_holding_by_id ( $s, $id ) {
-    my $res = $s->_get( 'https://nummus.robinhood.com/holdings/' . $id . '/' );
+sub forex_holding_by_id ($s, $id) {
+    my $res = $s->_get('https://nummus.robinhood.com/holdings/' . $id . '/');
     require Finance::Robinhood::Forex::Holding if $res->is_success;
     return $res->is_success
-        ? Finance::Robinhood::Forex::Holding->new( _rh => $s, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Holding->new(_rh => $s, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_forex_holding_by_id {
     my $rh      = t::Utility::rh_instance(1);
-    my $holding = $rh->forex_holding_by_id( $rh->forex_holdings->current->id );
-    isa_ok( $holding, 'Finance::Robinhood::Forex::Holding' );
+    my $holding = $rh->forex_holding_by_id($rh->forex_holdings->current->id);
+    isa_ok($holding, 'Finance::Robinhood::Forex::Holding');
 }
 
 =head1 LEGAL

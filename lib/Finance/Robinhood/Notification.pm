@@ -30,19 +30,18 @@ sub _test__init {
     my $notification;
     do {
         $notification = $notifications->next;
-    } while $notification && $notification->type ne 'referral_hook_asset_stock';
+        } while $notification &&
+        $notification->type ne 'referral_hook_asset_stock';
     $notification // skip_all('Failed to fine executied equity order');
-    isa_ok( $notification, __PACKAGE__ );
-    t::Utility::stash( 'CARD', $notification );    #  Store it for later
+    isa_ok($notification, __PACKAGE__);
+    t::Utility::stash('CARD', $notification);    #  Store it for later
 }
-
-use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('CARD') // skip_all();
-    like(
-        +t::Utility::stash('CARD'),
-        qr'^https://midlands.robinhood.com/notifications/stack/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/$'i
+    like(+t::Utility::stash('CARD'),
+         qr'^https://midlands.robinhood.com/notifications/stack/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/$'i
     );
 }
 #
@@ -90,9 +89,11 @@ What sort of notification is is. C<news>, C<top_sp500_gainers>, etc.
 
 =cut
 
-has [
-    'call_to_action', 'fixed', 'font_size', 'icon', 'message', 'show_if_unsupported',
-    'side_image',     'title', 'type'
+has ['call_to_action', 'fixed',
+     'font_size',      'icon',
+     'message',        'show_if_unsupported',
+     'side_image',     'title',
+     'type'
 ];
 
 =head2 C<action( )>
@@ -103,12 +104,12 @@ notification is activated.
 =cut
 
 sub action($s) {
-    Mojo::URL->new( $s->{action} );
+    Mojo::URL->new($s->{action});
 }
 
 sub _test_action {
     t::Utility::stash('CARD') // skip_all();
-    isa_ok( t::Utility::stash('CARD')->action, 'Mojo::URL' );
+    isa_ok(t::Utility::stash('CARD')->action, 'Mojo::URL');
 }
 
 =head2 C<time( )>
@@ -122,12 +123,12 @@ Note that some notifications do not have a timestamp.
 =cut
 
 sub time($s) {
-    $s->{time} ? Time::Moment->from_string( $s->{time} ) : ();
+    $s->{time} ? Time::Moment->from_string($s->{time}) : ();
 }
 
 sub _test_time {
     t::Utility::stash('CARD') // skip_all();
-    isa_ok( t::Utility::stash('CARD')->time, 'Time::Moment' );
+    isa_ok(t::Utility::stash('CARD')->time, 'Time::Moment');
 }
 
 =head2 C<dismiss( )>
@@ -139,7 +140,7 @@ Marks the notification as read and hides it from the stack.
 =cut
 
 sub dismiss ($s) {
-    $s->_rh->_post( $s->{url} . 'dismiss/' )->is_success;
+    $s->_rh->_post($s->{url} . 'dismiss/')->is_success;
 }
 
 sub _test_dismiss {    # I'd rather not mark a notification as read...
@@ -159,9 +160,8 @@ sub id($s) {
 
 sub _test_id {
     t::Utility::stash('CARD') // skip_all();
-    like(
-        t::Utility::stash('CARD')->id,
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    like(t::Utility::stash('CARD')->id,
+         qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
     );
 }
 

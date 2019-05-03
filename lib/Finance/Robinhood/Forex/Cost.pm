@@ -25,18 +25,16 @@ use Finance::Robinhood::Forex::Currency;
 sub _test__init {
     my $rh = t::Utility::rh_instance(1);
     my ($cost) = $rh->forex_holdings->current->cost_bases;
-
     $cost // skip_all('No cost basis found');
-    isa_ok( $cost, __PACKAGE__ );
-    t::Utility::stash( 'COST_BASIS', $cost );    #  Store it for later
+    isa_ok($cost, __PACKAGE__);
+    t::Utility::stash('COST_BASIS', $cost);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{id} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{id} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('COST_BASIS') // skip_all();
-    like(
-        +t::Utility::stash('COST_BASIS'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    like(+t::Utility::stash('COST_BASIS'),
+         qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
     );
 }
 #
@@ -70,9 +68,9 @@ has _rh => undef => weak => 1;
 
 =cut
 
-has [
-    'direct_quantity', 'direct_cost_basis', 'intraday_cost_basis', 'intraday_quantity',
-    'marked_quantity', 'marked_cost_basis'
+has ['direct_quantity',     'direct_cost_basis',
+     'intraday_cost_basis', 'intraday_quantity',
+     'marked_quantity',     'marked_cost_basis'
 ];
 
 =head2 C<currency( )>
@@ -82,12 +80,13 @@ Returns a Finance::Robinhood::Forex::Currency object.
 =cut
 
 sub currency ($s) {
-    $s->_rh->forex_currency_by_id( $s->{currency_id} );
+    $s->_rh->forex_currency_by_id($s->{currency_id});
 }
 
 sub _test_currency {
     t::Utility::stash('COST_BASIS') // skip_all();
-    isa_ok( t::Utility::stash('COST_BASIS')->currency, 'Finance::Robinhood::Forex::Currency' );
+    isa_ok(t::Utility::stash('COST_BASIS')->currency,
+           'Finance::Robinhood::Forex::Currency');
 }
 
 =head1 LEGAL

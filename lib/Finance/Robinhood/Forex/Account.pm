@@ -26,16 +26,15 @@ use Time::Moment;
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $acct = $rh->forex_accounts->current;
-    isa_ok( $acct, __PACKAGE__ );
-    t::Utility::stash( 'ACCOUNT', $acct );    #  Store it for later
+    isa_ok($acct, __PACKAGE__);
+    t::Utility::stash('ACCOUNT', $acct);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{id} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{id} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('ACCOUNT') // skip_all();
-    like(
-        +t::Utility::stash('ACCOUNT'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    like(+t::Utility::stash('ACCOUNT'),
+         qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
     );
 }
 #
@@ -69,24 +68,24 @@ Returns a UUID.
 
 =cut
 
-has [ 'id', 'status', 'status_reason_code', 'user_id' ];
+has ['id', 'status', 'status_reason_code', 'user_id'];
 
 sub created_at ($s) {
-    Time::Moment->from_string( $s->{created_at} );
+    Time::Moment->from_string($s->{created_at});
 }
 
 sub _test_created_at {
     t::Utility::stash('ACCOUNT') // skip_all();
-    isa_ok( t::Utility::stash('ACCOUNT')->created_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('ACCOUNT')->created_at, 'Time::Moment');
 }
 
 sub updated_at ($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
     t::Utility::stash('ACCOUNT') // skip_all();
-    isa_ok( t::Utility::stash('ACCOUNT')->updated_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('ACCOUNT')->updated_at, 'Time::Moment');
 }
 
 =head1 LEGAL

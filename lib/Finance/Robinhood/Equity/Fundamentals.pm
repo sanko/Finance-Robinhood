@@ -29,8 +29,8 @@ use Finance::Robinhood::Equity::Instrument;
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $tsla = $rh->equity_instrument_by_symbol('TSLA')->fundamentals();
-    isa_ok( $tsla, __PACKAGE__ );
-    t::Utility::stash( 'TSLA', $tsla );    #  Store it for later
+    isa_ok($tsla, __PACKAGE__);
+    t::Utility::stash('TSLA', $tsla);    #  Store it for later
 }
 #
 has _rh => undef => weak => 1;
@@ -121,17 +121,16 @@ The year the company was founded, if applicable.
 
 =cut
 
-has [
-    'average_volume',     'average_volume_2_weeks',
-    'ceo',                'description',
-    'dividend_yield',     'headquarters_city',
-    'headquarters_state', 'high',
-    'high_52_weeks',      'industry',
-    'low',                'low_52_weeks',
-    'market_cap',         'num_employees',
-    'open',               'pe_ratio',
-    'sector',             'shares_outstanding',
-    'volume',             'year_founded',
+has ['average_volume',     'average_volume_2_weeks',
+     'ceo',                'description',
+     'dividend_yield',     'headquarters_city',
+     'headquarters_state', 'high',
+     'high_52_weeks',      'industry',
+     'low',                'low_52_weeks',
+     'market_cap',         'num_employees',
+     'open',               'pe_ratio',
+     'sector',             'shares_outstanding',
+     'volume',             'year_founded',
 ];
 
 =head2 C<instrument( )>
@@ -141,16 +140,18 @@ Loop back to the equity instrument.
 =cut
 
 sub instrument($s) {
-    my $res = $s->_rh->_get( $s->{instrument} );
+    my $res = $s->_rh->_get($s->{instrument});
     $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
+                                                      %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_instrument {
     t::Utility::stash('TSLA') // skip_all();
-    isa_ok( t::Utility::stash('TSLA')->instrument, 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok(t::Utility::stash('TSLA')->instrument,
+           'Finance::Robinhood::Equity::Instrument');
 }
 
 =head1 LEGAL

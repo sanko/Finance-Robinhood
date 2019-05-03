@@ -24,16 +24,15 @@ use Mojo::URL;
 sub _test__init {
     my $rh  = t::Utility::rh_instance(1);
     my $act = $rh->forex_portfolios->current;
-    isa_ok( $act, __PACKAGE__ );
-    t::Utility::stash( 'PORTFOLIO', $act );    #  Store it for later
+    isa_ok($act, __PACKAGE__);
+    t::Utility::stash('PORTFOLIO', $act);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{id} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{id} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('PORTFOLIO') // skip_all();
-    like(
-        +t::Utility::stash('PORTFOLIO'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    like(+t::Utility::stash('PORTFOLIO'),
+         qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
     );
 }
 #
@@ -71,11 +70,10 @@ Returns a dollar amount.
 
 =cut
 
-has [
-    'account_id',            'equity',
-    'extended_hours_equity', 'extended_hours_market_value',
-    'id',                    'market_value',
-    'previous_close'
+has ['account_id',            'equity',
+     'extended_hours_equity', 'extended_hours_market_value',
+     'id',                    'market_value',
+     'previous_close'
 ];
 
 =head2 C<updated_at( )>
@@ -85,12 +83,12 @@ Returns a Time::Moment object.
 =cut
 
 sub updated_at ($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
     t::Utility::stash('PORTFOLIO') // skip_all();
-    isa_ok( t::Utility::stash('PORTFOLIO')->updated_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('PORTFOLIO')->updated_at, 'Time::Moment');
 }
 
 =head1 LEGAL

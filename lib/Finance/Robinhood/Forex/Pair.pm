@@ -27,17 +27,17 @@ use Finance::Robinhood::Forex::Quote;
 
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
-    my $pair = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');    # BTC-USD
-    isa_ok( $pair, __PACKAGE__ );
-    t::Utility::stash( 'PAIR', $pair );    #  Store it for later
+    my $pair = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511')
+        ;    # BTC-USD
+    isa_ok($pair, __PACKAGE__);
+    t::Utility::stash('PAIR', $pair);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{id} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{id} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('PAIR') // skip_all();
-    like(
-        +t::Utility::stash('PAIR'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    like(+t::Utility::stash('PAIR'),
+         qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
     );
 }
 #
@@ -86,10 +86,11 @@ Either C<tradable> or C<untradable>.
 
 =cut
 
-has [
-    'id', 'display_only', 'max_order_size', 'min_order_price_increment',
-    'min_order_quantity_increment',
-    'min_order_size', 'name', 'symbol', 'tradability'
+has ['id',                           'display_only',
+     'max_order_size',               'min_order_price_increment',
+     'min_order_quantity_increment', 'min_order_size',
+     'name',                         'symbol',
+     'tradability'
 ];
 
 =head2 C<asset_currency( )>
@@ -99,12 +100,14 @@ Returns a Finance::Robinhood::Forex::Currency object.
 =cut
 
 sub asset_currency ($s) {
-    Finance::Robinhood::Forex::Currency->new( _rh => $s, %{ $s->{asset_currency} } );
+    Finance::Robinhood::Forex::Currency->new(_rh => $s,
+                                             %{$s->{asset_currency}});
 }
 
 sub _test_asset_currency {
     t::Utility::stash('PAIR') // skip_all();
-    isa_ok( t::Utility::stash('PAIR')->asset_currency, 'Finance::Robinhood::Forex::Currency' );
+    isa_ok(t::Utility::stash('PAIR')->asset_currency,
+           'Finance::Robinhood::Forex::Currency');
 }
 
 =head2 C<quote_currency( )>
@@ -114,12 +117,14 @@ Returns a Finance::Robinhood::Forex::Currency object.
 =cut
 
 sub quote_currency ($s) {
-    Finance::Robinhood::Forex::Currency->new( _rh => $s, %{ $s->{quote_currency} } );
+    Finance::Robinhood::Forex::Currency->new(_rh => $s,
+                                             %{$s->{quote_currency}});
 }
 
 sub _test_quote_currency {
     t::Utility::stash('PAIR') // skip_all();
-    isa_ok( t::Utility::stash('PAIR')->quote_currency, 'Finance::Robinhood::Forex::Currency' );
+    isa_ok(t::Utility::stash('PAIR')->quote_currency,
+           'Finance::Robinhood::Forex::Currency');
 }
 
 =head2 C<quote( )>
@@ -135,16 +140,18 @@ You do not need to be logged in for this to work.
 
 sub quote ($s) {
     my $res
-        = $s->_rh->_get( 'https://api.robinhood.com/marketdata/forex/quotes/' . $s->{id} . '/' );
+        = $s->_rh->_get('https://api.robinhood.com/marketdata/forex/quotes/' .
+                        $s->{id} . '/');
     $res->is_success
-        ? Finance::Robinhood::Forex::Quote->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Quote->new(_rh => $s->_rh, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_quote {
     t::Utility::stash('PAIR') // skip_all();
-    isa_ok( t::Utility::stash('PAIR')->quote(), 'Finance::Robinhood::Forex::Quote' );
+    isa_ok(t::Utility::stash('PAIR')->quote(),
+           'Finance::Robinhood::Forex::Quote');
 }
 
 =head2 C<historicals( ... )>
@@ -197,26 +204,26 @@ You may provide the following arguments:
 
 =cut
 
-sub historicals ( $s, %filters ) {
+sub historicals ($s, %filters) {
     my $res = $s->_rh->_get(
-        Mojo::URL->new( 'https://api.robinhood.com/marketdata/forex/historicals/' . $s->id . '/' )
-            ->query( \%filters ),
+               Mojo::URL->new(
+                   'https://api.robinhood.com/marketdata/forex/historicals/' .
+                       $s->id . '/'
+               )->query(\%filters),
     );
-
     require Finance::Robinhood::Forex::Historicals if $res->is_success;
     $res->is_success
-        ? Finance::Robinhood::Forex::Historicals->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Historicals->new(_rh => $s->_rh,
+                                                      %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_historicals {
     t::Utility::stash('PAIR') // skip_all();
-    warn t::Utility::stash('PAIR')->historicals( interval => 'hour' );
-    isa_ok(
-        t::Utility::stash('PAIR')->historicals( interval => 'hour' ),
-        'Finance::Robinhood::Forex::Historicals'
-    );
+    warn t::Utility::stash('PAIR')->historicals(interval => 'hour');
+    isa_ok(t::Utility::stash('PAIR')->historicals(interval => 'hour'),
+           'Finance::Robinhood::Forex::Historicals');
 }
 
 =head2 C<buy( ... )>
@@ -240,37 +247,35 @@ this:
 
 =cut
 
-sub buy ( $s, $quantity, $account = $s->_rh->forex_accounts->next ) {
-    Finance::Robinhood::Forex::OrderBuilder->new(
-        _rh      => $s->_rh,
-        _pair    => $s,
-        _account => $account,
-        quantity => $quantity
+sub buy ($s, $quantity, $account = $s->_rh->forex_accounts->next) {
+    Finance::Robinhood::Forex::OrderBuilder->new(_rh      => $s->_rh,
+                                                 _pair    => $s,
+                                                 _account => $account,
+                                                 quantity => $quantity
     )->buy;
 }
 
 sub _test_buy {
-    my $rh      = t::Utility::rh_instance(1);
-    my $btc_usd = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
+    my $rh = t::Utility::rh_instance(1);
+    my $btc_usd
+        = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
     #
     my $market = $btc_usd->buy(4);
-    is(
-        { $market->_dump(1) },
-        {
-            account          => '--private--',
-            currency_pair_id => '3d961844-d360-45fc-989b-f6fca761d511',
-            quantity         => 4,
-            side             => 'buy',
-            type             => 'market',
-            time_in_force    => 'gtc',
-            ref_id           => '00000000-0000-0000-0000-000000000000',
-            price            => '5.00'
+    is( {$market->_dump(1)},
+        {account          => '--private--',
+         currency_pair_id => '3d961844-d360-45fc-989b-f6fca761d511',
+         quantity         => 4,
+         side             => 'buy',
+         type             => 'market',
+         time_in_force    => 'gtc',
+         ref_id           => '00000000-0000-0000-0000-000000000000',
+         price            => '5.00'
         }
     );
 
     #->stop(43)->limit(55);#->submit;
     #ddx \{$order->_dump};
-    todo( "Write actual tests!" => sub { pass('ugh') } );
+    todo("Write actual tests!" => sub { pass('ugh') });
 
     #my $news = t::Utility::stash('MSFT')->news;
     #isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );
@@ -298,37 +303,35 @@ this:
 
 =cut
 
-sub sell ( $s, $quantity, $account = $s->_rh->forex_accounts->next ) {
-    Finance::Robinhood::Forex::OrderBuilder->new(
-        _rh      => $s->_rh,
-        _pair    => $s,
-        _account => $account,
-        quantity => $quantity
+sub sell ($s, $quantity, $account = $s->_rh->forex_accounts->next) {
+    Finance::Robinhood::Forex::OrderBuilder->new(_rh      => $s->_rh,
+                                                 _pair    => $s,
+                                                 _account => $account,
+                                                 quantity => $quantity
     )->sell;
 }
 
 sub _test_sell {
-    my $rh      = t::Utility::rh_instance(1);
-    my $btc_usd = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
+    my $rh = t::Utility::rh_instance(1);
+    my $btc_usd
+        = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
     #
     my $market = $btc_usd->sell(4);
-    is(
-        { $market->_dump(1) },
-        {
-            account          => '--private--',
-            currency_pair_id => '3d961844-d360-45fc-989b-f6fca761d511',
-            quantity         => 4,
-            side             => 'sell',
-            type             => 'market',
-            time_in_force    => 'gtc',
-            ref_id           => '00000000-0000-0000-0000-000000000000',
-            price            => '5.00'
+    is( {$market->_dump(1)},
+        {account          => '--private--',
+         currency_pair_id => '3d961844-d360-45fc-989b-f6fca761d511',
+         quantity         => 4,
+         side             => 'sell',
+         type             => 'market',
+         time_in_force    => 'gtc',
+         ref_id           => '00000000-0000-0000-0000-000000000000',
+         price            => '5.00'
         }
     );
 
     #->stop(43)->limit(55);#->submit;
     #ddx \{$order->_dump};
-    todo( "Write actual tests!" => sub { pass('ugh') } );
+    todo("Write actual tests!" => sub { pass('ugh') });
 
     #my $news = t::Utility::stash('MSFT')->news;
     #isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );

@@ -30,8 +30,10 @@ Error objects stringify to the contents of C<detail( )> or 'Unknown error.'
 our $VERSION = '0.92_002';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
-use overload 'bool' => sub ( $s, @ ) {0},
-    '""'     => sub ( $s, @ ) { $s->detail // 'Unknown error.' },
+use overload 'bool' => sub ($s, @) {0},
+    '""'            => sub ($s, @) {
+    $s->detail // 'Unknown error.';
+    },
     fallback => 1;
 #
 
@@ -45,7 +47,6 @@ service is here.
 =cut
 
 has _rh => undef => weak => 1;
-
 has ['detail'];
 
 =head1 LEGAL

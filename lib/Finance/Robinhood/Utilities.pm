@@ -34,14 +34,19 @@ sub gen_uuid() {
     $srand = srand() if !$srand;
     my $retval = join '', map {
         pack 'I',
-            ( int( rand(0x10000) ) % 0x10000 << 0x10 ) | int( rand(0x10000) ) % 0x10000
+            (int(rand(0x10000)) % 0x10000 << 0x10)
+            | int(rand(0x10000)) % 0x10000
     } 1 .. 4;
-    substr $retval, 6, 1, chr( ord( substr( $retval, 6, 1 ) ) & 0x0f | 0x40 );    # v4
-    return join '-', map { unpack 'H*', $_ } map { substr $retval, 0, $_, '' } ( 4, 2, 2, 2, 6 );
+    substr $retval, 6, 1, chr(ord(substr($retval, 6, 1)) & 0x0f | 0x40);  # v4
+    return join '-',
+        map { unpack 'H*', $_ }
+        map { substr $retval, 0, $_, '' } (4, 2, 2, 2, 6);
 }
 
 sub _test__gen_uuid {
-    like( gen_uuid(), qr[^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}\-[0-9a-f]{12}$]i, 'generated uuid' );
+    like(gen_uuid(),
+         qr[^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}\-[0-9a-f]{12}$]i,
+         'generated uuid');
 }
 
 =head1 LEGAL

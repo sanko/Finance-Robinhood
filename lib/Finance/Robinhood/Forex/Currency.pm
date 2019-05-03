@@ -24,18 +24,19 @@ use Mojo::URL;
 use Finance::Robinhood::Forex::Quote;
 
 sub _test__init {
-    my $rh  = t::Utility::rh_instance(1);
-    my $btc = $rh->forex_currency_by_id('d674efea-e623-4396-9026-39574b92b093');    # BTC
-    isa_ok( $btc, __PACKAGE__ );
-    t::Utility::stash( 'CURRENCY', $btc );    #  Store it for later
+    my $rh = t::Utility::rh_instance(1);
+    my $btc
+        = $rh->forex_currency_by_id('d674efea-e623-4396-9026-39574b92b093')
+        ;    # BTC
+    isa_ok($btc, __PACKAGE__);
+    t::Utility::stash('CURRENCY', $btc);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{id} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{id} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('CURRENCY') // skip_all();
-    like(
-        +t::Utility::stash('CURRENCY'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    like(+t::Utility::stash('CURRENCY'),
+         qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
     );
 }
 #
@@ -70,7 +71,7 @@ This is the asset type. Currently, C<fiat> or C<cryptocurrency>.
 
 =cut
 
-has [ 'brand_color', 'code', 'id', 'increment', 'name', 'type' ];
+has ['brand_color', 'code', 'id', 'increment', 'name', 'type'];
 
 =head2 C<news( )>
 
@@ -80,13 +81,13 @@ Returns an iterator containing Finance::Robinhood::News elements.
 
 =cut
 
-sub news ($s) { $s->_rh->news( $s->id ) }
+sub news ($s) { $s->_rh->news($s->id) }
 
 sub _test_news {
     t::Utility::stash('CURRENCY') // skip_all();
     my $news = t::Utility::stash('CURRENCY')->news;
-    isa_ok( $news,          'Finance::Robinhood::Utilities::Iterator' );
-    isa_ok( $news->current, 'Finance::Robinhood::News' );
+    isa_ok($news,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($news->current, 'Finance::Robinhood::News');
 }
 
 =head2 C<pair( )>
@@ -98,14 +99,15 @@ Returns a Finance::Robinhood::Forex::Pair object.
 =cut
 
 sub pair ($s) {
-    my ($retval) = grep { $_->asset_currency->id eq $s->id } $s->_rh->forex_pairs->all;
+    my ($retval)
+        = grep { $_->asset_currency->id eq $s->id } $s->_rh->forex_pairs->all;
     $retval;
 }
 
 sub _test_pairs {
     t::Utility::stash('CURRENCY') // skip_all();
     my $pair = t::Utility::stash('CURRENCY')->pair;
-    isa_ok( $pair, 'Finance::Robinhood::Forex::Pair' );
+    isa_ok($pair, 'Finance::Robinhood::Forex::Pair');
 }
 
 =head1 LEGAL

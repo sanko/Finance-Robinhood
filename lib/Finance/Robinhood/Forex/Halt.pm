@@ -25,16 +25,15 @@ use Time::Moment;
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $halt = $rh->forex_halts->current;
-    isa_ok( $halt, __PACKAGE__ );
-    t::Utility::stash( 'HALT', $halt );    #  Store it for later
+    isa_ok($halt, __PACKAGE__);
+    t::Utility::stash('HALT', $halt);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{id} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{id} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('HALT') // skip_all();
-    like(
-        +t::Utility::stash('HALT'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    like(+t::Utility::stash('HALT'),
+         qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
     );
 }
 #
@@ -76,25 +75,25 @@ One of the following: C<queued>, C<full>, C<sell_only>, and C<buy_only>.
 
 =cut
 
-has [ 'active', 'pair_id', 'id', 'reason', 'reason_code', 'state' ];
+has ['active', 'pair_id', 'id', 'reason', 'reason_code', 'state'];
 
 sub start_at ($s) {
-    Time::Moment->from_string( $s->{start_at} );
+    Time::Moment->from_string($s->{start_at});
 }
 
 sub _test_start_at {
     t::Utility::stash('HALT') // skip_all();
-    isa_ok( t::Utility::stash('HALT')->start_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('HALT')->start_at, 'Time::Moment');
 }
 
 sub end_at ($s) {
     $s->{end_at} // return ();
-    Time::Moment->from_string( $s->{end_at} );
+    Time::Moment->from_string($s->{end_at});
 }
 
 sub _test_end_at {
     t::Utility::stash('HALT') // skip_all();
-    isa_ok( t::Utility::stash('HALT')->end_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('HALT')->end_at, 'Time::Moment');
 }
 
 =head1 LEGAL

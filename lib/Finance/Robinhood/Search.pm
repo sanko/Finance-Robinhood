@@ -28,19 +28,15 @@ sub _test__init {
     my $msft = $rh->search('microsoft');
     my $btc  = $rh->search('bitcoin');
     my $tag  = $rh->search('New on Robinhood');
-
-    isa_ok( $msft, __PACKAGE__ );
-    t::Utility::stash( 'MSFT', $msft );    #  Store it for later
-
-    isa_ok( $btc, __PACKAGE__ );
-    t::Utility::stash( 'BTC', $btc );      #  Store it for later
-
-    isa_ok( $tag, __PACKAGE__ );
-    t::Utility::stash( 'TAG', $tag );      #  Store it for later
+    isa_ok($msft, __PACKAGE__);
+    t::Utility::stash('MSFT', $msft);    #  Store it for later
+    isa_ok($btc, __PACKAGE__);
+    t::Utility::stash('BTC', $btc);      #  Store it for later
+    isa_ok($tag, __PACKAGE__);
+    t::Utility::stash('TAG', $tag);      #  Store it for later
 }
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
-
 use Finance::Robinhood::Equity::Tag;
 use Finance::Robinhood::Forex::Pair;
 use Finance::Robinhood::Equity::Instrument;
@@ -55,13 +51,14 @@ objects.
 =cut
 
 sub forex_pairs ( $s ) {
-    map { Finance::Robinhood::Forex::Pair->new( _rh => $s->_rh, %$_ ) } @{ $s->{currency_pairs} };
+    map { Finance::Robinhood::Forex::Pair->new(_rh => $s->_rh, %$_) }
+        @{$s->{currency_pairs}};
 }
 
 sub _test_forex_pairs {
     t::Utility::stash('BTC') // skip_all();
     my ($btc_usd) = t::Utility::stash('BTC')->forex_pairs;
-    isa_ok( $btc_usd, 'Finance::Robinhood::Forex::Pair' );
+    isa_ok($btc_usd, 'Finance::Robinhood::Forex::Pair');
 }
 
 =head2 C<equity_instruments( )>
@@ -72,17 +69,14 @@ objects.
 =cut
 
 sub equity_instruments ( $s ) {
-    map { Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %$_ ) }
-        @{ $s->{instruments} };
+    map { Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh, %$_) }
+        @{$s->{instruments}};
 }
 
 sub _test_equity_instruments {
     t::Utility::stash('MSFT') // skip_all();
     my ($instrument) = t::Utility::stash('MSFT')->equity_instruments;
-    isa_ok(
-        $instrument,
-        'Finance::Robinhood::Equity::Instrument'
-    );
+    isa_ok($instrument, 'Finance::Robinhood::Equity::Instrument');
 }
 
 =head2 C<tags( )>
@@ -94,13 +88,14 @@ objects.
 =cut
 
 sub tags ( $s ) {
-    map { Finance::Robinhood::Equity::Tag->new( _rh => $s->_rh, %$_ ) } @{ $s->{tags} };
+    map { Finance::Robinhood::Equity::Tag->new(_rh => $s->_rh, %$_) }
+        @{$s->{tags}};
 }
 
 sub _test_tags {
     t::Utility::stash('TAG') // skip_all();
     my ($tag) = t::Utility::stash('TAG')->tags;
-    isa_ok( $tag, 'Finance::Robinhood::Equity::Tag' );
+    isa_ok($tag, 'Finance::Robinhood::Equity::Tag');
 }
 
 =head1 LEGAL

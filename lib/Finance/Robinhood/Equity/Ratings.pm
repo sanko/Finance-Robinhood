@@ -26,19 +26,19 @@ use Mojo::Base-base, -signatures;
 use Mojo::URL;
 
 sub _test__init {
-    my $rh      = t::Utility::rh_instance(1);
-    my $msft    = $rh->equity_instrument_by_id('50810c35-d215-4866-9758-0ada4ac79ffa');    # MSFT
+    my $rh = t::Utility::rh_instance(1);
+    my $msft = $rh->equity_instrument_by_id(
+                               '50810c35-d215-4866-9758-0ada4ac79ffa'); # MSFT
     my $ratings = $msft->ratings;
-    isa_ok( $ratings, __PACKAGE__ );
-    t::Utility::stash( 'RATINGS', $ratings );    #  Store it for later
+    isa_ok($ratings, __PACKAGE__);
+    t::Utility::stash('RATINGS', $ratings);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{instrument_id} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{instrument_id} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('RATINGS') // skip_all();
-    like(
-        +t::Utility::stash('RATINGS'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    like(+t::Utility::stash('RATINGS'),
+         qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
     );
 }
 #
@@ -53,7 +53,7 @@ Returns a list of buy ratings.
 =cut
 
 sub buy ($s) {
-    map { $_->{text} } grep { $_->{type} eq 'buy' } @{ $s->{ratings} };
+    map { $_->{text} } grep { $_->{type} eq 'buy' } @{$s->{ratings}};
 }
 sub _test_buy { skip_all() }
 
@@ -64,7 +64,7 @@ Returns a list of sell ratings.
 =cut
 
 sub sell ($s) {
-    map { $_->{text} } grep { $_->{type} eq 'sell' } @{ $s->{ratings} };
+    map { $_->{text} } grep { $_->{type} eq 'sell' } @{$s->{ratings}};
 }
 sub _test_sell { skip_all() }
 
@@ -75,9 +75,8 @@ Returns a list of hold ratings.
 =cut
 
 sub hold ($s) {
-    map { $_->{text} } grep { $_->{type} eq 'hold' } @{ $s->{ratings} };
+    map { $_->{text} } grep { $_->{type} eq 'hold' } @{$s->{ratings}};
 }
-
 sub _test_hold { skip_all() }
 
 =head2 C<all( )>
@@ -88,11 +87,7 @@ values are ratings.
 =cut
 
 sub all ($s) {
-    {
-        buy  => [ $s->buy ],
-        hold => [ $s->hold ],
-        sell => [ $s->sell ]
-    }
+    {buy => [$s->buy], hold => [$s->hold], sell => [$s->sell]}
 }
 
 sub _test_all {
@@ -109,10 +104,9 @@ values are numbers.
 =cut
 
 sub totals ($s) {
-    {
-        buy  => $s->{summary}{num_buy_ratings},
-        hold => $s->{summary}{num_hold_ratings},
-        sell => $s->{summary}{num_sell_ratings}
+    {buy  => $s->{summary}{num_buy_ratings},
+     hold => $s->{summary}{num_hold_ratings},
+     sell => $s->{summary}{num_sell_ratings}
     }
 }
 
@@ -133,13 +127,12 @@ Returns an iterator containing Finance::Robinhood::News elements.
 
 =cut
 
-sub instrument ($s) { $s->_rh->equity_instrument_by_id( $s->{instrument_id} ) }
+sub instrument ($s) { $s->_rh->equity_instrument_by_id($s->{instrument_id}) }
 
 sub _test_instrument {
     t::Utility::stash('RATINGS') // skip_all();
-
     my $instrument = t::Utility::stash('RATINGS')->instrument;
-    isa_ok( $instrument, 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok($instrument, 'Finance::Robinhood::Equity::Instrument');
 }
 
 =head1 LEGAL

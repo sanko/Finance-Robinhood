@@ -18,9 +18,8 @@ our $VERSION = '0.92_002';
 use Mojo::Base-base;
 #
 has _rh => undef => weak => 1;
-has [
-    'access_token',  'backup_code', 'expires_in', 'mfa_code',
-    'refresh_token', 'scope',       'token_type'
+has ['access_token',  'backup_code', 'expires_in', 'mfa_code',
+     'refresh_token', 'scope',       'token_type'
 ];
 
 =head1 LEGAL

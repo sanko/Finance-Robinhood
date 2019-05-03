@@ -23,7 +23,6 @@ Instruments
 =cut
 
 our $VERSION = '0.92_002';
-
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 use Time::Moment;
@@ -32,18 +31,14 @@ use Finance::Robinhood::Equity::PriceMovement;
 sub _test__init {
     my $rh  = t::Utility::rh_instance(1);
     my $tag = $rh->tags('food')->current;
-    isa_ok( $tag, __PACKAGE__ );
-    t::Utility::stash( 'TAG', $tag );    #  Store it for later
+    isa_ok($tag, __PACKAGE__);
+    t::Utility::stash('TAG', $tag);    #  Store it for later
 }
-
-use overload '""' => sub ( $s, @ ) { $s->{slug} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{slug} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('TAG') // skip_all();
-    like(
-        +t::Utility::stash('TAG'),
-        'food',
-    );
+    like(+t::Utility::stash('TAG'), 'food',);
 }
 #
 has _rh => undef => weak => 1;
@@ -71,7 +66,7 @@ Returns the internal string used to locate this tag.
 
 =cut
 
-has [ 'canonical_examples', 'description', 'membership_count', 'name', 'slug' ];
+has ['canonical_examples', 'description', 'membership_count', 'name', 'slug'];
 
 =head2 C<instruments( )>
 
@@ -83,15 +78,16 @@ Returns a list of Finance::Robinhood::Equity::Instrument objects.
 
 sub instruments ($s) {
     $s->_rh->equity_instruments_by_id(
-        map {m/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/$/i}
-            @{ $s->{instruments} } );
-
+        map {
+            m/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/$/i
+        } @{$s->{instruments}}
+    );
 }
 
 sub _test_instruments {
     t::Utility::stash('TAG') // skip_all();
     my @instruments = t::Utility::stash('TAG')->instruments();
-    isa_ok( $instruments[0], 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok($instruments[0], 'Finance::Robinhood::Equity::Instrument');
 }
 
 =head1 LEGAL

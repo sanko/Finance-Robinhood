@@ -23,11 +23,12 @@ use Mojo::Base-base, -signatures;
 use Mojo::URL;
 
 sub _test__init {
-    my $rh          = t::Utility::rh_instance(1);
-    my $historicals = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511')    # BTC-USD
-        ->historicals( interval => '5minute' );
-    isa_ok( $historicals, __PACKAGE__ );
-    t::Utility::stash( 'HISTORICALS', $historicals );    #  Store it for later
+    my $rh = t::Utility::rh_instance(1);
+    my $historicals = $rh->forex_pair_by_id(
+                             '3d961844-d360-45fc-989b-f6fca761d511') # BTC-USD
+        ->historicals(interval => '5minute');
+    isa_ok($historicals, __PACKAGE__);
+    t::Utility::stash('HISTORICALS', $historicals);    #  Store it for later
 }
 ##
 
@@ -69,27 +70,34 @@ Returns a Time::Moment object.
 
 =cut
 
-has [ 'bounds', 'interval', 'open_price', 'previous_close_price', 'span', 'symbol' ];
+has ['bounds',     'interval',
+     'open_price', 'previous_close_price',
+     'span',       'symbol'
+];
 
 sub data_points ($s) {
     require Finance::Robinhood::Forex::Historicals::Datapoint;
-    map { Finance::Robinhood::Forex::Historicals::Datapoint->new( _rh => $s->_rh, %{$_} ) }
-        @{ $s->{data_points} };
+    map {
+        Finance::Robinhood::Forex::Historicals::Datapoint->new(_rh => $s->_rh,
+                                                               %{$_})
+    } @{$s->{data_points}};
 }
 
 sub _test_data_points {
-    t::Utility::stash('HISTORICALS') // skip_all('No historicals object in stash');
+    t::Utility::stash('HISTORICALS')
+        // skip_all('No historicals object in stash');
     my ($datapoint) = t::Utility::stash('HISTORICALS')->data_points;
-    isa_ok( $datapoint, 'Finance::Robinhood::Forex::Historicals::Datapoint' );
+    isa_ok($datapoint, 'Finance::Robinhood::Forex::Historicals::Datapoint');
 }
 
 sub open_time ($s) {
-    Time::Moment->from_string( $s->{open_time} );
+    Time::Moment->from_string($s->{open_time});
 }
 
 sub _test_open_time {
-    t::Utility::stash('HISTORICALS') // skip_all('No historicals object in stash');
-    isa_ok( t::Utility::stash('HISTORICALS')->open_time, 'Time::Moment' );
+    t::Utility::stash('HISTORICALS')
+        // skip_all('No historicals object in stash');
+    isa_ok(t::Utility::stash('HISTORICALS')->open_time, 'Time::Moment');
 }
 
 =head2 C<previous_close_time( )>
@@ -99,12 +107,14 @@ Returns a Time::Moment object.
 =cut
 
 sub previous_close_time ($s) {
-    Time::Moment->from_string( $s->{previous_close_time} );
+    Time::Moment->from_string($s->{previous_close_time});
 }
 
 sub _test_previous_close_time {
-    t::Utility::stash('HISTORICALS') // skip_all('No historicals object in stash');
-    isa_ok( t::Utility::stash('HISTORICALS')->previous_close_time, 'Time::Moment' );
+    t::Utility::stash('HISTORICALS')
+        // skip_all('No historicals object in stash');
+    isa_ok(t::Utility::stash('HISTORICALS')->previous_close_time,
+           'Time::Moment');
 }
 
 =head2 C<pair( )>
@@ -114,12 +124,14 @@ Returns the related Finance::Robinhood::Forex::Pair object.
 =cut
 
 sub pair ($s) {
-    $s->_rh->forex_pair_by_id( $s->{id} );
+    $s->_rh->forex_pair_by_id($s->{id});
 }
 
 sub _test_instrument {
-    t::Utility::stash('HISTORICALS') // skip_all('No historicals object in stash');
-    isa_ok( t::Utility::stash('HISTORICALS')->pair, 'Finance::Robinhood::Forex::Pair' );
+    t::Utility::stash('HISTORICALS')
+        // skip_all('No historicals object in stash');
+    isa_ok(t::Utility::stash('HISTORICALS')->pair,
+           'Finance::Robinhood::Forex::Pair');
 }
 
 =head1 LEGAL

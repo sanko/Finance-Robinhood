@@ -23,17 +23,17 @@ sub _test__init {
     my $rh                  = t::Utility::rh_instance(1);
     my $acct                = $rh->equity_accounts->current;
     my $instant_eligibility = $acct->instant_eligibility;
-    isa_ok( $instant_eligibility, __PACKAGE__ );
-    t::Utility::stash( 'INSTANT', $instant_eligibility );    #  Store it for later
+    isa_ok($instant_eligibility, __PACKAGE__);
+    t::Utility::stash('INSTANT', $instant_eligibility);  #  Store it for later
 }
 our $VERSION = '0.92_002';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
-use overload '""' => sub ( $s, @ ) { $s->{state} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{state} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('INSTANT') // skip_all();
-    is( +t::Utility::stash('INSTANT'), 'ok' );
+    is(+t::Utility::stash('INSTANT'), 'ok');
 }
 
 =head1 METHODS
@@ -51,7 +51,7 @@ has _rh => undef => weak => 1;
 
 =cut
 
-has [ 'state', 'reversal', 'reason' ];
+has ['state', 'reversal', 'reason'];
 
 =head2 C<reinstatement_date( )>
 
@@ -60,14 +60,15 @@ Returns a Time::Moment object if applicable.
 =cut
 
 sub reinstatement_date ($s) {
-    Time::Moment->from_string( $s->{reinstatement_date} . 'T00:00:00Z' );
+    Time::Moment->from_string($s->{reinstatement_date} . 'T00:00:00Z');
 }
 
 sub _test_reinstatement_date {
-    t::Utility::stash('INSTANT') // skip_all('No instant eligibility object in stash');
+    t::Utility::stash('INSTANT')
+        // skip_all('No instant eligibility object in stash');
     skip_all('Instant state is okay... No reinstatement_date set')
         if t::Utility::stash('INSTANT')->state eq 'ok';
-    isa_ok( t::Utility::stash('INSTANT')->reinstatement_date, 'Time::Moment' );
+    isa_ok(t::Utility::stash('INSTANT')->reinstatement_date, 'Time::Moment');
 }
 
 =head2 C<updated_at( )>
@@ -77,14 +78,15 @@ Returns a Time::Moment object if applicable.
 =cut
 
 sub updated_at ($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
-    t::Utility::stash('INSTANT') // skip_all('No instant eligibility object in stash');
+    t::Utility::stash('INSTANT')
+        // skip_all('No instant eligibility object in stash');
     skip_all('Instant state is okay... No updated_at set')
         if t::Utility::stash('INSTANT')->state eq 'ok';
-    isa_ok( t::Utility::stash('INSTANT')->updated_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('INSTANT')->updated_at, 'Time::Moment');
 }
 
 =head1 LEGAL

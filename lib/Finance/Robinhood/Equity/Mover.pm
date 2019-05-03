@@ -24,7 +24,6 @@ Finance::Robinhood::Equity::Mover - Represents a Top Moving Equity Instrument
 =cut
 
 our $VERSION = '0.92_002';
-
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 use Time::Moment;
@@ -32,19 +31,16 @@ use Finance::Robinhood::Equity::PriceMovement;
 
 sub _test__init {
     my $rh  = t::Utility::rh_instance(1);
-    my $top = $rh->top_movers( direction => 'up' )->current;
-    isa_ok( $top, __PACKAGE__ );
-    t::Utility::stash( 'MOVER', $top );    #  Store it for later
+    my $top = $rh->top_movers(direction => 'up')->current;
+    isa_ok($top, __PACKAGE__);
+    t::Utility::stash('MOVER', $top);    #  Store it for later
 }
-
-use overload '""' => sub ( $s, @ ) { $s->{instrument_url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{instrument_url} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('MOVER') // skip_all();
-    like(
-        +t::Utility::stash('MOVER'),
-        qr'https://api.robinhood.com/instruments/.+/',
-    );
+    like(+t::Utility::stash('MOVER'),
+         qr'https://api.robinhood.com/instruments/.+/',);
 }
 #
 has _rh => undef => weak => 1;
@@ -59,7 +55,7 @@ Returns the ticker symbol of the instrument.
 
 =cut
 
-has [ 'description', 'symbol' ];
+has ['description', 'symbol'];
 
 =head2 C<updated_at( )>
 
@@ -71,12 +67,12 @@ object.
 =cut
 
 sub updated_at($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
     t::Utility::stash('MOVER') // skip_all();
-    isa_ok( t::Utility::stash('MOVER')->updated_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('MOVER')->updated_at, 'Time::Moment');
 }
 
 =head2 C<instrument( )>
@@ -88,16 +84,18 @@ Builds a Finance::Robinhood::Equity::Instrument object.
 =cut
 
 sub instrument ($s) {
-    my $res = $s->_rh->_get( $s->{instrument_url} );
+    my $res = $s->_rh->_get($s->{instrument_url});
     $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
+                                                      %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_instrument {
     t::Utility::stash('MOVER') // skip_all();
-    isa_ok( t::Utility::stash('MOVER')->instrument(), 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok(t::Utility::stash('MOVER')->instrument(),
+           'Finance::Robinhood::Equity::Instrument');
 }
 
 =head2 C<price_movement( )>
@@ -109,15 +107,14 @@ Builds a Finance::Robinhood::Equity::PriceMovement object.
 =cut
 
 sub price_movement ($s) {
-    Finance::Robinhood::Equity::PriceMovement->new( _rh => $s->_rh, %{ $s->{price_movement} } );
+    Finance::Robinhood::Equity::PriceMovement->new(_rh => $s->_rh,
+                                                   %{$s->{price_movement}});
 }
 
 sub _test_price_movement {
     t::Utility::stash('MOVER') // skip_all();
-    isa_ok(
-        t::Utility::stash('MOVER')->price_movement(),
-        'Finance::Robinhood::Equity::PriceMovement'
-    );
+    isa_ok(t::Utility::stash('MOVER')->price_movement(),
+           'Finance::Robinhood::Equity::PriceMovement');
 }
 
 =head1 LEGAL

@@ -47,19 +47,19 @@ from scratch.
 =cut
 
 sub reset($s) {
-    $s->_next_page( $s->_first_page // $s->_next_page );
-    $s->_current( () );
-    $s->_results( [] );
+    $s->_next_page($s->_first_page // $s->_next_page);
+    $s->_current(());
+    $s->_results([]);
 }
 
 sub _test_reset {
     my $rh          = t::Utility::rh_instance(0);
     my $instruments = $rh->equity_instruments;
-    isa_ok( $instruments, __PACKAGE__ );
+    isa_ok($instruments, __PACKAGE__);
     my $next = $instruments->next;
     $instruments->take(300);
     $instruments->reset;
-    is( $instruments->next, $next );
+    is($instruments->next, $next);
 }
 
 =head2 C<current( )>
@@ -77,10 +77,10 @@ sub current($s) {
 sub _test_current {
     my $rh          = t::Utility::rh_instance(0);
     my $instruments = $rh->equity_instruments;
-    isa_ok( $instruments, __PACKAGE__ );
+    isa_ok($instruments, __PACKAGE__);
     my $next = $instruments->next;
-    isa_ok( $instruments->current, 'Finance::Robinhood::Equity::Instrument' );
-    is( $instruments->current, $next );
+    isa_ok($instruments->current, 'Finance::Robinhood::Equity::Instrument');
+    is($instruments->current, $next);
 }
 
 =head2 C<next( )>
@@ -92,8 +92,8 @@ and all pages have been exhausted, this will return an undefined value.
 
 sub next($s) {
     $s->_check_next_page;
-    my ( $retval, @values ) = @{ $s->_results };
-    $s->_results( \@values );
+    my ($retval, @values) = @{$s->_results};
+    $s->_results(\@values);
     $s->_current($retval);
     $retval;
 }
@@ -107,17 +107,17 @@ optional and, by default, the first element is returned.
 
 =cut
 
-sub peek ( $s, $pos = 1 ) {
+sub peek ($s, $pos = 1) {
     $s->_check_next_page($pos);
-    $s->_results->[ $pos - 1 ];
+    $s->_results->[$pos - 1];
 }
 
 sub _test_peek {
     my $rh          = t::Utility::rh_instance(0);
     my $instruments = $rh->equity_instruments;
-    isa_ok( $instruments, __PACKAGE__ );
+    isa_ok($instruments, __PACKAGE__);
     my $peek = $instruments->peek;
-    is( $instruments->next, $peek );
+    is($instruments->next, $peek);
 }
 
 =head2 C<has_next( ... )>
@@ -127,9 +127,9 @@ length is optional and checks the results for a a single element by default.
 
 =cut
 
-sub has_next ( $s, $pos = 1 ) {
+sub has_next ($s, $pos = 1) {
     $s->_check_next_page($pos);
-    !!defined $s->_results->[ $pos - 1 ];
+    !!defined $s->_results->[$pos - 1];
 }
 
 =head2 C<take( ... )>
@@ -140,25 +140,25 @@ returns a single element.
 =cut
 
 # Grab a certain number of elements
-sub take ( $s, $count = 1 ) {
+sub take ($s, $count = 1) {
     $s->_check_next_page($count);
     my @retval;
-    for ( 1 .. $count ) { push @retval, $s->next; last if !$s->has_next }
-    $s->_current( $retval[-1] );
+    for (1 .. $count) { push @retval, $s->next; last if !$s->has_next }
+    $s->_current($retval[-1]);
     @retval;
 }
 
 sub _test_take {
     my $rh          = t::Utility::rh_instance(0);
     my $instruments = $rh->equity_instruments;
-    isa_ok( $instruments, __PACKAGE__ );
+    isa_ok($instruments, __PACKAGE__);
     {
         my @take = $instruments->take(3);
-        is( 3, scalar @take, '...take(3) returns 3 items' );
+        is(3, scalar @take, '...take(3) returns 3 items');
     }
     {
         my @take = $instruments->take(300);
-        is( 300, scalar @take, '...take(300) returns 300 items' );
+        is(300, scalar @take, '...take(300) returns 300 items');
     }
 }
 
@@ -170,54 +170,60 @@ Grabs every page and returns every element we see.
 
 sub all($s) {
     my @retval;
-    push @retval, $s->take( $s->count // 1000 ) until !$s->has_next;
-    $s->_current( $retval[-1] );
+    push @retval, $s->take($s->count // 1000) until !$s->has_next;
+    $s->_current($retval[-1]);
     @retval;
 }
 
 sub _test_all_and_has_next {
     my $rh          = t::Utility::rh_instance(0);    # Do not log in!
     my $instruments = $rh->equity_instruments;
-    isa_ok( $instruments, __PACKAGE__ );
+    isa_ok($instruments, __PACKAGE__);
     diag('Grabbing all instruments... please hold...');
     my @take = $instruments->all;
-    cmp_ok( 11000, '<=', scalar(@take), sprintf '...all() returns %d items', scalar @take );
-    isnt( $instruments->has_next, !!1, '...has_next() works at the end of the list' );
+    cmp_ok(11000, '<=', scalar(@take), sprintf '...all() returns %d items',
+           scalar @take);
+    isnt($instruments->has_next, !!1,
+         '...has_next() works at the end of the list');
 }
 
 # Check if we need to slurp the next page of elements to fill a position
-sub _check_next_page ( $s, $count = 1 ) {
-    my @push = @{ $s->_results };
+sub _check_next_page ($s, $count = 1) {
+    my @push = @{$s->_results};
     my $pre  = scalar @push;
-    $s->_first_page // $s->_first_page( $s->_next_page );
-    while ( ( $count > scalar @push ) && defined $s->_next_page ) {
-        my $res = $s->_rh->_get( $s->_next_page );
+    $s->_first_page // $s->_first_page($s->_next_page);
+    while (($count > scalar @push) && defined $s->_next_page) {
+        my $res = $s->_rh->_get($s->_next_page);
 
         #use Data::Dump;
         #ddx $res;
         #ddx $res->json;
         #die;
-        if ( $res->is_success ) {
+        if ($res->is_success) {
             my $json = $res->json;
-            $s->_next_page( $json->{next} );
+            $s->_next_page($json->{next});
             push @push, map {
                       defined $_
                     ? defined $s->_class
-                        ? do { eval 'require ' . $s->_class; $s->_class->new( _rh => $s->_rh, %$_ ) }
+                        ? do {
+                            eval 'require ' . $s->_class;
+                            $s->_class->new(_rh => $s->_rh, %$_);
+                        }
                         : $_
                     : ()
-            } @{ $json->{results} };
+            } @{$json->{results}};
         }
         else {    # Trouble! Let's not try another page
             $s->_next_page(undef);
         }
     }
-    $s->_results( \@push ) if scalar @push > $pre;
+    $s->_results(\@push) if scalar @push > $pre;
 }
 
 sub _test_check_next_page {
     my $rh = t::Utility::rh_instance(0);    # Do not log in!
-    is( $rh->equity_instruments_by_id('c7d4323d-9512-4b15-977a-7cb2d1381d00'), () );    # Fake id
+    is($rh->equity_instruments_by_id('c7d4323d-9512-4b15-977a-7cb2d1381d00'),
+        ());                                # Fake id
 }
 
 =head1 LEGAL

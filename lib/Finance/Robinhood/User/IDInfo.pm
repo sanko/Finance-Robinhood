@@ -26,11 +26,11 @@ our $VERSION = '0.92_002';
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $user = $rh->user;
-    isa_ok( $user, 'Finance::Robinhood::User' );
-    t::Utility::stash( 'USER', $user );    #  Store it for later
+    isa_ok($user, 'Finance::Robinhood::User');
+    t::Utility::stash('USER', $user);    #  Store it for later
     my $id_info = $user->id_info();
-    isa_ok( $id_info, __PACKAGE__ );
-    t::Utility::stash( 'USER_ID_INFO', $id_info );
+    isa_ok($id_info, __PACKAGE__);
+    t::Utility::stash('USER_ID_INFO', $id_info);
 }
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
@@ -51,7 +51,7 @@ Current user's login name.
 
 =cut
 
-has [ 'id', 'username' ];
+has ['id', 'username'];
 
 =head2 C<user( )>
 
@@ -64,17 +64,20 @@ Use this if you think the status or some other info might have changed.
 =cut
 
 sub user($s) {
-    my $res = $s->_rh->_get( $s->{url} );    # Yes, this is correct rather than 'user'. IDK why.
+    my $res = $s->_rh->_get($s->{url})
+        ;    # Yes, this is correct rather than 'user'. IDK why.
     $_[0]
         = $res->is_success
-        ? Finance::Robinhood::User->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::User->new(_rh => $s->_rh, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_user {
-    t::Utility::stash('USER_ID_INFO') // skip_all('No user id data object in stash');
-    isa_ok( t::Utility::stash('USER_ID_INFO')->user(), 'Finance::Robinhood::User' );
+    t::Utility::stash('USER_ID_INFO')
+        // skip_all('No user id data object in stash');
+    isa_ok(t::Utility::stash('USER_ID_INFO')->user(),
+           'Finance::Robinhood::User');
 }
 
 =head1 LEGAL

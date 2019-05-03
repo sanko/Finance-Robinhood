@@ -25,9 +25,9 @@ our $VERSION = '0.92_002';
 
 sub _test__init {
     my $rh     = t::Utility::rh_instance(1);
-    my $report = $rh->equity_earnings( range => -7 )->current->report;
-    isa_ok( $report, __PACKAGE__ );
-    t::Utility::stash( 'REPORT', $report );
+    my $report = $rh->equity_earnings(range => -7)->current->report;
+    isa_ok($report, __PACKAGE__);
+    t::Utility::stash('REPORT', $report);
 }
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
@@ -45,12 +45,12 @@ Returns a Time::Moment object.
 =cut
 
 sub date ($s) {
-    Time::Moment->from_string( $s->{date} . 'T00:00:00Z' );
+    Time::Moment->from_string($s->{date} . 'T00:00:00Z');
 }
 
 sub _test_datel {
     t::Utility::stash('REPORT') // skip_all();
-    isa_ok( t::Utility::stash('REPORT')->date(), 'Time::Moment' );
+    isa_ok(t::Utility::stash('REPORT')->date(), 'Time::Moment');
 }
 
 =head2 C<timing( )>
@@ -65,7 +65,7 @@ expected.
 
 =cut
 
-has [ 'timing', 'verified' ];
+has ['timing', 'verified'];
 
 =head1 LEGAL
 

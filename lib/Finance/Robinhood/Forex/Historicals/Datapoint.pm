@@ -24,10 +24,12 @@ use Mojo::URL;
 
 sub _test__init {
     my $rh = t::Utility::rh_instance(1);
-    my ($datapoint) = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511')    # BTC-USD
-        ->historicals( interval => '5minute' )->data_points;
-    isa_ok( $datapoint, __PACKAGE__ );
-    t::Utility::stash( 'DATAPOINT', $datapoint );    #  Store it for later
+    my ($datapoint)
+        = $rh->forex_pair_by_id(
+                             '3d961844-d360-45fc-989b-f6fca761d511') # BTC-USD
+        ->historicals(interval => '5minute')->data_points;
+    isa_ok($datapoint, __PACKAGE__);
+    t::Utility::stash('DATAPOINT', $datapoint);    #  Store it for later
 }
 ##
 
@@ -66,15 +68,18 @@ Returns a Time::Moment object.
 
 =cut
 
-has [ 'close_price', 'high_price', 'interpolated', 'low_price', 'open_price', 'session', 'volume' ];
+has ['close_price', 'high_price', 'interpolated', 'low_price',
+     'open_price',  'session',    'volume'
+];
 
 sub begins_at ($s) {
-    Time::Moment->from_string( $s->{begins_at} );
+    Time::Moment->from_string($s->{begins_at});
 }
 
 sub _test_begins_at {
-    t::Utility::stash('DATAPOINT') // skip_all('No historical datapoint object in stash');
-    isa_ok( t::Utility::stash('DATAPOINT')->begins_at, 'Time::Moment' );
+    t::Utility::stash('DATAPOINT')
+        // skip_all('No historical datapoint object in stash');
+    isa_ok(t::Utility::stash('DATAPOINT')->begins_at, 'Time::Moment');
 }
 
 =head1 LEGAL

@@ -25,12 +25,12 @@ our $VERSION = '0.92_002';
 
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
-    my $past = $rh->equity_earnings( range => -7 )->current;
-    isa_ok( $past, __PACKAGE__ );
-    t::Utility::stash( 'PAST', $past );
-    my $future = $rh->equity_earnings( range => 7 )->current;
-    isa_ok( $future, __PACKAGE__ );
-    t::Utility::stash( 'FUTURE', $future );
+    my $past = $rh->equity_earnings(range => -7)->current;
+    isa_ok($past, __PACKAGE__);
+    t::Utility::stash('PAST', $past);
+    my $future = $rh->equity_earnings(range => 7)->current;
+    isa_ok($future, __PACKAGE__);
+    t::Utility::stash('FUTURE', $future);
 }
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
@@ -53,13 +53,15 @@ active or has been archived.
 
 sub call ($s) {
     defined $s->{call}
-        ? Finance::Robinhood::Equity::Earnings::Call->new( _rh => $s->_rh, %{ $s->{call} } )
+        ? Finance::Robinhood::Equity::Earnings::Call->new(_rh => $s->_rh,
+                                                          %{$s->{call}})
         : ();
 }
 
 sub _test_call {
     t::Utility::stash('PAST') // skip_all();
-    isa_ok( t::Utility::stash('PAST')->call(), 'Finance::Robinhood::Equity::Earnings::Call' );
+    isa_ok(t::Utility::stash('PAST')->call(),
+           'Finance::Robinhood::Equity::Earnings::Call');
 }
 
 =head2 C<eps( )>
@@ -70,13 +72,15 @@ Returns a Finance::Robinhood::Equity::Earnings::EPS object.
 
 sub eps ($s) {
     defined $s->{eps}
-        ? Finance::Robinhood::Equity::Earnings::EPS->new( _rh => $s->_rh, %{ $s->{eps} } )
+        ? Finance::Robinhood::Equity::Earnings::EPS->new(_rh => $s->_rh,
+                                                         %{$s->{eps}})
         : ();
 }
 
 sub _test_eps {
     t::Utility::stash('PAST') // skip_all();
-    isa_ok( t::Utility::stash('PAST')->eps(), 'Finance::Robinhood::Equity::Earnings::EPS' );
+    isa_ok(t::Utility::stash('PAST')->eps(),
+           'Finance::Robinhood::Equity::Earnings::EPS');
 }
 
 =head2 C<quarter( )>
@@ -91,13 +95,15 @@ Returns a Fiance::Robinhood::Earnings::Report object.
 
 sub report ($s) {
     defined $s->{report}
-        ? Finance::Robinhood::Equity::Earnings::Report->new( _rh => $s->_rh, %{ $s->{report} } )
+        ? Finance::Robinhood::Equity::Earnings::Report->new(_rh => $s->_rh,
+                                                            %{$s->{report}})
         : ();
 }
 
 sub _test_report {
     t::Utility::stash('PAST') // skip_all();
-    isa_ok( t::Utility::stash('PAST')->report(), 'Finance::Robinhood::Equity::Earnings::Report' );
+    isa_ok(t::Utility::stash('PAST')->report(),
+           'Finance::Robinhood::Equity::Earnings::Report');
 }
 
 =head2 C<symbol( )>
@@ -110,7 +116,7 @@ Four digit year.
 
 =cut
 
-has [ 'quarter', 'symbol', 'year' ];
+has ['quarter', 'symbol', 'year'];
 
 =head2 C<instrument( )>
 
@@ -121,16 +127,18 @@ Loops back to a Finance::Robinhood::Equity::Instrument object.
 =cut
 
 sub instrument ($s) {
-    my $res = $s->_rh->_get( $s->{instrument} );
+    my $res = $s->_rh->_get($s->{instrument});
     $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
+                                                      %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_instrument {
     t::Utility::stash('PAST') // skip_all();
-    isa_ok( t::Utility::stash('PAST')->instrument(), 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok(t::Utility::stash('PAST')->instrument(),
+           'Finance::Robinhood::Equity::Instrument');
 }
 
 =head1 LEGAL

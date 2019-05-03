@@ -33,27 +33,26 @@ sub _test__init {
         $order = $orders->next;
     } while $order->state ne 'filled';
     $order // skip_all('Failed to fine executied equity order');
-
     my ($execution) = $order->executions;
-
-    isa_ok( $execution, __PACKAGE__ );
-    t::Utility::stash( 'ORDER',     $order );        #  Store it for later
-    t::Utility::stash( 'EXECUTION', $execution );    #  Store it for later
+    isa_ok($execution, __PACKAGE__);
+    t::Utility::stash('ORDER',     $order);        #  Store it for later
+    t::Utility::stash('EXECUTION', $execution);    #  Store it for later
 }
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
-use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
 use Finance::Robinhood::Equity::Account;
 use Finance::Robinhood::Error;
 use Finance::Robinhood::Equity::Position;
 
 sub _test_stringify {
     t::Utility::stash('ORDER') // skip_all();
-    like( +t::Utility::stash('ORDER'), qr'https://api.robinhood.com/orders/.+/' );
+    like(+t::Utility::stash('ORDER'),
+         qr'https://api.robinhood.com/orders/.+/');
 }
 #
 has _rh => undef => weak => 1;
-has [ 'id', 'price', 'quantity' ];
+has ['id', 'price', 'quantity'];
 
 =head2 C<id( )>
 
@@ -74,12 +73,13 @@ Returns a Time::Moment object.
 =cut
 
 sub timestamp ($s) {
-    Time::Moment->from_string( $s->{timestamp} );
+    Time::Moment->from_string($s->{timestamp});
 }
 
 sub _test_timestamp {
-    t::Utility::stash('EXECUTION') // skip_all('No order execution object in stash');
-    isa_ok( t::Utility::stash('EXECUTION')->timestamp, 'Time::Moment' );
+    t::Utility::stash('EXECUTION')
+        // skip_all('No order execution object in stash');
+    isa_ok(t::Utility::stash('EXECUTION')->timestamp, 'Time::Moment');
 }
 
 =head2 C<settlement_date( )>
@@ -89,12 +89,13 @@ Returns a Time::Moment object.
 =cut
 
 sub settlement_date($s) {
-    Time::Moment->from_string( $s->{settlement_date} . 'T00:00:00Z' );
+    Time::Moment->from_string($s->{settlement_date} . 'T00:00:00Z');
 }
 
 sub _test_settlement_date {
-    t::Utility::stash('EXECUTION') // skip_all('No order execution object in stash');
-    isa_ok( t::Utility::stash('EXECUTION')->settlement_date, 'Time::Moment' );
+    t::Utility::stash('EXECUTION')
+        // skip_all('No order execution object in stash');
+    isa_ok(t::Utility::stash('EXECUTION')->settlement_date, 'Time::Moment');
 }
 
 =head1 LEGAL

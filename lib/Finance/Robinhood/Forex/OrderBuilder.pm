@@ -47,11 +47,12 @@ use Finance::Robinhood::Forex::Order;
 use Finance::Robinhood::Utilities qw[gen_uuid];
 
 sub _test__init {
-    my $rh      = t::Utility::rh_instance(1);
-    my $btc_usd = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
-    t::Utility::stash( 'BTC_USD', $btc_usd );    #  Store it for later
-    isa_ok( $btc_usd->buy(3),  __PACKAGE__ );
-    isa_ok( $btc_usd->sell(3), __PACKAGE__ );
+    my $rh = t::Utility::rh_instance(1);
+    my $btc_usd
+        = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
+    t::Utility::stash('BTC_USD', $btc_usd);    #  Store it for later
+    isa_ok($btc_usd->buy(3),  __PACKAGE__);
+    isa_ok($btc_usd->sell(3), __PACKAGE__);
 }
 #
 has _rh => undef => weak => 1;
@@ -75,7 +76,7 @@ Expects a whole number of shares.
 
 has _account => undef;    # => weak => 1;
 has _pair    => undef;    # => weak => 1;
-has [ 'quantity', 'price' ];
+has ['quantity', 'price'];
 #
 # Type
 
@@ -95,34 +96,33 @@ Use this to create market and stop loss orders.
 
 =cut
 
-sub limit ( $s, $price ) {
-    $s->with_roles('Finance::Robinhood::Forex::OrderBuilder::Role::Limit')->limit($price);
+sub limit ($s, $price) {
+    $s->with_roles('Finance::Robinhood::Forex::OrderBuilder::Role::Limit')
+        ->limit($price);
 }
 {
 
     package Finance::Robinhood::Forex::OrderBuilder::Role::Limit;
     use Mojo::Base-role, -signatures;
     has limit    => 0;
-    around _dump => sub ( $orig, $s, $test = 0 ) {
-        my %data = $orig->( $s, $test );
-        ( %data, price => $s->limit, type => 'limit' );
+    around _dump => sub ($orig, $s, $test = 0) {
+        my %data = $orig->($s, $test);
+        (%data, price => $s->limit, type => 'limit');
     };
 }
 
 sub _test_limit {
     t::Utility::stash('BTC_USD') // skip_all('No cached currency pair');
     my $order = t::Utility::stash('BTC_USD')->buy(3)->limit(3.40);
-    is(
-        { $order->_dump(1) },
-        {
-            account          => "--private--",
-            currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
-            price            => 3.40,
-            quantity         => 3,
-            ref_id           => "00000000-0000-0000-0000-000000000000",
-            side             => "buy",
-            time_in_force    => "gtc",
-            type             => "limit",
+    is( {$order->_dump(1)},
+        {account          => "--private--",
+         currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
+         price            => 3.40,
+         quantity         => 3,
+         ref_id           => "00000000-0000-0000-0000-000000000000",
+         side             => "buy",
+         time_in_force    => "gtc",
+         type             => "limit",
         },
         'dump is correct'
     );
@@ -135,26 +135,24 @@ sub market($s) {
 
     package Finance::Robinhood::Forex::OrderBuilder::Role::Market;
     use Mojo::Base-role, -signatures;
-    around _dump => sub ( $orig, $s, $test = 0 ) {
-        my %data = $orig->( $s, $test );
-        ( %data, type => 'market' );
+    around _dump => sub ($orig, $s, $test = 0) {
+        my %data = $orig->($s, $test);
+        (%data, type => 'market');
     };
 }
 
 sub _test_market {
     t::Utility::stash('BTC_USD') // skip_all('No cached currency pair');
     my $order = t::Utility::stash('BTC_USD')->sell(3)->market();
-    is(
-        { $order->_dump(1) },
-        {
-            account          => "--private--",
-            currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
-            price            => '5.00',
-            quantity         => 3,
-            ref_id           => "00000000-0000-0000-0000-000000000000",
-            side             => "sell",
-            time_in_force    => "gtc",
-            type             => "market",
+    is( {$order->_dump(1)},
+        {account          => "--private--",
+         currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
+         price            => '5.00',
+         quantity         => 3,
+         ref_id           => "00000000-0000-0000-0000-000000000000",
+         side             => "sell",
+         time_in_force    => "gtc",
+         type             => "market",
         },
         'dump is correct'
     );
@@ -179,7 +177,7 @@ Use this to change the order side.
 =cut
 
 # Side
-sub buy ( $s, $quantity = $s->quantity ) {
+sub buy ($s, $quantity = $s->quantity) {
     $s->with_roles('Finance::Robinhood::Forex::OrderBuilder::Role::Buy');
     $s->quantity($quantity);
 }
@@ -187,12 +185,11 @@ sub buy ( $s, $quantity = $s->quantity ) {
 
     package Finance::Robinhood::Forex::OrderBuilder::Role::Buy;
     use Mojo::Base-role, -signatures;
-    around _dump => sub ( $orig, $s, $test = 0 ) {
-        my %data = $orig->( $s, $test );
-        (
-            %data,
-            side  => 'buy',
-            price => $test ? '5.00' : $s->price // $s->_pair->quote->bid_price
+    around _dump => sub ($orig, $s, $test = 0) {
+        my %data = $orig->($s, $test);
+        (%data,
+         side  => 'buy',
+         price => $test ? '5.00' : $s->price // $s->_pair->quote->bid_price
         );
     };
 }
@@ -200,23 +197,21 @@ sub buy ( $s, $quantity = $s->quantity ) {
 sub _test_buy {
     t::Utility::stash('BTC_USD') // skip_all('No cached currency pair');
     my $order = t::Utility::stash('BTC_USD')->sell(32)->buy(3);
-    is(
-        { $order->_dump(1) },
-        {
-            account          => "--private--",
-            currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
-            price            => '5.00',
-            quantity         => 3,
-            ref_id           => "00000000-0000-0000-0000-000000000000",
-            side             => "buy",
-            time_in_force    => "gtc",
-            type             => "market",
+    is( {$order->_dump(1)},
+        {account          => "--private--",
+         currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
+         price            => '5.00',
+         quantity         => 3,
+         ref_id           => "00000000-0000-0000-0000-000000000000",
+         side             => "buy",
+         time_in_force    => "gtc",
+         type             => "market",
         },
         'dump is correct'
     );
 }
 
-sub sell ( $s, $quantity = $s->quantity ) {
+sub sell ($s, $quantity = $s->quantity) {
     $s->with_roles('Finance::Robinhood::Forex::OrderBuilder::Role::Sell');
     $s->quantity($quantity);
 }
@@ -224,12 +219,11 @@ sub sell ( $s, $quantity = $s->quantity ) {
 
     package Finance::Robinhood::Forex::OrderBuilder::Role::Sell;
     use Mojo::Base-role, -signatures;
-    around _dump => sub ( $orig, $s, $test = 0 ) {
-        my %data = $orig->( $s, $test );
-        (
-            %data,
-            side  => 'sell',
-            price => $test ? '5.00' : $s->price // $s->_pair->quote->ask_price
+    around _dump => sub ($orig, $s, $test = 0) {
+        my %data = $orig->($s, $test);
+        (%data,
+         side  => 'sell',
+         price => $test ? '5.00' : $s->price // $s->_pair->quote->ask_price
         );
     };
 }
@@ -237,17 +231,15 @@ sub sell ( $s, $quantity = $s->quantity ) {
 sub _test_sell {
     t::Utility::stash('BTC_USD') // skip_all('No cached currency pair');
     my $order = t::Utility::stash('BTC_USD')->buy(32)->sell(3);
-    is(
-        { $order->_dump(1) },
-        {
-            account          => "--private--",
-            currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
-            price            => '5.00',
-            quantity         => 3,
-            ref_id           => "00000000-0000-0000-0000-000000000000",
-            side             => "sell",
-            time_in_force    => "gtc",
-            type             => "market",
+    is( {$order->_dump(1)},
+        {account          => "--private--",
+         currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
+         price            => '5.00',
+         quantity         => 3,
+         ref_id           => "00000000-0000-0000-0000-000000000000",
+         side             => "sell",
+         time_in_force    => "gtc",
+         type             => "market",
         },
         'dump is correct'
     );
@@ -280,26 +272,24 @@ sub gtc($s) {
 
     package Finance::Robinhood::Forex::OrderBuilder::Role::GTC;
     use Mojo::Base-role, -signatures;
-    around _dump => sub ( $orig, $s, $test = 0 ) {
-        my %data = $orig->( $s, $test );
-        ( %data, time_in_force => 'gtc' );
+    around _dump => sub ($orig, $s, $test = 0) {
+        my %data = $orig->($s, $test);
+        (%data, time_in_force => 'gtc');
     };
 }
 
 sub _test_gtc {
     t::Utility::stash('BTC_USD') // skip_all('No cached currency pair');
     my $order = t::Utility::stash('BTC_USD')->sell(3)->gtc();
-    is(
-        { $order->_dump(1) },
-        {
-            account          => "--private--",
-            currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
-            price            => '5.00',
-            quantity         => 3,
-            ref_id           => "00000000-0000-0000-0000-000000000000",
-            side             => "sell",
-            time_in_force    => "gtc",
-            type             => "market",
+    is( {$order->_dump(1)},
+        {account          => "--private--",
+         currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
+         price            => '5.00',
+         quantity         => 3,
+         ref_id           => "00000000-0000-0000-0000-000000000000",
+         side             => "sell",
+         time_in_force    => "gtc",
+         type             => "market",
         },
         'dump is correct'
     );
@@ -312,26 +302,24 @@ sub ioc($s) {
 
     package Finance::Robinhood::Forex::OrderBuilder::Role::IOC;
     use Mojo::Base-role, -signatures;
-    around _dump => sub ( $orig, $s, $test = 0 ) {
-        my %data = $orig->( $s, $test );
-        ( %data, time_in_force => 'ioc' );
+    around _dump => sub ($orig, $s, $test = 0) {
+        my %data = $orig->($s, $test);
+        (%data, time_in_force => 'ioc');
     };
 }
 
 sub _test_ioc {
     t::Utility::stash('BTC_USD') // skip_all('No cached currency pair');
     my $order = t::Utility::stash('BTC_USD')->sell(3)->ioc();
-    is(
-        { $order->_dump(1) },
-        {
-            account          => "--private--",
-            currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
-            price            => '5.00',
-            quantity         => 3,
-            ref_id           => "00000000-0000-0000-0000-000000000000",
-            side             => "sell",
-            time_in_force    => "ioc",
-            type             => "market",
+    is( {$order->_dump(1)},
+        {account          => "--private--",
+         currency_pair_id => "3d961844-d360-45fc-989b-f6fca761d511",
+         price            => '5.00',
+         quantity         => 3,
+         ref_id           => "00000000-0000-0000-0000-000000000000",
+         side             => "sell",
+         time_in_force    => "ioc",
+         type             => "market",
         },
         'dump is correct'
     );
@@ -350,12 +338,13 @@ builder object is replaced by a Finance::Robinhood::Error object.
 =cut
 
 sub submit ($s) {
-    my $res = $s->_rh->_post( 'https://nummus.robinhood.com/orders/', $s->_dump );
+    my $res
+        = $s->_rh->_post('https://nummus.robinhood.com/orders/', $s->_dump);
     $_[0]
         = $res->is_success
-        ? Finance::Robinhood::Forex::Order->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Forex::Order->new(_rh => $s->_rh, %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_submit {
@@ -366,9 +355,8 @@ sub _test_submit {
 
     # Orders must be within 10% of ask/bid
     my $order = t::Utility::stash('BTC_USD')->buy(.001)
-        ->gtc->limit( sprintf '%.2f', $ask - ( $ask * .1 ) );
-
-    isa_ok( $order->submit, 'Finance::Robinhood::Forex::Order' );
+        ->gtc->limit(sprintf '%.2f', $ask - ($ask * .1));
+    isa_ok($order->submit, 'Finance::Robinhood::Forex::Order');
 
     #use Data::Dump;
     #ddx $order;
@@ -376,14 +364,14 @@ sub _test_submit {
 }
 
 # Do it! (And debug it...)
-sub _dump ( $s, $test = 0 ) {
+sub _dump ($s, $test = 0) {
     (    # Defaults
-        quantity         => $s->quantity,
-        type             => 'market',
-        currency_pair_id => $s->_pair->id,
-        account          => $test ? '--private--' : $s->_account->id,
-        time_in_force    => 'gtc',
-        ref_id           => $test ? '00000000-0000-0000-0000-000000000000' : gen_uuid()
+       quantity         => $s->quantity,
+       type             => 'market',
+       currency_pair_id => $s->_pair->id,
+       account          => $test ? '--private--' : $s->_account->id,
+       time_in_force    => 'gtc',
+       ref_id => $test ? '00000000-0000-0000-0000-000000000000' : gen_uuid()
     )
 }
 

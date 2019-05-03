@@ -30,8 +30,8 @@ use Finance::Robinhood::Equity::Instrument;
 sub _test__init {
     my $rh    = t::Utility::rh_instance(1);
     my $quote = $rh->equity_instrument_by_symbol('MSFT')->quote();
-    isa_ok( $quote, __PACKAGE__ );
-    t::Utility::stash( 'QUOTE', $quote );    #  Store it for later
+    isa_ok($quote, __PACKAGE__);
+    t::Utility::stash('QUOTE', $quote);    #  Store it for later
 }
 #
 has _rh => undef => weak => 1;
@@ -89,13 +89,12 @@ Returns a boolean value; true if trading is halted.
 
 =cut
 
-has [
-    'adjusted_previous_close',         'ask_price',
-    'ask_size',                        'bid_price',
-    'bid_size',                        'has_traded',
-    'last_extended_hours_trade_price', 'last_trade_price',
-    'last_trade_price_source',         'previous_close',
-    'symbol',                          'trading_halted'
+has ['adjusted_previous_close',         'ask_price',
+     'ask_size',                        'bid_price',
+     'bid_size',                        'has_traded',
+     'last_extended_hours_trade_price', 'last_trade_price',
+     'last_trade_price_source',         'previous_close',
+     'symbol',                          'trading_halted'
 ];
 
 =head2 C<previous_close_date( )>
@@ -107,12 +106,12 @@ Returns a Time::Moment object.
 =cut
 
 sub previous_close_date ($s) {
-    Time::Moment->from_string( $s->{previous_close_date} . 'T16:30:00-05:00' );
+    Time::Moment->from_string($s->{previous_close_date} . 'T16:30:00-05:00');
 }
 
 sub _test_previous_close_date {
     t::Utility::stash('QUOTE') // skip_all();
-    isa_ok( t::Utility::stash('QUOTE')->previous_close_date(), 'Time::Moment' );
+    isa_ok(t::Utility::stash('QUOTE')->previous_close_date(), 'Time::Moment');
 }
 
 =head2 C<updated_at( )>
@@ -124,12 +123,12 @@ Returns a Time::Moment object.
 =cut
 
 sub updated_at ($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
     t::Utility::stash('QUOTE') // skip_all();
-    isa_ok( t::Utility::stash('QUOTE')->updated_at(), 'Time::Moment' );
+    isa_ok(t::Utility::stash('QUOTE')->updated_at(), 'Time::Moment');
 }
 
 =head2 C<instrument( )>
@@ -141,16 +140,18 @@ Loops back to a Finance::Robinhood::Equity::Instrument object.
 =cut
 
 sub instrument ($s) {
-    my $res = $s->_rh->_get( $s->{instrument} );
+    my $res = $s->_rh->_get($s->{instrument});
     $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
+                                                      %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_instrument {
     t::Utility::stash('QUOTE') // skip_all();
-    isa_ok( t::Utility::stash('QUOTE')->instrument(), 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok(t::Utility::stash('QUOTE')->instrument(),
+           'Finance::Robinhood::Equity::Instrument');
 }
 
 =head1 LEGAL

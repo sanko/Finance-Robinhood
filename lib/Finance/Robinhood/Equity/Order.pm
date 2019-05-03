@@ -33,28 +33,28 @@ use Finance::Robinhood::Equity::Order::Execution;
 sub _test__init {
     my $rh    = t::Utility::rh_instance(1);
     my $order = $rh->equity_orders->current;
-    isa_ok( $order, __PACKAGE__ );
-    t::Utility::stash( 'ORDER', $order );    #  Store it for later
+    isa_ok($order, __PACKAGE__);
+    t::Utility::stash('ORDER', $order);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('ORDER') // skip_all();
-    like( +t::Utility::stash('ORDER'), qr'https://api.robinhood.com/orders/.+/' );
+    like(+t::Utility::stash('ORDER'),
+         qr'https://api.robinhood.com/orders/.+/');
 }
 #
 has _rh => undef => weak => 1;
-has [
-    'average_price',        'cumulative_quantity',
-    'extended_hours',       'fees',
-    'id',                   'override_day_trade_checks',
-    'override_dtbp_checks', 'price',
-    'quantity',             'ref_id',
-    'reject_reason',        'response_category',
-    'side',                 'state',
-    'stop_price',           'time_in_force',
-    'trigger',              'type',
-    'url'
+has ['average_price',        'cumulative_quantity',
+     'extended_hours',       'fees',
+     'id',                   'override_day_trade_checks',
+     'override_dtbp_checks', 'price',
+     'quantity',             'ref_id',
+     'reject_reason',        'response_category',
+     'side',                 'state',
+     'stop_price',           'time_in_force',
+     'trigger',              'type',
+     'url'
 ];
 
 =head2 C<can_cancel( )>
@@ -68,8 +68,8 @@ sub can_cancel ($s) { defined $s->{cancel} ? !0 : !1 }
 sub _test_can_cancel {
     my $rh     = t::Utility::rh_instance(1);
     my $orders = $rh->equity_orders;
-    my ( $filled, $cancelled );
-    while ( $orders->has_next ) {
+    my ($filled, $cancelled);
+    while ($orders->has_next) {
         my $order = $orders->next;
 
         #$filled   = $order if $order->state eq 'queued';
@@ -77,17 +77,18 @@ sub _test_can_cancel {
         last if $filled && $cancelled;
     }
 SKIP: {
-        skip( 'I need to create a new equity order here', 1 );
-        $filled // skip( 'Cannot find a filled equity order', 1 );
+        skip('I need to create a new equity order here', 1);
+        $filled // skip('Cannot find a filled equity order', 1);
         my $execution = $filled->executions->[0];
-        isa_ok( $execution, 'Finance::Robinhood::Equity::Order::Execution' );
+        isa_ok($execution, 'Finance::Robinhood::Equity::Order::Execution');
     }
 SKIP: {
-        $cancelled // skip( 'Cannot find a cancelled equity order', 1 );
-        is( $cancelled->can_cancel, !1, 'cancelled order cannot be cancelled' );
+        $cancelled // skip('Cannot find a cancelled equity order', 1);
+        is($cancelled->can_cancel, !1, 'cancelled order cannot be cancelled');
     }
-    todo( "Place an order and test if it can be cancelled then cancel it, reload, and retest it" =>
-            sub { pass('ugh') } );
+    todo(
+        "Place an order and test if it can be cancelled then cancel it, reload, and retest it"
+            => sub { pass('ugh') });
 }
 
 =head2 C<account( )>
@@ -97,16 +98,18 @@ Returns the related Finance::Robinhood::Equity::Account object.
 =cut
 
 sub account ($s) {
-    my $res = $s->_rh->_get( $s->{account} );
+    my $res = $s->_rh->_get($s->{account});
     $res->is_success
-        ? Finance::Robinhood::Equity::Account->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Account->new(_rh => $s->_rh,
+                                                   %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_account {
     t::Utility::stash('ORDER') // skip_all('No order object in stash');
-    isa_ok( t::Utility::stash('ORDER')->account, 'Finance::Robinhood::Equity::Account' );
+    isa_ok(t::Utility::stash('ORDER')->account,
+           'Finance::Robinhood::Equity::Account');
 }
 
 =head2 C<position( )>
@@ -116,16 +119,18 @@ Returns the related Finance::Robinhood::Equity::Position object.
 =cut
 
 sub position ($s) {
-    my $res = $s->_rh->_get( $s->{position} );
+    my $res = $s->_rh->_get($s->{position});
     $res->is_success
-        ? Finance::Robinhood::Equity::Position->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Position->new(_rh => $s->_rh,
+                                                    %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_position {
     t::Utility::stash('ORDER') // skip_all('No order object in stash');
-    isa_ok( t::Utility::stash('ORDER')->position, 'Finance::Robinhood::Equity::Position' );
+    isa_ok(t::Utility::stash('ORDER')->position,
+           'Finance::Robinhood::Equity::Position');
 }
 
 =head2 C<average_price( )>
@@ -146,10 +151,10 @@ correctly.
 
 sub cancel ($s) {
     $s->can_cancel // return $s;
-    my $res = $s->_rh->_post( $s->{cancel} );
+    my $res = $s->_rh->_post($s->{cancel});
     $s->reload && return $s if $res->is_success;
     Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 =head2 C<created_at( )>
@@ -159,12 +164,12 @@ Returns a Time::Moment object.
 =cut
 
 sub created_at ($s) {
-    Time::Moment->from_string( $s->{created_at} );
+    Time::Moment->from_string($s->{created_at});
 }
 
 sub _test_created_at {
     t::Utility::stash('ORDER') // skip_all('No order object in stash');
-    isa_ok( t::Utility::stash('ORDER')->created_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('ORDER')->created_at, 'Time::Moment');
 }
 
 =head2 C<cumulative_quantity( )>
@@ -180,28 +185,30 @@ if applicable.
 =cut
 
 sub executions ($s) {
-    map { Finance::Robinhood::Equity::Order::Execution->new( _rh => $s->_rh, %{$_} ) }
-        @{ $s->{executions} };
+    map {
+        Finance::Robinhood::Equity::Order::Execution->new(_rh => $s->_rh,
+                                                          %{$_})
+    } @{$s->{executions}};
 }
 
 sub _test_executions {
     my $rh     = t::Utility::rh_instance(1);
     my $orders = $rh->equity_orders;
-    my ( $filled, $rejected );
-    while ( $orders->has_next ) {
+    my ($filled, $rejected);
+    while ($orders->has_next) {
         my $order = $orders->next;
         $filled   = $order if $order->state eq 'filled';
         $rejected = $order if $order->state eq 'rejected';
         last if $filled && $rejected;
     }
 SKIP: {
-        $filled // skip( 'Cannot find a filled equity order', 1 );
+        $filled // skip('Cannot find a filled equity order', 1);
         my ($execution) = $filled->executions;
-        isa_ok( $execution, 'Finance::Robinhood::Equity::Order::Execution' );
+        isa_ok($execution, 'Finance::Robinhood::Equity::Order::Execution');
     }
 SKIP: {
-        $rejected // skip( 'Cannot find a rejected equity order', 1 );
-        is( [ $rejected->executions ], [], 'rejected order has no executions' );
+        $rejected // skip('Cannot find a rejected equity order', 1);
+        is([$rejected->executions], [], 'rejected order has no executions');
     }
 }
 
@@ -225,16 +232,18 @@ Returns the related Finance::Robinhood::Equity::Instrument object.
 =cut
 
 sub instrument($s) {
-    my $res = $s->_rh->_get( $s->{instrument} );
+    my $res = $s->_rh->_get($s->{instrument});
     $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
+                                                      %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_instrument {
     t::Utility::stash('ORDER') // skip_all('No order object in stash');
-    isa_ok( t::Utility::stash('ORDER')->instrument, 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok(t::Utility::stash('ORDER')->instrument,
+           'Finance::Robinhood::Equity::Instrument');
 }
 
 =head2 C<last_transaction_at( )>
@@ -244,14 +253,16 @@ Returns a Time::Moment object if applicable.
 =cut
 
 sub last_transaction_at($s) {
-    defined $s->{last_transaction_at} ? Time::Moment->from_string( $s->{last_transaction_at} ) : ();
+    defined $s->{last_transaction_at}
+        ? Time::Moment->from_string($s->{last_transaction_at})
+        : ();
 }
 
 sub _test_last_transaction_at {
     t::Utility::stash('ORDER') // skip_all('No order in stash');
     my $last_transaction_at = t::Utility::stash('ORDER')->last_transaction_at;
     skip_all('No transactions... goodbye') if !defined $last_transaction_at;
-    isa_ok( $last_transaction_at, 'Time::Moment' );
+    isa_ok($last_transaction_at, 'Time::Moment');
 }
 
 =head2 C<override_day_trade_checks( )>
@@ -342,12 +353,12 @@ Returns a Time::Moment object.
 =cut
 
 sub updated_at($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
     t::Utility::stash('ORDER') // skip_all('No order object in stash');
-    isa_ok( t::Utility::stash('ORDER')->updated_at, 'Time::Moment' );
+    isa_ok(t::Utility::stash('ORDER')->updated_at, 'Time::Moment');
 }
 
 =head2 C<reload( )>
@@ -361,18 +372,19 @@ Use this if you think the status or some other info might have changed.
 =cut
 
 sub reload($s) {
-    my $res = $s->_rh->_get( $s->{url} );
+    my $res = $s->_rh->_get($s->{url});
     $_[0]
         = $res->is_success
-        ? Finance::Robinhood::Equity::Order->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Order->new(_rh => $s->_rh,
+                                                 %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_reload {
     t::Utility::stash('ORDER') // skip_all('No order object in stash');
     t::Utility::stash('ORDER')->reload;
-    isa_ok( t::Utility::stash('ORDER'), 'Finance::Robinhood::Equity::Order' );
+    isa_ok(t::Utility::stash('ORDER'), 'Finance::Robinhood::Equity::Order');
 }
 
 =head1 LEGAL

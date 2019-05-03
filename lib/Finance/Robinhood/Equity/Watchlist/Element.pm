@@ -25,18 +25,19 @@ our $VERSION = '0.92_002';
 sub _test__init {
     my $rh      = t::Utility::rh_instance(1);
     my $element = $rh->equity_watchlist_by_name('Default')->current;
-    isa_ok( $element, __PACKAGE__ );
-    t::Utility::stash( 'ELEMENT', $element );    #  Store it for later
+    isa_ok($element, __PACKAGE__);
+    t::Utility::stash('ELEMENT', $element);    #  Store it for later
 }
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 use Time::Moment;
-use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
 use Finance::Robinhood::Equity::Instrument;
 
 sub _test_stringify {
     t::Utility::stash('ELEMENT') // skip_all();
-    like( +t::Utility::stash('ELEMENT'), qr'^https://api.robinhood.com/watchlists/Default/.+$' );
+    like(+t::Utility::stash('ELEMENT'),
+         qr'^https://api.robinhood.com/watchlists/Default/.+$');
 }
 #
 has _rh => undef => weak => 1;
@@ -53,12 +54,12 @@ the watchlist.
 =cut
 
 sub created_at ($s) {
-    Time::Moment->from_string( $s->{created_at} );
+    Time::Moment->from_string($s->{created_at});
 }
 
 sub _test_created_at {
     t::Utility::stash('ELEMENT') // skip_all();
-    isa_ok( t::Utility::stash('ELEMENT')->created_at(), 'Time::Moment' );
+    isa_ok(t::Utility::stash('ELEMENT')->created_at(), 'Time::Moment');
 }
 
 =head2 C<delete( )>
@@ -70,15 +71,16 @@ Removes a instrument from the parent watchlist.
 =cut
 
 sub delete ($s) {
-    my $res = $s->_rh->_delete( $s->{url} );
-    return $res->is_success || Finance::Robinhood::Error->new( %{ $res->json } );
+    my $res = $s->_rh->_delete($s->{url});
+    return $res->is_success || Finance::Robinhood::Error->new(%{$res->json});
 }
 
 sub _test_delete {
     t::Utility::stash('ELEMENT') // skip_all();
-    todo( "Add something and remove it and check watchlist" => sub { pass('ugh') } );
+    todo("Add something and remove it and check watchlist" =>
+         sub { pass('ugh') });
 
-    # isa_ok( t::Utility::stash('ELEMENT')->instrument, 'Finance::Robinhood::Equity::Instrument' );
+# isa_ok( t::Utility::stash('ELEMENT')->instrument, 'Finance::Robinhood::Equity::Instrument' );
 }
 
 =head2 C<instrument( )>
@@ -90,15 +92,17 @@ Returns a Finance::Robinhood::Equity::Instrument object.
 =cut
 
 sub instrument ($s) {
-    my $res = $s->_rh->_get( $s->{instrument} );
+    my $res = $s->_rh->_get($s->{instrument});
     return $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new( _rh => $s->_rh, %{ $res->json } )
-        : Finance::Robinhood::Error->new( %{ $res->json } );
+        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
+                                                      %{$res->json})
+        : Finance::Robinhood::Error->new(%{$res->json});
 }
 
 sub _test_instrument {
     t::Utility::stash('ELEMENT') // skip_all();
-    isa_ok( t::Utility::stash('ELEMENT')->instrument, 'Finance::Robinhood::Equity::Instrument' );
+    isa_ok(t::Utility::stash('ELEMENT')->instrument,
+           'Finance::Robinhood::Equity::Instrument');
 }
 
 =head2 C<id( )>
@@ -110,13 +114,15 @@ Returns the UUID of the equity instrument.
 =cut
 
 sub id ($s) {
-    $s->{instrument} =~ qr[/([0-9a-f]{8}(?:\-[0-9a-f]{4}){3}\-[0-9a-f]{12})/$]i;
+    $s->{instrument}
+        =~ qr[/([0-9a-f]{8}(?:\-[0-9a-f]{4}){3}\-[0-9a-f]{12})/$]i;
     $1;
 }
 
 sub _test_id {
     t::Utility::stash('ELEMENT') // skip_all();
-    like( t::Utility::stash('ELEMENT')->id, qr[^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}\-[0-9a-f]{12}$]i );
+    like(t::Utility::stash('ELEMENT')->id,
+         qr[^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}\-[0-9a-f]{12}$]i);
 }
 
 =head2 C<watchlist( )>
@@ -128,18 +134,19 @@ Returns a Finance::Robinhood::Equity::Instrument object.
 =cut
 
 sub watchlist ($s) {
-    my $res = $s->_rh->_get( $s->{watchlist} );
+    my $res = $s->_rh->_get($s->{watchlist});
     return $res->is_success
-        ? Finance::Robinhood::Equity::Watchlist->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Watchlist->new(_rh => $s->_rh,
+                                                     %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_watchlist {
     t::Utility::stash('ELEMENT') // skip_all();
     my $watchlist = t::Utility::stash('ELEMENT')->watchlist;
-    isa_ok( $watchlist, 'Finance::Robinhood::Equity::Watchlist' );
-    is( $watchlist->name, 'Default' );
+    isa_ok($watchlist, 'Finance::Robinhood::Equity::Watchlist');
+    is($watchlist->name, 'Default');
 }
 
 =head1 LEGAL

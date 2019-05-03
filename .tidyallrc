@@ -1,13 +1,14 @@
 ignore = **/*.bak
- 
+
 [PerlTidy]
 select = **/*.{pl,pm,t}
-argv = -noll -it=2 -l=100 -i=4 -ci=4 -se -b -bar -boc -vt=0 -vtc=0 -cti=0 -pt=1 -bt=1 -sbt=1 -bbt=1 -nolq -npro -nsfs --opening-hash-brace-right --no-outdent-long-comments -wbb="% + - * / x != == >= <= =~ !~ < > | & >= < = **= += *= &= <<= &&= -= /= |= >>= ||= .= %= ^= x=" --iterations=2
- 
+;argv = -noll -it=2 -l=100 -i=4 -ci=4 -se -b -bar -boc -vt=0 -vtc=0 -cti=0 -pt=1 -bt=1 -sbt=1 -bbt=1 -nolq -npro -nsfs --opening-hash-brace-right --no-outdent-long-comments -wbb="% + - * / x != == >= <= =~ !~ < > | & >= < = **= += *= &= <<= &&= -= /= |= >>= ||= .= %= ^= x=" --iterations=2
+argv = --brace-tightness=2 --block-brace-tightness=1 --block-brace-vertical-tightness=2 --paren-tightness=2 --paren-vertical-tightness=2 --square-bracket-tightness=2 --square-bracket-vertical-tightness=2 --brace-tightness=2 --brace-vertical-tightness=2 --check-syntax --delete-old-whitespace --no-indent-closing-brace --line-up-parentheses --no-outdent-keywords --no-outdent-long-quotes --no-space-for-semicolon --swallow-optional-blank-lines --continuation-indentation=4 --maximum-line-length=78 --want-break-before='% + - * / x != == >= <= =~ !~ < > | & >= < = **= += *= &= <<= &&= -= /= |= \ >>= ||= .= %= ^= x= ? :' --standard-error-output --backup-and-modify-in-place
+
 ;[PerlCritic]
 ;select = lib/**/*.pm
 ;ignore = lib/UtterHack.pm lib/OneTime/*.pm
 ;argv = -severity 3
- 
+
 [PodTidy]
 select = lib/**/*.{pm,pod}

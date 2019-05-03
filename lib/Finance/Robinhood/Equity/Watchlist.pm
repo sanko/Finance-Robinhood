@@ -23,17 +23,19 @@ our $VERSION = '0.92_002';
 sub _test__init {
     my $rh        = t::Utility::rh_instance(1);
     my $watchlist = $rh->equity_watchlist_by_name('Default');
-    isa_ok( $watchlist, __PACKAGE__ );
-    t::Utility::stash( 'WATCHLIST', $watchlist );    #  Store it for later
+    isa_ok($watchlist, __PACKAGE__);
+    t::Utility::stash('WATCHLIST', $watchlist);    #  Store it for later
 }
 use Mojo::Base 'Finance::Robinhood::Utilities::Iterator', -signatures;
 use Mojo::URL;
-use overload '""' => sub ( $s, @ ) { $s->{_next_page} // $s->{_first_page} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{_next_page} // $s->{_first_page} },
+    fallback => 1;
 use Finance::Robinhood::Equity::Watchlist::Element;
 
 sub _test_stringify {
     t::Utility::stash('WATCHLIST') // skip_all();
-    is( +t::Utility::stash('WATCHLIST'), 'https://api.robinhood.com/watchlists/Default/' );
+    is(+t::Utility::stash('WATCHLIST'),
+        'https://api.robinhood.com/watchlists/Default/');
 }
 
 =head1 METHODS
@@ -61,7 +63,7 @@ has 'name' => sub ($s) {
 
 sub _test_name {
     t::Utility::stash('WATCHLIST') // skip_all();
-    is( t::Utility::stash('WATCHLIST')->name, 'Default' );
+    is(t::Utility::stash('WATCHLIST')->name, 'Default');
 }
 
 # Private
@@ -71,7 +73,8 @@ has 'url' => sub ($s) {
 
 sub _test_url {
     t::Utility::stash('WATCHLIST') // skip_all();
-    is( t::Utility::stash('WATCHLIST')->url, 'https://api.robinhood.com/watchlists/Default/' );
+    is(t::Utility::stash('WATCHLIST')->url,
+        'https://api.robinhood.com/watchlists/Default/');
 }
 
 # Override methods from Iterator
@@ -81,19 +84,15 @@ has _next_page => sub ($s) { $s->{url} };
 sub _test_current {
     t::Utility::stash('WATCHLIST') // skip_all();
     t::Utility::stash('WATCHLIST')->reset;
-    isa_ok(
-        t::Utility::stash('WATCHLIST')->current,
-        'Finance::Robinhood::Equity::Watchlist::Element'
-    );
+    isa_ok(t::Utility::stash('WATCHLIST')->current,
+           'Finance::Robinhood::Equity::Watchlist::Element');
 }
 
 sub _test_next {
     t::Utility::stash('WATCHLIST') // skip_all();
     t::Utility::stash('WATCHLIST')->reset;
-    isa_ok(
-        t::Utility::stash('WATCHLIST')->next,
-        'Finance::Robinhood::Equity::Watchlist::Element'
-    );
+    isa_ok(t::Utility::stash('WATCHLIST')->next,
+           'Finance::Robinhood::Equity::Watchlist::Element');
 }
 
 =head2 C<populate( ... )>
@@ -105,24 +104,29 @@ boolean.
 
 =cut
 
-sub populate ( $s, @symbols ) {
+sub populate ($s, @symbols) {
 
     # Split symbols into groups of 32 to keep URL length down
     my $res;
     while (@symbols) {
-        $res = $s->_rh->_post( $s->url . 'bulk_add/', symbols => splice @symbols, 0, 32 );
-        return Finance::Robinhood::Error->new( $res->json ) if !$res->is_success;
+        $res = $s->_rh->_post($s->url . 'bulk_add/',
+                              symbols => splice @symbols,
+                              0, 32
+        );
+        return Finance::Robinhood::Error->new($res->json)
+            if !$res->is_success;
     }
-    return $res->is_success
-        || Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+    return $res->is_success ||
+        Finance::Robinhood::Error->new(
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_populate {
     t::Utility::stash('WATCHLIST') // skip_all();
     t::Utility::stash('WATCHLIST')->reset;
-    ok( t::Utility::stash('WATCHLIST')->populate('MSFT'), 'adding MSFT' );
-    todo( "Test that the instrument was added by checking watchlist size" => sub { pass('ugh') } );
+    ok(t::Utility::stash('WATCHLIST')->populate('MSFT'), 'adding MSFT');
+    todo("Test that the instrument was added by checking watchlist size" =>
+         sub { pass('ugh') });
 }
 
 =head2 C<add_instrument( ... )>
@@ -134,12 +138,13 @@ Finance::Robinhood::Equity::Watchlist::Element object is returned.
 
 =cut
 
-sub add_instrument ( $s, $instrument ) {
-    my $res = $s->_rh->_post( $s->url, instrument => $instrument );
+sub add_instrument ($s, $instrument) {
+    my $res = $s->_rh->_post($s->url, instrument => $instrument);
     return $res->is_success
-        ? Finance::Robinhood::Equity::Watchlist::Element->new( _rh => $s->_rh, %{ $res->json } )
+        ? Finance::Robinhood::Equity::Watchlist::Element->new(_rh => $s->_rh,
+                                                              %{$res->json})
         : Finance::Robinhood::Error->new(
-        $res->is_server_error ? ( details => $res->message ) : $res->json );
+             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_add_instrument {
@@ -147,11 +152,12 @@ sub _test_add_instrument {
     t::Utility::stash('WATCHLIST')->reset;
     my $result
         = t::Utility::stash('WATCHLIST')
-        ->add_instrument(
-        t::Utility::stash('WATCHLIST')->_rh->equity_instrument_by_symbol('MSFT') );
-    isa_ok(
-        $result,
-        $result ? 'Finance::Robinhood::Equity::Watchlist::Element' : 'Finance::Robinhood::Error'
+        ->add_instrument(t::Utility::stash('WATCHLIST')
+                         ->_rh->equity_instrument_by_symbol('MSFT'));
+    isa_ok($result,
+           $result
+           ? 'Finance::Robinhood::Equity::Watchlist::Element'
+           : 'Finance::Robinhood::Error'
     );
 }
 
@@ -165,14 +171,14 @@ watchlist and returns them as a list.
 =cut
 
 sub instruments ($s) {
-    $s->_rh->equity_instruments_by_id( map { $_->id } $s->all );
+    $s->_rh->equity_instruments_by_id(map { $_->id } $s->all);
 }
 
 sub _test_instruments {
     t::Utility::stash('WATCHLIST') // skip_all();
     t::Utility::stash('WATCHLIST')->reset;
     my @instruments = t::Utility::stash('WATCHLIST')->instruments;
-    isa_ok( $_, 'Finance::Robinhood::Equity::Instrument' ) for @instruments;
+    isa_ok($_, 'Finance::Robinhood::Equity::Instrument') for @instruments;
 }
 
 =head2 C<ids( )>
@@ -191,7 +197,8 @@ sub _test_ids {
     t::Utility::stash('WATCHLIST') // skip_all();
     t::Utility::stash('WATCHLIST')->reset;
     my @ids = t::Utility::stash('WATCHLIST')->ids;
-    like( $_, qr[^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}\-[0-9a-f]{12}$]i, $_ ) for @ids;
+    like($_, qr[^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}\-[0-9a-f]{12}$]i, $_)
+        for @ids;
 }
 
 =head2 C<reorder( ... )>
@@ -202,19 +209,19 @@ This method moves items of the watchlist around.
 
 =cut
 
-sub reorder ( $s, @ids ) {
-    my $res = $s->_rh->_post( $s->url . 'reorder/', uuids => join ',', @ids );
-    return $res->is_success || Finance::Robinhood::Error->new( %{ $res->json } );
+sub reorder ($s, @ids) {
+    my $res = $s->_rh->_post($s->url . 'reorder/', uuids => join ',', @ids);
+    return $res->is_success || Finance::Robinhood::Error->new(%{$res->json});
 }
 
 sub _test_reorder {
     t::Utility::stash('WATCHLIST') // skip_all();
     t::Utility::stash('WATCHLIST')->reset;
     my @ids = t::Utility::stash('WATCHLIST')->ids;
-    ok( t::Utility::stash('WATCHLIST')->reorder( reverse @ids ), 'reorder(...)' );
+    ok(t::Utility::stash('WATCHLIST')->reorder(reverse @ids), 'reorder(...)');
     t::Utility::stash('WATCHLIST')->reset;
     my @reordered = t::Utility::stash('WATCHLIST')->ids;
-    is( [ reverse @ids ], \@reordered );
+    is([reverse @ids], \@reordered);
 }
 
 =head1 LEGAL

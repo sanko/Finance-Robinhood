@@ -27,8 +27,8 @@ use Finance::Robinhood::Forex::Pair;
 sub _test__init {
     my $rh    = t::Utility::rh_instance(1);
     my $quote = $rh->forex_pairs->current->quote();
-    isa_ok( $quote, __PACKAGE__ );
-    t::Utility::stash( 'QUOTE', $quote );    #  Store it for later
+    isa_ok($quote, __PACKAGE__);
+    t::Utility::stash('QUOTE', $quote);    #  Store it for later
 }
 #
 has _rh => undef => weak => 1;
@@ -71,9 +71,9 @@ Volume traded during period.
 
 =cut
 
-has [
-    'ask_price',  'bid_price', 'high_price', 'id', 'low_price', 'mark_price',
-    'open_price', 'symbol',    'volume'
+has ['ask_price', 'bid_price',  'high_price', 'id',
+     'low_price', 'mark_price', 'open_price', 'symbol',
+     'volume'
 ];
 
 =head2 C<instrument( )>
@@ -85,12 +85,13 @@ Loops back to a Finance::Robinhood::Forex::Instrument object.
 =cut
 
 sub pair ($s) {
-    return $s->_rh->forex_pair_by_id( $s->{id} );
+    return $s->_rh->forex_pair_by_id($s->{id});
 }
 
 sub _test_pair {
     t::Utility::stash('QUOTE') // skip_all();
-    isa_ok( t::Utility::stash('QUOTE')->pair(), 'Finance::Robinhood::Forex::Pair' );
+    isa_ok(t::Utility::stash('QUOTE')->pair(),
+           'Finance::Robinhood::Forex::Pair');
 }
 
 =head1 LEGAL

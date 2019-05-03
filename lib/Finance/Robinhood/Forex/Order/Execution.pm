@@ -26,30 +26,29 @@ sub _test__init {
     my $rh     = t::Utility::rh_instance(1);
     my $orders = $rh->forex_orders;
     my $order;
-    while ( $orders->has_next ) {
-        if ( $orders->next->state eq 'filled' ) {
+    while ($orders->has_next) {
+        if ($orders->next->state eq 'filled') {
             $order = $orders->current;
             last;
         }
     }
     $order // skip_all('Cannot find a forex order to test against');
     my ($execution) = $order->executions;
-    isa_ok( $execution, __PACKAGE__ );
-    t::Utility::stash( 'ORDER',     $order );        #  Store it for later
-    t::Utility::stash( 'EXECUTION', $execution );    #  Store it for later
+    isa_ok($execution, __PACKAGE__);
+    t::Utility::stash('ORDER',     $order);        #  Store it for later
+    t::Utility::stash('EXECUTION', $execution);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { $s->{id} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->{id} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('EXECUTION') // skip_all();
-    like(
-        +t::Utility::stash('EXECUTION'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    like(+t::Utility::stash('EXECUTION'),
+         qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
     );
 }
 #
 has _rh => undef => weak => 1;
-has [ 'effective_price', 'id', 'quantity' ];
+has ['effective_price', 'id', 'quantity'];
 
 =head1 METHODS
  
@@ -74,12 +73,13 @@ Returns a Time::Moment object.
 =cut
 
 sub timestamp ($s) {
-    Time::Moment->from_string( $s->{timestamp} );
+    Time::Moment->from_string($s->{timestamp});
 }
 
 sub _test_timestamp {
-    t::Utility::stash('EXECUTION') // skip_all('No order execution object in stash');
-    isa_ok( t::Utility::stash('EXECUTION')->timestamp, 'Time::Moment' );
+    t::Utility::stash('EXECUTION')
+        // skip_all('No order execution object in stash');
+    isa_ok(t::Utility::stash('EXECUTION')->timestamp, 'Time::Moment');
 }
 
 =head1 LEGAL

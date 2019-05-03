@@ -27,14 +27,15 @@ sub _test__init {
     my $rh              = t::Utility::rh_instance(1);
     my $acct            = $rh->equity_accounts->current;
     my $margin_balances = $acct->margin_balances;
-    isa_ok( $margin_balances, __PACKAGE__ );
-    t::Utility::stash( 'MARGIN', $margin_balances );    #  Store it for later
+    isa_ok($margin_balances, __PACKAGE__);
+    t::Utility::stash('MARGIN', $margin_balances);    #  Store it for later
 }
-use overload '""' => sub ( $s, @ ) { +$s->{created_at} }, fallback => 1;
+use overload '""' => sub ($s, @) { +$s->{created_at} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('MARGIN') // skip_all();
-    like( +t::Utility::stash('MARGIN'), qr'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d+Z$' );
+    like(+t::Utility::stash('MARGIN'),
+         qr'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d+Z$');
 }
 
 =head1 METHODS
@@ -97,19 +98,30 @@ has _rh => undef => weak => 1;
 
 =cut
 
-has [
-    'cash',                                   'cash_available_for_withdrawal',
-    'cash_held_for_dividends',                'cash_held_for_nummus_restrictions',
-    'cash_held_for_options_collateral',       'cash_held_for_orders',
-    'cash_pending_from_options_events',       'day_trade_buying_power',
-    'day_trade_buying_power_held_for_orders', 'day_trade_ratio',
-    'gold_equity_requirement',                'margin_limit',
-    'outstanding_interest',                   'overnight_buying_power',
-    'overnight_buying_power_held_for_orders', 'overnight_ratio',
-    'sma',                                    'start_of_day_dtbp',
-    'start_of_day_overnight_buying_power',    'unallocated_margin_cash',
-    'uncleared_deposits',                     'uncleared_nummus_deposits',
-    'unsettled_debit',                        'unsettled_funds',
+has ['cash',
+     'cash_available_for_withdrawal',
+     'cash_held_for_dividends',
+     'cash_held_for_nummus_restrictions',
+     'cash_held_for_options_collateral',
+     'cash_held_for_orders',
+     'cash_pending_from_options_events',
+     'day_trade_buying_power',
+     'day_trade_buying_power_held_for_orders',
+     'day_trade_ratio',
+     'gold_equity_requirement',
+     'margin_limit',
+     'outstanding_interest',
+     'overnight_buying_power',
+     'overnight_buying_power_held_for_orders',
+     'overnight_ratio',
+     'sma',
+     'start_of_day_dtbp',
+     'start_of_day_overnight_buying_power',
+     'unallocated_margin_cash',
+     'uncleared_deposits',
+     'uncleared_nummus_deposits',
+     'unsettled_debit',
+     'unsettled_funds',
 ];
 
 =head2 C<marked_pattern_day_trader_date( )>
@@ -120,15 +132,18 @@ Returns a Time::Moment object if applicable.
 
 sub marked_pattern_day_trader_date ($s) {
     defined $s->{marked_pattern_day_trader_date}
-        ? Time::Moment->from_string( $s->{marked_pattern_day_trader_date} )
+        ? Time::Moment->from_string($s->{marked_pattern_day_trader_date})
         : ();
 }
 
 sub _test_marked_pattern_day_trader_date {
-    t::Utility::stash('MARGIN') // skip_all('No margin balances object in stash');
+    t::Utility::stash('MARGIN')
+        // skip_all('No margin balances object in stash');
     skip_all('Not marked as a PDT')
-        if !defined t::Utility::stash('MARGIN')->marked_pattern_day_trader_date;
-    isa_ok( t::Utility::stash('MARGIN')->marked_pattern_day_trader_date, 'Time::Moment' );
+        if !
+        defined t::Utility::stash('MARGIN')->marked_pattern_day_trader_date;
+    isa_ok(t::Utility::stash('MARGIN')->marked_pattern_day_trader_date,
+           'Time::Moment');
 }
 
 =head2 C<created_at( )>
@@ -138,12 +153,13 @@ Returns a Time::Moment object.
 =cut
 
 sub created_at ($s) {
-    Time::Moment->from_string( $s->{created_at} );
+    Time::Moment->from_string($s->{created_at});
 }
 
 sub _test_created_at {
-    t::Utility::stash('MARGIN') // skip_all('No margin balances object in stash');
-    isa_ok( t::Utility::stash('MARGIN')->created_at, 'Time::Moment' );
+    t::Utility::stash('MARGIN')
+        // skip_all('No margin balances object in stash');
+    isa_ok(t::Utility::stash('MARGIN')->created_at, 'Time::Moment');
 }
 
 =head2 C<updated_at( )>
@@ -153,12 +169,13 @@ Returns a Time::Moment object if applicable.
 =cut
 
 sub updated_at ($s) {
-    Time::Moment->from_string( $s->{updated_at} );
+    Time::Moment->from_string($s->{updated_at});
 }
 
 sub _test_updated_at {
-    t::Utility::stash('MARGIN') // skip_all('No margin balances object in stash');
-    isa_ok( t::Utility::stash('MARGIN')->updated_at, 'Time::Moment' );
+    t::Utility::stash('MARGIN')
+        // skip_all('No margin balances object in stash');
+    isa_ok(t::Utility::stash('MARGIN')->updated_at, 'Time::Moment');
 }
 
 =head1 LEGAL
