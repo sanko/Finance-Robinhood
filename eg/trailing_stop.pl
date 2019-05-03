@@ -5,47 +5,30 @@ use warnings;
 # Install Perl dist first:
 # > cpanm -n Finance::Robinhood
 use lib '../lib', 'lib';
-use Getopt::Long qw(GetOptions);
-use Pod::Usage qw(pod2usage);
+use Mojo::Util qw(extract_usage getopt);
 binmode STDOUT, ':utf8';
 use Finance::Robinhood;
 use Try::Tiny;
 $|++;
-#
-my (
-    $help, $man,    # Pod::Usage
-    $verbose,       # Debugging
-    $username, $password,    # New login
-    $device,                 # New challenge API
-    $percent                 # How much rope to give us
-);
+
 ## Parse options and print usage if there is a syntax error,
 ## or if usage was explicitly requested.
-GetOptions(
-    'help|?'       => \$help,
-    man            => \$man,
-    'verbose+'     => \$verbose,
-    'username|u:s' => \$username,
-    'password|p:s' => \$password,
-    'device|d:s'   => \$device,
-    'percent|%t=f' => \$percent
-) or pod2usage(2);
+getopt
+    'help|?'       => \my $help,
+    'verbose|v'    => \my $verbose,
+    'username|u:s' => \my $username,
+    'password|p:s' => \my $password,
+    'device|d:s'   => \my $device,
+    'percent|%t=f' => \my $percent;
 $percent //= 3;    # Defaults
 
 # TODO: Forex
 my %limits;
 my $range = 1.5;    # Percent
 #
-#$verbose++;
-#
-pod2usage(1) if $help;
-pod2usage( -verbose => 2 ) if $man;
-pod2usage("$0: Not sure how far away to keep orders.") if !$percent;
-pod2usage(
-    -message => "$0: Missing or incomplete username/password combo given.",
-    -verbose => 1,
-    -exitval => 1
-) if !( $username && $password );
+die extract_usage if $help;    # || !(my $config = shift);
+die "Error: Missing or incomplete username/password combo given.\n\n" . extract_usage
+    if !( $username && $password );
 #
 my $rh = Finance::Robinhood->new( $device ? ( device_token => $device ) : () )->login(
     $username,
@@ -186,52 +169,18 @@ trailing_stop - Crazy Basic Forex and Equities Trailing Stop Loss Example
 
 =head1 SYNOPSIS
 
-trailing_stop [options]
+  Usage: trailing_stop [options]
 
- Options:
-   -help            brief help message
-   -man             full documentation
-   -verbose			enable status text
-   -username		login data
-   -password		login data
-   -device			device ID
-   -percentage		equity price distance
+    trailing_stop -u mike34 -p '$lM#lO@9n4ofsnamkfsa'
 
-=head1 OPTIONS
-
-=over 4
-
-=item B<-help>
-
-Print a brief help message and exits.
-
-=item B<-man>
-
-Prints the manual page and exits.
-
-=item B<-verbose>
-
-Turns on status text during program run.
-
-=item B<-username>
-
-Your account name or email address.
-
-=item B<-password>
-
-Your password.
-
-=item B<-device>
-
-The device ID for your client.
-
-=item B<-percent>
-
-Distance for equity trailing stop loss.
-
-Optional and defaults to C<3>.
-
-=back
+  Options:
+    -?, --help                   Print a brief help message and exits
+    -v, --verbose                Turns on status text during program run
+    -u, --username <string>      Your account name or email address
+    -p, --password <string>      Your password
+    -d, --device <UUID>          The device ID for your client
+    -%, --percentage <number>    Distance for equity trailing stop loss.
+                                 Optional and defaults to 3.
 
 =head1 DESCRIPTION
 
