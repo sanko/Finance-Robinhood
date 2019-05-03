@@ -140,7 +140,7 @@ while (1) {
             CORE::say 'real cost:  $' . $actual if $verbose;
             my $change = ( 100 * ( ( $quote->bid_price * $holding->quantity_available ) - $actual )
                     / $actual );
-            CORE::say '   change:   ' . $change . '%' if $verbose;
+            CORE::say '   change:  ' . $change . '%' if $verbose;
             my $minus_range_percent = $quote->bid_price - ( $quote->bid_price * ( $range / 100 ) );
 
             #warn $minus_range_percent;
