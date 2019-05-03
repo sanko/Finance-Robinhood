@@ -16,6 +16,7 @@ my (
     $help, $man,    # Pod::Usage
     $verbose,       # Debugging
     $username, $password,    # New login
+    $device,                 # New challenge API
     $percent                 # How much rope to give us
 );
 ## Parse options and print usage if there is a syntax error,
@@ -26,13 +27,14 @@ GetOptions(
     'verbose+'     => \$verbose,
     'username|u:s' => \$username,
     'password|p:s' => \$password,
+    'device|d:s'   => \$device,
     'percent|%t=f' => \$percent
 ) or pod2usage(2);
-$percent //= 3;              # Defaults
+$percent //= 3;    # Defaults
 
 # TODO: Forex
 my %limits;
-my $range = 1.5;             # Percent
+my $range = 1.5;    # Percent
 #
 #$verbose++;
 #
@@ -45,7 +47,7 @@ pod2usage(
     -exitval => 1
 ) if !( $username && $password );
 #
-my $rh = Finance::Robinhood->new->login(
+my $rh = Finance::Robinhood->new( $device ? ( device_token => $device ) : () )->login(
     $username,
     $password,
     challenge_callback => sub {
@@ -175,3 +177,89 @@ sub promptUser {
     }
     $retval ? $retval : $default ? $default : $retval;
 }
+
+__END__
+
+=head1 NAME
+
+trailing_stop - Crazy Basic Forex and Equities Trailing Stop Loss Example
+
+=head1 SYNOPSIS
+
+trailing_stop [options]
+
+ Options:
+   -help            brief help message
+   -man             full documentation
+   -verbose			enable status text
+   -username		login data
+   -password		login data
+   -device			device ID
+   -percentage		equity price distance
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-help>
+
+Print a brief help message and exits.
+
+=item B<-man>
+
+Prints the manual page and exits.
+
+=item B<-verbose>
+
+Turns on status text during program run.
+
+=item B<-username>
+
+Your account name or email address.
+
+=item B<-password>
+
+Your password.
+
+=item B<-device>
+
+The device ID for your client.
+
+=item B<-percent>
+
+Distance for equity trailing stop loss.
+
+Optional and defaults to C<3>.
+
+=back
+
+=head1 DESCRIPTION
+
+This program is a very dumb trailing stop loss for equities and forex.
+
+Right now, the trailing percentage for forex is hard coded.
+
+=head1 LEGAL
+
+This is a simple wrapper around the API used in the official apps. The author
+provides no investment, legal, or tax advice and is not responsible for any
+damages incurred while using this software. This software is not affiliated
+with Robinhood Financial LLC in any way.
+
+For Robinhood's terms and disclosures, please see their website at
+https://robinhood.com/legal/
+
+=head1 LICENSE
+
+Copyright (C) Sanko Robinson.
+
+This library is free software; you can redistribute it and/or modify it under
+the terms found in the Artistic License 2. Other copyrights, terms, and
+conditions may apply to data transmitted through this module. Please refer to
+the L<LEGAL> section.
+
+=head1 AUTHOR
+
+Sanko Robinson E<lt>sanko@cpan.orgE<gt>
+
+=cut
