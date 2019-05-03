@@ -69,6 +69,20 @@ has _ua => sub {
                          $^O, __PACKAGE__, $VERSION);
     $x;
 };
+
+BEGIN {    # Hide giant UA from Data::Dump
+    Data::Dump::Filtered::add_dump_filter(
+        sub {
+            my ($ctx, $object) = @_;
+            $ctx->is_blessed &&
+                $ctx->class eq 'Mojo::UserAgent'
+                ? {'dump' => 'Mojo::UserAgent object {' .
+                   $object->transactor->name . '}'
+                }
+                : ();
+        }
+    ) if $Data::Dump::VERSION && require Data::Dump::Filtered;
+}
 has 'oauth2_token';
 has 'device_token' => sub { gen_uuid() };
 
