@@ -26,7 +26,7 @@ use Mojo::URL;
 use Finance::Robinhood::Error;
 use Finance::Robinhood::Utilities qw[gen_uuid];
 use Finance::Robinhood::Utilities::Iterator;
-use Finance::Robinhood::Data::OAuth2::Token;
+use Finance::Robinhood::OAuth2::Token;
 
 =head1 METHODS
 
@@ -305,7 +305,7 @@ To prevent your client from having to log in every time it is run, call this
 method which returns the authorization tokens which should be passed to C<new(
 ... )>.
 
-This method returns a Finance::Robinhood::Data::OAuth2::Token object.
+This method returns a Finance::Robinhood::OAuth2::Token object.
 
 =cut
 
@@ -341,8 +341,8 @@ sub login ( $s, $u, $p, %opt ) {
                 : $s->login( $u, $p, %opt, mfa_code => $opt{mfa_callback}->( $res->json ) );
         }
         else {
-            require Finance::Robinhood::Data::OAuth2::Token;
-            $s->oauth2_token( Finance::Robinhood::Data::OAuth2::Token->new( $res->json ) );
+            require Finance::Robinhood::OAuth2::Token;
+            $s->oauth2_token( Finance::Robinhood::OAuth2::Token->new( $res->json ) );
         }
     }
     elsif ( $res->json->{challenge} ) {    # 400
@@ -365,7 +365,7 @@ sub login ( $s, $u, $p, %opt ) {
 
 sub _test_login {
     my $rh = t::Utility::rh_instance(1);
-    isa_ok( $rh->oauth2_token, 'Finance::Robinhood::Data::OAuth2::Token' );
+    isa_ok( $rh->oauth2_token, 'Finance::Robinhood::OAuth2::Token' );
 }
 
 # Cannot test this without logging in, getting a challenge, and then entering the private data
@@ -397,8 +397,8 @@ sub _refresh_login_token ( $s, %opt ) {    # TODO: Store %opt from login and reu
     );
     if ( $res->is_success ) {
 
-        require Finance::Robinhood::Data::OAuth2::Token;
-        $s->oauth2_token( Finance::Robinhood::Data::OAuth2::Token->new( $res->json ) );
+        require Finance::Robinhood::OAuth2::Token;
+        $s->oauth2_token( Finance::Robinhood::OAuth2::Token->new( $res->json ) );
 
     }
     else {

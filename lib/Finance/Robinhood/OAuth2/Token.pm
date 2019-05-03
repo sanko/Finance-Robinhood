@@ -1,4 +1,4 @@
-package Finance::Robinhood::Data::OAuth2::Token;
+package Finance::Robinhood::OAuth2::Token;
 
 =encoding utf-8
 
@@ -6,7 +6,7 @@ package Finance::Robinhood::Data::OAuth2::Token;
 
 =head1 NAME
 
-Finance::Robinhood::Data::OAuth2::Token - Private Authorization Data
+Finance::Robinhood::OAuth2::Token - Private Authorization Data
 
 =head1 SYNOPSIS
 

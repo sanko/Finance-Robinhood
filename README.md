@@ -86,7 +86,7 @@ To prevent your client from having to log in every time it is run, call this
 method which returns the authorization tokens which should be passed to `new(
 ... )`.
 
-This method returns a Finance::Robinhood::Data::OAuth2::Token object.
+This method returns a Finance::Robinhood::OAuth2::Token object.
 
 ## `search( ... )`
 
