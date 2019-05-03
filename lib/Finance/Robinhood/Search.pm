@@ -13,9 +13,8 @@ Finance::Robinhood::Search - Represents Search Results
     use Text::Wrap qw[wrap];
     use Finance::Robinhood;
     my $rh = Finance::Robinhood->new;
-    
-    my $search = $rh->search('shoes');
 
+    my $search = $rh->search('shoes');
 
 =head1 METHODS
 

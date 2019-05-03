@@ -70,13 +70,17 @@ an app), you can pass that code directly and log in.
 ### `challenge_callback => ...`
 
         my $rh = Finance::Robinhood->new()->login($user, $pass, challenge_callback => sub {
+                my ($challenge) = @_;
                 # Do something like pop open an inputbox in TK, read from shell or whatever
+                $challenge->respond( ... );
+                $challenge;
         } );
 
 When logging in with a new client, you are required to authorize it to access
 your account.
 
-This callback should return the six digit code sent to you via sms or email.
+This callback should should expect a Finance::Robinhood::Error::Challenge
+object and must return the object after validation.
 
 ## `device_token( [...] )`
 

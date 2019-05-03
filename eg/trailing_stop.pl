@@ -36,9 +36,11 @@ my $rh
     $username,
     $password,
     challenge_callback => sub {
-        my $data = shift;
-        promptUser(sprintf 'Login challenge issued (check your %s)',
-                   $data->{type});
+        my ($challenge) = @_;
+        my $response
+            = promptUser(sprintf 'Login challenge issued (check your %s)',
+                         $challenge->type);
+        $challenge->respond($response);
     },
     mfa_callback => sub {
         promptUser('MFA code required');

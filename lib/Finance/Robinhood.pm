@@ -281,13 +281,17 @@ an app), you can pass that code directly and log in.
 =head3 C<challenge_callback =E<gt> ...>
 
 	my $rh = Finance::Robinhood->new()->login($user, $pass, challenge_callback => sub {
+		my ($challenge) = @_;
 		# Do something like pop open an inputbox in TK, read from shell or whatever
+		$challenge->respond( ... );
+		$challenge;
 	} );
 
 When logging in with a new client, you are required to authorize it to access
 your account.
 
-This callback should return the six digit code sent to you via sms or email.
+This callback should should expect a Finance::Robinhood::Error::Challenge
+object and must return the object after validation.
 
 =head2 C<device_token( [...] )>
 
@@ -368,17 +372,20 @@ sub login ($s, $u, $p, %opt) {
         }
     }
     elsif ($res->json->{challenge}) {    # 400
+        require Finance::Robinhood::Error::Challenge;
         return Finance::Robinhood::Error->new(
                          description => 'You must pass a challenge_callback.')
             if !$opt{challenge_callback};
-        my $id = $res->json->{challenge}{id};
-        return
-            $s->_challenge_response($id,
-                          $opt{challenge_callback}->($res->json->{challenge}))
-            ->is_success
-            ? $s->login($u, $p, %opt, challenge_id => $id)
-            : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+        my $challenge =
+            $opt{challenge_callback}->(
+                                    Finance::Robinhood::Error::Challenge->new(
+                                                    _rh => $s,
+                                                    %{$res->json->{challenge}}
+                                    )
+            );                           # Call it
+        return $challenge
+            ? $s->login($u, $p, %opt, challenge_id => $challenge->id)
+            : $challenge;
     }
     else {
         return Finance::Robinhood::Error->new(
@@ -390,12 +397,6 @@ sub login ($s, $u, $p, %opt) {
 sub _test_login {
     my $rh = t::Utility::rh_instance(1);
     isa_ok($rh->oauth2_token, 'Finance::Robinhood::OAuth2::Token');
-}
-
-# Cannot test this without logging in, getting a challenge, and then entering the private data
-sub _challenge_response ($s, $id, $response) {
-    $s->_post(sprintf('https://api.robinhood.com/challenge/%s/respond/', $id),
-              response => $response);
 }
 
 # Cannot test this without using the same token for 24hrs and letting it expire
