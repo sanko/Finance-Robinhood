@@ -57,7 +57,7 @@ my @classes = (
     'Finance::Robinhood::News', 'Finance::Robinhood::Notification', 'Finance::Robinhood::Search',
 
     # Utility
-	'Finance::Robinhood::Utilities', 'Finance::Robinhood::Utilities::Iterator'
+    'Finance::Robinhood::Utilities', 'Finance::Robinhood::Utilities::Iterator'
 );
 
 for my $class ( sort @classes ) {

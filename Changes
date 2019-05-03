@@ -2,6 +2,9 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+	- Auth challenge
+	- Ability to store and reload tokens
+
 0.92_002 2019-04-13T17:22:42Z
 
     - Fix Role::Tiny prereq for smokers

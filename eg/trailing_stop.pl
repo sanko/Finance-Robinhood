@@ -34,7 +34,6 @@ $percent //= 3;              # Defaults
 my %limits;
 my $range = 1.5;             # Percent
 #
-
 #$verbose++;
 #
 pod2usage(1) if $help;
@@ -45,10 +44,19 @@ pod2usage(
     -verbose => 1,
     -exitval => 1
 ) if !( $username && $password );
-
 #
-my $rh = Finance::Robinhood->new->login( $username, $password ) || exit;
-
+my $rh = Finance::Robinhood->new->login(
+    $username,
+    $password,
+    challenge_callback => sub {
+        my $data = shift;
+        promptUser( sprintf 'Login challenge issued (check your %s)', $data->{type} );
+    },
+    mfa_callback => sub {
+        promptUser('MFA code required');
+    }
+);
+$rh || die $rh;
 while (1) {
 
     # Equities
@@ -95,14 +103,12 @@ while (1) {
         next if !$quantity;
         CORE::say 'Setting new order to panic sell ' . $quantity . ' shares at $' . $target_price
             if $verbose;
-
         my $order
             = $position->instrument->sell($quantity)->limit($target_price)->stop($target_price)
             ->gtc->submit;
     }
 
     # Forex
-
     my @holdings = grep { $_->quantity_available > 0 } $rh->forex_holdings( nonzero => 1 )->all;
     for my $holding (@holdings) {
         my $currency = $holding->currency;
@@ -112,55 +118,14 @@ while (1) {
         #ddx $holding;
         #my $hist = $holding->currency->histo
         my $quote = $pair->quote;
-
-        my $hist = $pair->historicals( interval => '15second', bounds => '24_7' );
-
-        use Math::Business::BollingerBands;
-
-        # or to just get the recommended model ... (20, 2);
-        my $bb = Math::Business::BollingerBands->recommended;
-
-        # choose one:
-        $bb->insert( map { $_->close_price } $hist->data_points );
-
-        my ( $L, $M, $U ) = map {
-            $_    #* $holding->quantity_available
-        } $bb->query;
-        if ( defined $M ) {
-            CORE::say "BB:         \$$L < \$$M < \$$U" if $verbose;
-
-        }
-        else {
-            CORE::say 'BB:         n/a' if $verbose;
-        }
-
-        # Historical datapoint
-        #         begins_at    => "2019-04-09T13:35:00Z",
-        #         close_price  => "178.915000",
-        #         high_price   => "179.140000",
-        #         interpolated => 'fix',
-        #         low_price    => 178.325899,
-        #         open_price   => "178.935000",
-        #         session      => "reg",
-        #         volume       => 0,
-        #       },
-
-        # Quote:
-        #     ask_price => "177.560000",
-        #     bid_price => "176.840000",
-        #     high_price => "184.090000",
-        #     id => "76637d50-c702-4ed1-bcb5-5b0732a81f48",
-        #     low_price => "174.870000",
-        #     mark_price => "177.200000",
-        #     open_price => "177.590000",
-        #     symbol => "ETHUSD",
-        #     volume => 12938219.744008,
         if ($verbose) {
             CORE::say 'b / a / s:  $'
                 . $quote->bid_price . ' / $'
                 . $quote->ask_price . ' / $'
                 . ( $quote->ask_price - $quote->bid_price );
             CORE::say 'stop:       $' . $limits{ $pair->symbol } if $limits{ $pair->symbol } // 0;
+            CORE::say 'stop value: $' . $limits{ $pair->symbol } * $holding->quantity_available
+                if $limits{ $pair->symbol } // 0;
             CORE::say 'ask value:  $' . $quote->ask_price * $holding->quantity_available;
             CORE::say 'bid value:  $' . $quote->bid_price * $holding->quantity_available;
         }
@@ -174,13 +139,11 @@ while (1) {
             my $change = ( 100 * ( ( $quote->bid_price * $holding->quantity_available ) - $actual )
                     / $actual );
             CORE::say '   change:   ' . $change . '%' if $verbose;
-
             my $minus_range_percent = $quote->bid_price - ( $quote->bid_price * ( $range / 100 ) );
 
             #warn $minus_range_percent;
             $limits{ $pair->symbol } = $minus_range_percent
                 if $minus_range_percent > ( $limits{ $pair->symbol } // 0 );
-
             if ( $limits{ $pair->symbol } >= $quote->bid_price ) {
                 my $order = $pair->sell( $holding->quantity_available )->limit( $quote->bid_price )
                     ->ioc->submit;
@@ -190,8 +153,25 @@ while (1) {
             }
         }
     }
-
     #
-    CORE::say '-' x 10 if @positions || @holdings;
-    sleep 15;
+    CORE::say '-' x 10 if $verbose && ( @positions || @holdings );
+    sleep 300;
+}
+
+sub promptUser {
+    my ( $prompt, $default ) = @_;
+    my $retval;
+    if ( -t STDIN && -t STDOUT ) {
+        print $prompt . ( length $default ? " [$default]" : '' ) . ': ';
+        $retval = readline(STDIN);
+        chomp $retval;
+    }
+    else {
+        require Prima;
+        require Prima::Application;
+        Prima::Application->import();
+        require Prima::MsgBox;
+        $retval = Prima::MsgBox::input_box( $prompt, $prompt, $default // '' );
+    }
+    $retval ? $retval : $default ? $default : $retval;
 }

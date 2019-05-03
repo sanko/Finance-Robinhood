@@ -24,7 +24,9 @@ use Mojo::URL;
 #
 
 use Finance::Robinhood::Error;
+use Finance::Robinhood::Utilities qw[gen_uuid];
 use Finance::Robinhood::Utilities::Iterator;
+use Finance::Robinhood::Data::OAuth2::Token;
 
 =head1 METHODS
 
@@ -43,18 +45,34 @@ later. For now, let's create a client object...
 A new Finance::Robinhood object is created without credentials. Before you can
 buy or sell or do almost anything else, you must L<log in|/"login( ... )">.
 
+=head3 C<token => ...>
+
+If you have previously authorized this package to access your account, passing
+the OAuth2 tokens here will prevent you from having to C<login( ... )> with
+your user data.
+
+These tokens should be kept private.
+
+=head3 C<device_token => ...>
+
+If you have previously authorized this package to access your account, passing
+the assigned device ID here will prevent you from having to authorize it again
+upon C<login( ... )>.
+
+Like authorization tokens, this UUID should be kept private.
+
 =cut
 
 has _ua => sub {
     my $x = Mojo::UserAgent->new;
     $x->transactor->name(
-
         sprintf 'Perl/%s (%s) %s/%s', ( $^V =~ m[([\.\d]+)] ), $^O, __PACKAGE__,
         $VERSION
     );
     $x;
 };
-has '_token';
+has 'oauth2_token';
+has 'device_token' => sub { gen_uuid() };
 
 sub _test_new {
     ok( t::Utility::rh_instance(1) );
@@ -69,14 +87,14 @@ sub _get ( $s, $url, %data ) {
     #warn 'GET  ' . $url;
 
     #warn '  Auth: ' . (
-    #    ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] ) ? $s->_token->token_type :
+    #    ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] ) ? $s->oauth2_token->token_type :
     #        'none' );
     my $retval = $s->_ua->get(
         $url => {
-            ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
+            ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
             ? (
                 'Authorization' => ucfirst join ' ',
-                $s->_token->token_type, $s->_token->access_token
+                $s->oauth2_token->token_type, $s->oauth2_token->access_token
                 )
             : ()
         }
@@ -114,10 +132,10 @@ sub _test_get {
 sub _options ( $s, $url, %data ) {
     my $retval = $s->_ua->options(
         Mojo::URL->new($url) => {
-            ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
+            ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
             ? (
                 'Authorization' => ucfirst join ' ',
-                $s->_token->token_type, $s->_token->access_token
+                $s->oauth2_token->token_type, $s->oauth2_token->access_token
                 )
             : ()
         } => json => \%data
@@ -139,18 +157,24 @@ sub _test_options {
 sub _post ( $s, $url, %data ) {
 
     #warn 'POST ' . $url;
-
+    #use Data::Dump;
+    #ddx \%data;
     #$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
-    #warn '  Auth: ' . (($s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]) ? $s->_token->token_type : 'none');
+    #warn '  Auth: ' . (($s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]) ? $s->oauth2_token->token_type : 'none');
     my $retval = $s->_ua->post(
         Mojo::URL->new($url) => {
-            ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
+            ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
                 && !delete $data{'no_auth_token'}
             ? (
                 'Authorization' => ucfirst join ' ',
-                $s->_token->token_type, $s->_token->access_token
+                $s->oauth2_token->token_type, $s->oauth2_token->access_token
                 )
-            : ()
+            : (),
+            (
+                $data{challenge_id}
+                ? ( 'X-Robinhood-Challenge-Response-ID' => delete $data{challenge_id} )
+                : ()
+            )
         } => json => \%data
     );
 
@@ -186,11 +210,11 @@ sub _patch ( $s, $url, %data ) {
     #$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
     my $retval = $s->_ua->patch(
         Mojo::URL->new($url) => {
-            ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
+            ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
                 && !delete $data{'no_auth_token'}
             ? (
                 'Authorization' => ucfirst join ' ',
-                $s->_token->token_type, $s->_token->access_token
+                $s->oauth2_token->token_type, $s->oauth2_token->access_token
                 )
             : ()
         } => json => \%data
@@ -214,11 +238,11 @@ sub _delete ( $s, $url, %data ) {
     #$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
     my $retval = $s->_ua->delete(
         Mojo::URL->new($url) => {
-            ( $s->_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
+            ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] )
                 && !delete $data{'no_auth_token'}
             ? (
                 'Authorization' => ucfirst join ' ',
-                $s->_token->token_type, $s->_token->access_token
+                $s->oauth2_token->token_type, $s->oauth2_token->access_token
                 )
             : ()
         } => json => \%data
@@ -244,8 +268,10 @@ sub _test_delete {
 A new Finance::Robinhood object is created without credentials. Before you can
 buy or sell or do almost anything else, you must L<log in|/"login( ... )">.
 
+=head3 C<mfa_callback => ...>
+
     my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_callback => sub {
-        # Do something like pop open an inputbox in TK or whatever
+        # Do something like pop open an inputbox in TK, read from shell or whatever
     } );
 
 If you have MFA enabled, you may (or must) also pass a callback. When the code
@@ -253,10 +279,33 @@ is called, a ref will be passed that will contain C<mfa_required> (a boolean
 value) and C<mfa_type> which might be C<app>, C<sms>, etc. Your return value
 must be the MFA code.
 
+=head3 C<mfa_code => ...>
+
     my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_code => 980385);
 
 If you already know the MFA code (for example if you have MFA enabled through
 an app), you can pass that code directly and log in.
+
+=head3 C<challenge_callback => ...>
+
+When logging in with a new client, you are required to authorize it to access
+your account.
+
+This callback should return the six digit code sent to you via sms or email.
+
+=head2 C<device_token( )>
+
+To prevent your client from having to be reauthorized to access your account
+every time it is run, call this method which returns the device token which
+should be passed to C<new( ... )>.
+
+=head2 C<oauth2_token( )>
+
+To prevent your client from having to log in every time it is run, call this
+method which returns the authorization tokens which should be passed to C<new(
+... )>.
+
+This method returns a Finance::Robinhood::Data::OAuth2::Token object.
 
 =cut
 
@@ -265,21 +314,25 @@ sub login ( $s, $u, $p, %opt ) {
     # OAUTH2
     my $res = $s->_post(
         'https://api.robinhood.com/oauth2/token/',
-        no_auth_token => 1,            # NO AUTH INFO SENT!
-        scope         => 'internal',
-        username      => $u,
-        password      => $p,
+        no_auth_token  => 1,         # NO AUTH INFO SENT!
+        challenge_type => 'email',
+        ( $opt{challenge_id} ? ( challenge_id => $opt{challenge_id} ) : () ),
+        device_token => $s->device_token,
+        expires_in   => 86400,
+        scope        => 'internal',
+        username     => $u,
+        password     => $p,
         ( $opt{mfa_code} ? ( mfa_code => $opt{mfa_code} ) : () ),
         grant_type => ( $opt{grant_type} // 'password' ),
         client_id  => $opt{client_id} // sub {
             my ( @k, $c ) = split //, shift;
-            map {                      # cheap and easy
+            map {                    # cheap and easy
                 unshift @k, pop @k;
                 $c .= chr( ord ^ ord $k[0] );
             } split //, "\aW];&Y55\35I[\a,6&>[5\34\36\f\2]]\$\x179L\\\x0B4<;,\"*&\5);";
             $c;
         }
-            ->(__PACKAGE__),
+            ->(__PACKAGE__)
     );
     if ( $res->is_success ) {
         if ( $res->json->{mfa_required} ) {
@@ -289,8 +342,19 @@ sub login ( $s, $u, $p, %opt ) {
         }
         else {
             require Finance::Robinhood::Data::OAuth2::Token;
-            $s->_token( Finance::Robinhood::Data::OAuth2::Token->new( $res->json ) );
+            $s->oauth2_token( Finance::Robinhood::Data::OAuth2::Token->new( $res->json ) );
         }
+    }
+    elsif ( $res->json->{challenge} ) {    # 400
+        return Finance::Robinhood::Error->new(
+            description => 'You must pass a challenge_callback.' )
+            if !$opt{challenge_callback};
+        my $id = $res->json->{challenge}{id};
+        return $s->_challenge_response( $id, $opt{challenge_callback}->( $res->json->{challenge} ) )
+            ->is_success
+            ? $s->login( $u, $p, %opt, challenge_id => $id )
+            : Finance::Robinhood::Error->new(
+            $res->is_server_error ? ( details => $res->message ) : $res->json );
     }
     else {
         return Finance::Robinhood::Error->new(
@@ -301,17 +365,25 @@ sub login ( $s, $u, $p, %opt ) {
 
 sub _test_login {
     my $rh = t::Utility::rh_instance(1);
-    isa_ok( $rh->_token, 'Finance::Robinhood::Data::OAuth2::Token' );
+    isa_ok( $rh->oauth2_token, 'Finance::Robinhood::Data::OAuth2::Token' );
+}
+
+# Cannot test this without logging in, getting a challenge, and then entering the private data
+sub _challenge_response ( $s, $id, $response ) {
+    $s->_post(
+        sprintf( 'https://api.robinhood.com/challenge/%s/respond/', $id ),
+        response => $response
+    );
 }
 
 # Cannot test this without using the same token for 24hrs and letting it expire
 sub _refresh_login_token ( $s, %opt ) {    # TODO: Store %opt from login and reuse it here
-    $s->_token // return;                  # OAUTH2
+    $s->oauth2_token // return;            # OAUTH2
     my $res = $s->_post(
         'https://api.robinhood.com/oauth2/token/',
         no_auth_token => 1,                                    # NO AUTH INFO SENT!
         scope         => 'internal',
-        refresh_token => $s->_token->refresh_token,
+        refresh_token => $s->oauth2_token->refresh_token,
         grant_type    => ( $opt{grant_type} // 'password' ),
         client_id     => $opt{client_id} // sub {
             my ( @k, $c ) = split //, shift;
@@ -326,7 +398,7 @@ sub _refresh_login_token ( $s, %opt ) {    # TODO: Store %opt from login and reu
     if ( $res->is_success ) {
 
         require Finance::Robinhood::Data::OAuth2::Token;
-        $s->_token( Finance::Robinhood::Data::OAuth2::Token->new( $res->json ) );
+        $s->oauth2_token( Finance::Robinhood::Data::OAuth2::Token->new( $res->json ) );
 
     }
     else {

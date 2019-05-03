@@ -26,6 +26,22 @@ later. For now, let's create a client object...
 A new Finance::Robinhood object is created without credentials. Before you can
 buy or sell or do almost anything else, you must [log in](#login).
 
+### `token =` ...>
+
+If you have previously authorized this package to access your account, passing
+the OAuth2 tokens here will prevent you from having to `login( ... )` with
+your user data.
+
+These tokens should be kept private.
+
+### `device_token =` ...>
+
+If you have previously authorized this package to access your account, passing
+the assigned device ID here will prevent you from having to authorize it again
+upon `login( ... )`.
+
+Like authorization tokens, this UUID should be kept private.
+
 ## `login( ... )`
 
     my $rh = Finance::Robinhood->new()->login($user, $pass);
@@ -33,8 +49,10 @@ buy or sell or do almost anything else, you must [log in](#login).
 A new Finance::Robinhood object is created without credentials. Before you can
 buy or sell or do almost anything else, you must [log in](#login).
 
+### `mfa_callback =` ...>
+
     my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_callback => sub {
-        # Do something like pop open an inputbox in TK or whatever
+        # Do something like pop open an inputbox in TK, read from shell or whatever
     } );
 
 If you have MFA enabled, you may (or must) also pass a callback. When the code
@@ -42,10 +60,33 @@ is called, a ref will be passed that will contain `mfa_required` (a boolean
 value) and `mfa_type` which might be `app`, `sms`, etc. Your return value
 must be the MFA code.
 
+### `mfa_code =` ...>
+
     my $rh = Finance::Robinhood->new()->login($user, $pass, mfa_code => 980385);
 
 If you already know the MFA code (for example if you have MFA enabled through
 an app), you can pass that code directly and log in.
+
+### `challenge_callback =` ...>
+
+When logging in with a new client, you are required to authorize it to access
+your account.
+
+This callback should return the six digit code sent to you via sms or email.
+
+## `device_token( )`
+
+To prevent your client from having to be reauthorized to access your account
+every time it is run, call this method which returns the device token which
+should be passed to `new( ... )`.
+
+## `oauth2_token( )`
+
+To prevent your client from having to log in every time it is run, call this
+method which returns the authorization tokens which should be passed to `new(
+... )`.
+
+This method returns a Finance::Robinhood::Data::OAuth2::Token object.
 
 ## `search( ... )`
 
