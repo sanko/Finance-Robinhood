@@ -19,7 +19,7 @@ Chain's Underlying Equity Instrument
 
 =cut
 
-our $VERSION = '0.92_002';
+our $VERSION = '0.92_003';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 

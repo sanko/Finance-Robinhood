@@ -20,7 +20,7 @@ Finance::Robinhood::Equity::Account - Represents a Single Robinhood Account
 
 =cut
 
-our $VERSION = '0.92_002';
+our $VERSION = '0.92_003';
 
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);

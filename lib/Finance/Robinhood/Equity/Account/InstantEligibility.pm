@@ -26,7 +26,7 @@ sub _test__init {
     isa_ok($instant_eligibility, __PACKAGE__);
     t::Utility::stash('INSTANT', $instant_eligibility);  #  Store it for later
 }
-our $VERSION = '0.92_002';
+our $VERSION = '0.92_003';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 use overload '""' => sub ($s, @) { $s->{state} }, fallback => 1;

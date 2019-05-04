@@ -16,7 +16,7 @@ Finance::Robinhood::Utilities - Collection of Portable Utility Functions
 
 =cut
 
-our $VERSION = '0.92_002';
+our $VERSION = '0.92_003';
 use Exporter 'import';
 our @EXPORT_OK = ('gen_uuid');
 

@@ -23,13 +23,13 @@ blacklists the device from accessing the user's account.
 
 Challenge objects evaluate to untrue values if the response was invalid or if
 the challenge has not been responded to yet. Obviously, they evaluate to true
-values if the challenge was met sucessfully.
+values if the challenge was met successfully.
 
 =head1 METHODS
 
 =cut
 
-our $VERSION = '0.92_002';
+our $VERSION = '0.92_003';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 use Time::Moment;

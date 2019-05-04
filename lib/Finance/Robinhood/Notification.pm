@@ -19,7 +19,7 @@ Finance::Robinhood::Notification - Represents a Single Notification Card
 
 =cut
 
-our $VERSION = '0.92_002';
+our $VERSION = '0.92_003';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 use Time::Moment;

@@ -20,7 +20,7 @@ Finance::Robinhood::Utilities::Iterator - Sugary Access to Paginated Data
 
 =cut
 
-our $VERSION = '0.92_002';
+our $VERSION = '0.92_003';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
 

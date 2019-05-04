@@ -22,7 +22,7 @@ Finance::Robinhood::Equity::Fundamentals - Equity Instrument's Fundamental Data
 
 =cut
 
-our $VERSION = '0.92_002';
+our $VERSION = '0.92_003';
 use Mojo::Base-base, -signatures;
 use Finance::Robinhood::Equity::Instrument;
 
