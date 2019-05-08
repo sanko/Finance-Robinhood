@@ -24,7 +24,7 @@ use Mojo::URL;
 
 sub _test__init {
     my $rh = t::Utility::rh_instance(1);
-    my $historicals = $rh->forex_pair_by_id(
+    my $historicals = $rh->currency_pair_by_id(
                              '3d961844-d360-45fc-989b-f6fca761d511') # BTC-USD
         ->historicals(interval => '5minute');
     isa_ok($historicals, __PACKAGE__);
@@ -124,7 +124,7 @@ Returns the related Finance::Robinhood::Forex::Pair object.
 =cut
 
 sub pair ($s) {
-    $s->_rh->forex_pair_by_id($s->{id});
+    $s->_rh->currency_pair_by_id($s->{id});
 }
 
 sub _test_instrument {

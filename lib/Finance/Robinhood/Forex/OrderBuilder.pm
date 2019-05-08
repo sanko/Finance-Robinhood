@@ -13,7 +13,7 @@ Interface for Generating a Forex Order
 
     use Finance::Robinhood;
     my $rh = Finance::Robinhood->new;
-    my $btc_usd = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
+    my $btc_usd = $rh->currency_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
 
     $btc_usd->buy(1)->submit;
 
@@ -49,7 +49,7 @@ use Finance::Robinhood::Utilities qw[gen_uuid];
 sub _test__init {
     my $rh = t::Utility::rh_instance(1);
     my $btc_usd
-        = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
+        = $rh->currency_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
     t::Utility::stash('BTC_USD', $btc_usd);    #  Store it for later
     isa_ok($btc_usd->buy(3),  __PACKAGE__);
     isa_ok($btc_usd->sell(3), __PACKAGE__);

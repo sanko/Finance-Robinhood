@@ -100,7 +100,8 @@ Returns a Finance::Robinhood::Forex::Pair object.
 
 sub pair ($s) {
     my ($retval)
-        = grep { $_->asset_currency->id eq $s->id } $s->_rh->forex_pairs->all;
+        = grep { $_->asset_currency->id eq $s->id }
+        $s->_rh->currency_pairs->all;
     $retval;
 }
 

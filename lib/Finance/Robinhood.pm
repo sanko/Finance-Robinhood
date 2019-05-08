@@ -121,6 +121,8 @@ sub _get ($s, $url, %data) {
     #warn $retval->res->code;
     #ddx $retval->res;
     #warn $retval->res->body;
+    #use Data::Dump;
+    #ddx $retval->res->json;
     return $s->_get($url, %data)
         if $retval->res->code == 401 && $s->_refresh_login_token;
     $retval->result;
@@ -1578,16 +1580,16 @@ sub _test_forex_currency_by_id {
     isa_ok($usd, 'Finance::Robinhood::Forex::Currency');
 }
 
-=head2 C<forex_pairs( )>
+=head2 C<currency_pairs( )>
 
-    my $pairs = $rh->forex_pairs();
+    my $pairs = $rh->currency_pairs();
 
 An iterator containing Finance::Robinhood::Forex::Pair objects is returned. You
 need to be logged in for this to work.
 
 =cut
 
-sub forex_pairs ($s) {
+sub currency_pairs ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
                  _rh        => $s,
                  _next_page => 'https://nummus.robinhood.com/currency_pairs/',
@@ -1595,23 +1597,23 @@ sub forex_pairs ($s) {
     );
 }
 
-sub _test_forex_pairs {
+sub _test_currency_pairs {
     my $rh         = t::Utility::rh_instance(1);
-    my $watchlists = $rh->forex_pairs;
+    my $watchlists = $rh->currency_pairs;
     isa_ok($watchlists,          'Finance::Robinhood::Utilities::Iterator');
     isa_ok($watchlists->current, 'Finance::Robinhood::Forex::Pair');
 }
 
-=head2 C<forex_pair_by_id( ... )>
+=head2 C<currency_pair_by_id( ... )>
 
-    my $watchlist = $rh->forex_pair_by_id($id);
+    my $watchlist = $rh->currency_pair_by_id($id);
 
 Returns a Finance::Robinhood::Forex::Pair object. You need to be logged in for
 this to work.
 
 =cut
 
-sub forex_pair_by_id ($s, $id) {
+sub currency_pair_by_id ($s, $id) {
     my $res = $s->_get(
                   'https://nummus.robinhood.com/currency_pairs/' . $id . '/');
     require Finance::Robinhood::Forex::Pair if $res->is_success;
@@ -1621,37 +1623,46 @@ sub forex_pair_by_id ($s, $id) {
              $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
-sub _test_forex_pair_by_id {
+sub _test_currency_pair_by_id {
     my $rh = t::Utility::rh_instance(1);
     my $btc_usd
-        = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511')
+        = $rh->currency_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511')
         ;    # BTC-USD
     isa_ok($btc_usd, 'Finance::Robinhood::Forex::Pair');
 }
 
-=head2 C<forex_pair_by_symbol( ... )>
+=head2 C<currency_pair_by_name( ... )>
 
-    my $btc = $rh->forex_pair_by_symbol('BTCUSD');
+	my $bitcoin = $rh->currency_pair_by_name('Bitcoin');
+	   $bitcoin = $rh->currency_pair_by_name('BTC');
 
 Returns a Finance::Robinhood::Forex::Pair object. You need to be logged in for
 this to work.
 
 =cut
 
-sub forex_pair_by_symbol ($s, $id) {
-    my $res = $s->_get(
-               'https://nummus.robinhood.com/currency_pairs/?symbols=' . $id);
-    require Finance::Robinhood::Forex::Pair if $res->is_success;
-    return $res->is_success
-        ? Finance::Robinhood::Forex::Pair->new(_rh => $s, %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+sub currency_pair_by_name ($s, $id) {
+    [grep {
+         my $asset = $_->asset_currency;
+         ($id eq $asset->code && $_->quote_currency->code eq 'USD') ||
+             $id eq $asset->name
+     } $s->search($id)->currency_pairs
+    ]->[0] // ();
 }
 
-sub _test_forex_pair_by_symbol {
-    my $rh      = t::Utility::rh_instance(1);
-    my $btc_usd = $rh->forex_pair_by_symbol('BTCUSD');    # BTC-USD
+sub _test_currency_pair_by_name {
+    my $rh = t::Utility::rh_instance(1);
+    #
+    my $btc_usd = $rh->currency_pair_by_name('BTC');
     isa_ok($btc_usd, 'Finance::Robinhood::Forex::Pair');
+    is($btc_usd->id, '3d961844-d360-45fc-989b-f6fca761d511');
+    #
+    $btc_usd = $rh->currency_pair_by_name('Bitcoin');
+    isa_ok($btc_usd, 'Finance::Robinhood::Forex::Pair');
+    is($btc_usd->id, '3d961844-d360-45fc-989b-f6fca761d511');
+    #
+    $btc_usd = $rh->currency_pair_by_name('Meh');
+    is($btc_usd, undef, 'Bad currency name');
 }
 
 =head2 C<forex_watchlists( )>

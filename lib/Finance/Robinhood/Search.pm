@@ -42,21 +42,21 @@ use Finance::Robinhood::Equity::Instrument;
 #
 has _rh => undef => weak => 1;
 
-=head2 C<forex_pairs( )>
+=head2 C<currency_pairs( )>
 
 If available, this will return a list of Finance::Robinhood::Forex::Pair
 objects.
 
 =cut
 
-sub forex_pairs ( $s ) {
+sub currency_pairs ( $s ) {
     map { Finance::Robinhood::Forex::Pair->new(_rh => $s->_rh, %$_) }
         @{$s->{currency_pairs}};
 }
 
-sub _test_forex_pairs {
+sub _test_currency_pairs {
     t::Utility::stash('BTC') // skip_all();
-    my ($btc_usd) = t::Utility::stash('BTC')->forex_pairs;
+    my ($btc_usd) = t::Utility::stash('BTC')->currency_pairs;
     isa_ok($btc_usd, 'Finance::Robinhood::Forex::Pair');
 }
 

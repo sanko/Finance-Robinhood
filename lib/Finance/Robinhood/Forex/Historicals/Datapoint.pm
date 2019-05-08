@@ -25,7 +25,7 @@ use Mojo::URL;
 sub _test__init {
     my $rh = t::Utility::rh_instance(1);
     my ($datapoint)
-        = $rh->forex_pair_by_id(
+        = $rh->currency_pair_by_id(
                              '3d961844-d360-45fc-989b-f6fca761d511') # BTC-USD
         ->historicals(interval => '5minute')->data_points;
     isa_ok($datapoint, __PACKAGE__);

@@ -191,7 +191,7 @@ Returns the related Finance::Robinhood::Forex::Pair object.
 =cut
 
 sub pair ($s) {
-    $s->_rh->forex_pair_by_id($s->{currency_pair_id});
+    $s->_rh->currency_pair_by_id($s->{currency_pair_id});
 }
 
 sub _test_pair {

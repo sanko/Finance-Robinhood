@@ -468,23 +468,23 @@ You need to be logged in for this to work.
 Returns a Finance::Robinhood::Forex::Currency object. You need to be logged in
 for this to work.
 
-## `forex_pairs( )`
+## `currency_pairs( )`
 
-    my $pairs = $rh->forex_pairs();
+    my $pairs = $rh->currency_pairs();
 
 An iterator containing Finance::Robinhood::Forex::Pair objects is returned. You
 need to be logged in for this to work.
 
-## `forex_pair_by_id( ... )`
+## `currency_pair_by_id( ... )`
 
-    my $watchlist = $rh->forex_pair_by_id($id);
+    my $watchlist = $rh->currency_pair_by_id($id);
 
 Returns a Finance::Robinhood::Forex::Pair object. You need to be logged in for
 this to work.
 
-## `forex_pair_by_symbol( ... )`
+## `currency_pair_by_name( ... )`
 
-    my $btc = $rh->forex_pair_by_symbol('BTCUSD');
+    my $btc = $rh->currency_pair_by_name('BTCUSD');
 
 Returns a Finance::Robinhood::Forex::Pair object. You need to be logged in for
 this to work.

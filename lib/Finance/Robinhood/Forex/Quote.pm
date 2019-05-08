@@ -13,7 +13,7 @@ Currency Pair
 
     use Finance::Robinhood;
     my $rh = Finance::Robinhood->new;
-    
+
     # TODO
 
 =cut
@@ -26,7 +26,7 @@ use Finance::Robinhood::Forex::Pair;
 
 sub _test__init {
     my $rh    = t::Utility::rh_instance(1);
-    my $quote = $rh->forex_pairs->current->quote();
+    my $quote = $rh->currency_pairs->current->quote();
     isa_ok($quote, __PACKAGE__);
     t::Utility::stash('QUOTE', $quote);    #  Store it for later
 }
@@ -85,7 +85,7 @@ Loops back to a Finance::Robinhood::Forex::Instrument object.
 =cut
 
 sub pair ($s) {
-    return $s->_rh->forex_pair_by_id($s->{id});
+    return $s->_rh->currency_pair_by_id($s->{id});
 }
 
 sub _test_pair {

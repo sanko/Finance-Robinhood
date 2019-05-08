@@ -26,8 +26,9 @@ use Finance::Robinhood::Forex::OrderBuilder;
 use Finance::Robinhood::Forex::Quote;
 
 sub _test__init {
-    my $rh   = t::Utility::rh_instance(1);
-    my $pair = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511')
+    my $rh = t::Utility::rh_instance(1);
+    my $pair
+        = $rh->currency_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511')
         ;    # BTC-USD
     isa_ok($pair, __PACKAGE__);
     t::Utility::stash('PAIR', $pair);    #  Store it for later
@@ -258,7 +259,7 @@ sub buy ($s, $quantity, $account = $s->_rh->forex_accounts->next) {
 sub _test_buy {
     my $rh = t::Utility::rh_instance(1);
     my $btc_usd
-        = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
+        = $rh->currency_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
     #
     my $market = $btc_usd->buy(4);
     is( {$market->_dump(1)},
@@ -314,7 +315,7 @@ sub sell ($s, $quantity, $account = $s->_rh->forex_accounts->next) {
 sub _test_sell {
     my $rh = t::Utility::rh_instance(1);
     my $btc_usd
-        = $rh->forex_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
+        = $rh->currency_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511');
     #
     my $market = $btc_usd->sell(4);
     is( {$market->_dump(1)},
