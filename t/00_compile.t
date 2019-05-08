@@ -2,6 +2,9 @@ use Test2::V0;
 use Test2::Tools::Subtest qw/subtest_streamed/;
 use lib '../../lib', '../lib', 'lib';
 $|++;
+
+# DEV note: To run *all* tests, you need to provide login info.
+# Do this by setting RHUSER, RHPASS, and RHDEVICE environment variables.
 #
 my @classes = (
     'Finance::Robinhood',
@@ -111,9 +114,12 @@ sub rh_instance {
         eval 'require Finance::Robinhood';
         bail_out("Oh junk!: $@") if $@;
         if ($auth) {
-            my ($user, $pass) = ($ENV{RHUSER}, $ENV{RHPASS});
-            skip_all('No auth info in environment') unless $user && $pass;
-            $state{$auth} = Finance::Robinhood->new->login($user, $pass);
+            my ($user, $pass, $device)
+                = ($ENV{RHUSER}, $ENV{RHPASS}, $ENV{RHDEVICE});
+            skip_all('No auth info in environment')
+                unless $user && $pass && $device;
+            $state{$auth} = Finance::Robinhood->new(device_token => $device)
+                ->login($user, $pass);
         }
         else {
             $state{$auth} = Finance::Robinhood->new;
