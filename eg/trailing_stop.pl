@@ -24,7 +24,7 @@ $percent //= 3;    # Defaults
 
 # TODO: Forex
 my %limits;
-my $range = 1.5;    # Percent
+my $range = 1.25;    # Percent
 #
 die extract_usage if $help;    # || !(my $config = shift);
 die "Error: Missing or incomplete username/password combo given.\n\n" .
