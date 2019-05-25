@@ -123,9 +123,11 @@ sub _get ($s, $url, %data) {
     #warn $retval->res->body;
     #use Data::Dump;
     #ddx $retval->res->json;
-    return $s->_get($url, %data)
-        if $retval->res->code == 401 && $s->_refresh_login_token;
-    $retval->result;
+    $retval->res->is_error &&
+        $retval->res->code == 401 &&
+        $s->_refresh_login_token
+        ? $s->_get($url, %data)    # Retry with new auth info
+        : $retval->res;
 }
 
 sub _test_get {
@@ -151,9 +153,11 @@ sub _options ($s, $url, %data) {
                : ()
            } => json => \%data
     );
-    return $s->_options($url, %data)
-        if $retval->res->code == 401 && $s->_refresh_login_token;
-    $retval->result;
+    $retval->res->is_error &&
+        $retval->res->code == 401 &&
+        $s->_refresh_login_token
+        ? $s->_option($url, %data)    # Retry with new auth info
+        : $retval->res;
 }
 
 sub _test_options {
@@ -197,9 +201,11 @@ sub _post ($s, $url, %data) {
     #warn $retval->res->code;
     #ddx $retval->res;
     #warn $retval->res->body;
-    return $s->_post($url, %data)    # Retry with new auth info
-        if $retval->res->code == 401 && $s->_refresh_login_token;
-    $retval->res;
+    $retval->res->is_error &&
+        $retval->res->code == 401 &&
+        $s->_refresh_login_token
+        ? $s->_post($url, %data)    # Retry with new auth info
+        : $retval->res;
 }
 
 sub _test_post {
@@ -229,9 +235,11 @@ sub _patch ($s, $url, %data) {
                : ()
            } => json => \%data
     );
-    return $s->_post($url, %data)
-        if $retval->res->code == 401 && $s->_refresh_login_token;
-    $retval->result;
+    $retval->res->is_error &&
+        $retval->res->code == 401 &&
+        $s->_refresh_login_token
+        ? $s->_patch($url, %data)    # Retry with new auth info
+        : $retval->res;
 }
 
 sub _test_patch {
@@ -257,9 +265,11 @@ sub _delete ($s, $url, %data) {
                : ()
            } => json => \%data
     );
-    return $s->_delete($url, %data)
-        if $retval->res->code == 401 && $s->_refresh_login_token;
-    $retval->result;
+    $retval->res->is_error &&
+        $retval->res->code == 401 &&
+        $s->_refresh_login_token
+        ? $s->_delete($url, %data)    # Retry with new auth info
+        : $retval->res;
 }
 
 sub _test_delete {
@@ -387,7 +397,7 @@ sub login ($s, $u, $p, %opt) {
                           Finance::Robinhood::OAuth2::Token->new($res->json));
         }
     }
-    elsif ($res->json->{challenge}) {    # 400
+    elsif ($res->code == 400 && $res->json->{challenge}) {    # 400
         require Finance::Robinhood::Error::Challenge;
         return Finance::Robinhood::Error->new(
                          description => 'You must pass a challenge_callback.')
@@ -398,7 +408,7 @@ sub login ($s, $u, $p, %opt) {
                                                     _rh => $s,
                                                     %{$res->json->{challenge}}
                                     )
-            );                           # Call it
+            );                                                # Call it
         return $challenge
             ? $s->login($u, $p, %opt, challenge_id => $challenge->id)
             : $challenge;
