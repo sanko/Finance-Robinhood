@@ -43,34 +43,32 @@ has _rh => undef => weak => 1;
 =head1 METHODS
 
 
+=head2 C<direct_cost_basis( )>
+
 
 =head2 C<direct_quantity( )>
 
 
-
-=head2 C<direct_cost_basis( )>
-
+=head2 C<id( )>
 
 
 =head2 C<intraday_cost_basis( )>
 
 
-
 =head2 C<intraday_quantity( )>
 
 
-
 =head2 C<marked_quantity( )>
-
 
 
 =head2 C<marked_quantity( )>
 
 =cut
 
-has ['direct_quantity',     'direct_cost_basis',
-     'intraday_cost_basis', 'intraday_quantity',
-     'marked_quantity',     'marked_cost_basis'
+has ['direct_quantity',   'direct_cost_basis',
+     'id',                'intraday_cost_basis',
+     'intraday_quantity', 'marked_quantity',
+     'marked_cost_basis'
 ];
 
 =head2 C<currency( )>

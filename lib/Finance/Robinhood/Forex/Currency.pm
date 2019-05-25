@@ -50,7 +50,8 @@ If defined, this returns a hex color code used for display.
 
 =head2 C<code( )>
 
-Short code used to represent this currency for display. 'USD', for example.
+Short code used to represent this currency for display. 'USD' or 'ETH', for
+example.
 
 =head2 C<id( )>
 
