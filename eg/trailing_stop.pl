@@ -49,7 +49,7 @@ my $rh
     );
 $rh || die $rh;
 Mojo::IOLoop->recurring(
-    60 => sub {
+    15 => sub {
 
         # Forex
         my @holdings = grep { $_->quantity_available > 0 }
@@ -112,8 +112,8 @@ Mojo::IOLoop->recurring(
 );
 Mojo::IOLoop->recurring(
     300 => sub {
-        return;    # TODO: Only run when trading is open!!!!!!!!!
 
+        #return;    # TODO: Only run when trading is open!!!!!!!!!
         # Equities
         my @positions = $rh->equity_positions(nonzero => 1)->all;
         for my $position (@positions) {
