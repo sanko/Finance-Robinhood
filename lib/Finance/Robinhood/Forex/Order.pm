@@ -46,9 +46,9 @@ has _rh => undef => weak => 1;
 
 Returns the amount of currency bought or sold.
 
-=head2 C<pair_id( )>
+=head2 C<currency_pair_id( )>
 
-Returns a UUIS.
+Returns a UUID.
 
 =head2 C<id( )>
 
@@ -78,9 +78,8 @@ Returns C<canceled>, C<rejected>, C<filled>, C<queued>, or C<unconfirmed>.
 
 =cut
 
-has ['cumulative_quantity', 'pair_id', 'id',   'price',
-     'quantity',            'ref_id',  'side', 'state',
-     'time_in_force',       'type'
+has ['cumulative_quantity', 'currency_pair_id', 'id', 'price', 'quantity',
+     'ref_id', 'side', 'state', 'time_in_force', 'type'
 ];
 
 =head2 C<can_cancel( )>
