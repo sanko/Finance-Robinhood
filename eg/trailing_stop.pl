@@ -125,7 +125,7 @@ Mojo::IOLoop->recurring(
                 = grep { $_->state =~ m[queued|confirmed|partially_filled] }
                 grep { $_->trigger eq 'stop' } # Don't mess with manually set orders
                 grep { $_->side eq 'sell' }
-                $rh->equity_orders(instrument => $position->instrument)->all;
+                $rh->equity_orders(instrument => $instrument)->all;
             my $quote
                 = $instrument->prices(delayed => 0, source => 'consolidated')
                 ;                              # Live quote
