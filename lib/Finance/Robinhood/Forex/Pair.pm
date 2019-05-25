@@ -191,13 +191,29 @@ You may provide the following arguments:
 
 =item C<hour>
 
+=item C<day>
+
 =item C<week>
+
+=item C<month>
 
 =item C<year>
 
 =item C<5year>
 
 =item C<all>
+
+=back
+
+=item C<bounds> - Optional and must be one of the following:
+
+=over
+
+=item C<regular> - Default
+
+=item C<extended>
+
+=item C<24_7>
 
 =back
 
