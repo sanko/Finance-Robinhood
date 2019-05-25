@@ -76,7 +76,7 @@ Expects a whole number of shares.
 
 has _account => undef;    # => weak => 1;
 has _pair    => undef;    # => weak => 1;
-has ['quantity', 'price'];
+has ['quantity', '_price'];
 #
 # Type
 
@@ -189,7 +189,7 @@ sub buy ($s, $quantity = $s->quantity) {
         my %data = $orig->($s, $test);
         (%data,
          side  => 'buy',
-         price => $test ? '5.00' : $s->price // $s->_pair->quote->bid_price
+         price => $test ? '5.00' : $s->_price // $s->_pair->quote->bid_price
         );
     };
 }
@@ -223,7 +223,7 @@ sub sell ($s, $quantity = $s->quantity) {
         my %data = $orig->($s, $test);
         (%data,
          side  => 'sell',
-         price => $test ? '5.00' : $s->price // $s->_pair->quote->ask_price
+         price => $test ? '5.00' : $s->_price // $s->_pair->quote->ask_price
         );
     };
 }
