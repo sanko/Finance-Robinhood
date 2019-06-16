@@ -428,16 +428,18 @@ sub _test_login {
 # Cannot test this without using the same token for 24hrs and letting it expire
 sub _refresh_login_token ($s, %opt)
 {    # TODO: Store %opt from login and reuse it here
-    $s->oauth2_token // return;    # OAUTH2
+
+    #$s->oauth2_token // return;    # OAUTH2
     my $res = $s->_post(
         'https://api.robinhood.com/oauth2/token/',
-        no_auth_token => 1,                               # NO AUTH INFO SENT!
+        no_auth_token => 1,                    # NO AUTH INFO SENT!
         scope         => 'internal',
-        refresh_token => $s->oauth2_token->refresh_token,
-        grant_type    => ($opt{grant_type} // 'password'),
-        client_id     => $opt{client_id} // sub {
+        refresh_token => $opt{refresh_token}
+            // $s->oauth2_token->refresh_token,
+        grant_type => 'refresh_token',
+        client_id  => $opt{client_id} // sub {
             my (@k, $c) = split //, shift;
-            map {                                         # cheap and easy
+            map {                              # cheap and easy
                 unshift @k, pop @k;
                 $c .= chr(ord ^ ord $k[0]);
                 } split //,
