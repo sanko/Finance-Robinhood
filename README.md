@@ -484,7 +484,8 @@ this to work.
 
 ## `currency_pair_by_name( ... )`
 
-    my $btc = $rh->currency_pair_by_name('BTCUSD');
+        my $bitcoin = $rh->currency_pair_by_name('Bitcoin');
+           $bitcoin = $rh->currency_pair_by_name('BTC');
 
 Returns a Finance::Robinhood::Forex::Pair object. You need to be logged in for
 this to work.
