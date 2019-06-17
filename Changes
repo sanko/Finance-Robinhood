@@ -2,6 +2,8 @@ Revision history for Perl extension Finance-Robinhood
 
 {{$NEXT}}
 
+	- Equity historicals
+
 0.92_003 2019-05-03T23:58:44Z
 
 	- Auth challenge

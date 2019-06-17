@@ -382,6 +382,93 @@ sub _test_tags {
     isa_ok($tags[0], 'Finance::Robinhood::Equity::Tag');
 }
 
+=head2 C<historicals( ... )>
+
+    my $data = $instrument->historicals( interval => '15second' );
+
+Returns a Finance::Robinhood::MSFT::Historicals object.
+
+You may provide the following arguments:
+
+=over
+
+=item C<interval> Required and must be on eof the following:
+
+=over
+
+=item C<15second>
+
+=item C<5minute>
+
+=item C<10minute>
+
+=item C<hour>
+
+=item C<day>
+
+=item C<week>
+
+=item C<month>
+
+=back
+
+=item C<span> - Optional and must be one of the following:
+
+=over
+
+=item C<hour>
+
+=item C<day>
+
+=item C<week>
+
+=item C<month>
+
+=item C<year>
+
+=item C<5year>
+
+=item C<all>
+
+=back
+
+=item C<bounds> - Optional and must be one of the following:
+
+=over
+
+=item C<regular> - Default
+
+=item C<extended>
+
+=item C<24_7>
+
+=back
+
+=back
+
+=cut
+
+sub historicals ($s, %filters) {
+    my $res = $s->_rh->_get(
+                     Mojo::URL->new(
+                         'https://api.robinhood.com/marketdata/historicals/' .
+                             $s->id . '/'
+                     )->query(\%filters),
+    );
+    require Finance::Robinhood::Equity::Historicals if $res->is_success;
+    $res->is_success
+        ? Finance::Robinhood::Equity::Historicals->new(_rh => $s->_rh,
+                                                       %{$res->json})
+        : Finance::Robinhood::Error->new(
+             $res->is_server_error ? (details => $res->message) : $res->json);
+}
+
+sub _test_historicals {
+    t::Utility::stash('MSFT_AUTH') // skip_all();
+    isa_ok(t::Utility::stash('MSFT_AUTH')->historicals(interval => 'hour'),
+           'Finance::Robinhood::Equity::Historicals');
+}
+
 =head2 C<buy( ... )>
 
     my $order = $instrument->buy(34);
