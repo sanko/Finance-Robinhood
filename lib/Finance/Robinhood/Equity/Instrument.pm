@@ -386,7 +386,7 @@ sub _test_tags {
 
     my $data = $instrument->historicals( interval => '15second' );
 
-Returns a Finance::Robinhood::MSFT::Historicals object.
+Returns a Finance::Robinhood::Equity::Historicals object.
 
 You may provide the following arguments:
 
@@ -466,6 +466,40 @@ sub historicals ($s, %filters) {
 sub _test_historicals {
     t::Utility::stash('MSFT_AUTH') // skip_all();
     isa_ok(t::Utility::stash('MSFT_AUTH')->historicals(interval => 'hour'),
+           'Finance::Robinhood::Equity::Historicals');
+}
+
+=head2 C<pricebook( ... )>
+
+    my $data = $instrument->pricebook( );
+
+Returns a Finance::Robinhood::Equity::Pricebook object filled with Level II
+quote data.
+
+This will fail if the account is not a current Gold subscriber.
+
+=cut
+
+sub pricebook ($s) {
+    my $res = $s->_rh->_get(
+             Mojo::URL->new(
+                 'https://api.robinhood.com/marketdata/pricebook/snapshots/' .
+                     $s->id . '/'
+             ),
+    );
+    require Finance::Robinhood::Equity::PriceBook if $res->is_success;
+    $res->is_success
+        ? Finance::Robinhood::Equity::PriceBook->new(_rh => $s->_rh,
+                                                     %{$res->json})
+        : Finance::Robinhood::Error->new(
+             $res->is_server_error ? (details => $res->message) : $res->json);
+}
+
+sub _test_pricebook {
+    t::Utility::stash('MSFT_AUTH') // skip_all();
+
+    # TODO: I need to check Gold status
+    isa_ok(t::Utility::stash('MSFT_AUTH')->pricebook(),
            'Finance::Robinhood::Equity::Historicals');
 }
 

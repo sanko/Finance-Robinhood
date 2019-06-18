@@ -43,6 +43,8 @@ my @classes = (
     'Finance::Robinhood::Equity::Tag', 'Finance::Robinhood::Equity::Ratings',
     'Finance::Robinhood::Equity::Historicals',
     'Finance::Robinhood::Equity::Historicals::Datapoint',
+    'Finance::Robinhood::Equity::PriceBook',
+    'Finance::Robinhood::Equity::PriceBook::Datapoint',
 
     # Equity and Forex watchlists
     'Finance::Robinhood::Equity::Watchlist',

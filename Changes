@@ -3,6 +3,7 @@ Revision history for Perl extension Finance-Robinhood
 {{$NEXT}}
 
 	- Equity historicals
+	- L2 price data if Gold subscriber
 
 0.92_003 2019-05-03T23:58:44Z
 
