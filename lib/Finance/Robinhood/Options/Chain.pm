@@ -12,7 +12,7 @@ Finance::Robinhood::Options::Chain - Represents a Single Options Chain
 
     use Finance::Robinhood;
     my $rh = Finance::Robinhood->new->login('user', 'pass');
- 
+
     # TODO
 
 =head1 METHODS
@@ -131,6 +131,58 @@ sub _test_min_ticks {
     t::Utility::stash('CHAIN') // skip_all();
     isa_ok(t::Utility::stash('CHAIN')->min_ticks,
            'Finance::Robinhood::Options::Chain::Ticks');
+}
+
+=head2 C<underlying_instruments( )>
+
+Returns a list of Finance::Robinhood::Options::Chain::Underlying objects.
+
+=cut
+
+=head2 C<instruments( [...] )>
+
+    my $instruments = $chain->instruments( );
+
+Returns an iterator filled with Finance::Robinhood::Options::Instrument
+objects.
+
+The following options are all optional:
+
+=over
+
+=item * C<type> - If given, must be C<put> or C<call>
+
+=item * C<expiration_dates> - If given, this is a list of expiration dates in the form of C<YYYY-MM-DD> or Time::Moment objects.
+
+	my $instruments = $chain->instruments(expiration_dates => [$chain->expiration_dates]);
+
+It would be a good idea to pass the values from C<expiration_dates( )>.
+
+=item * C<tradability> - May be either C<tradable> or C<untradable>
+
+=back
+
+=cut
+
+sub instruments ($s, %filter) {
+    $filter{expiration_dates} = join ',',
+        map { ref $_ eq 'Time::Moment' ? $_->strftime('%Y-%m-%d') : $_; }
+        @{$filter{expiration_dates}}
+        if $filter{expiration_dates};
+    Finance::Robinhood::Utilities::Iterator->new(
+          _rh => $s->_rh,
+          _next_page =>
+              Mojo::URL->new('https://api.robinhood.com/options/instruments/')
+              ->query(chain_id => $s->id, %filter),
+          _class => 'Finance::Robinhood::Options::Instrument'
+    );
+}
+
+sub _test_instruments {
+    t::Utility::stash('CHAIN') // skip_all();
+    my $instrument = t::Utility::stash('CHAIN')->instruments;
+    isa_ok($instrument,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($instrument->current, 'Finance::Robinhood::Options::Instrument');
 }
 
 =head1 LEGAL

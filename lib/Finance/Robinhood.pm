@@ -1456,7 +1456,7 @@ Crypto. See https://crypto.robinhood.com/ for more.
 
 =head2 C<forex_accounts( )>
 
-    my $halts = $rh->forex_accounts;
+    my $accts = $rh->forex_accounts;
 
 Returns an iterator full of Finance::Robinhood::Forex::Account objects.
 
@@ -1474,9 +1474,9 @@ sub forex_accounts( $s ) {
 }
 
 sub _test_forex_accounts {
-    my $halts = t::Utility::rh_instance(1)->forex_accounts;
-    isa_ok($halts,          'Finance::Robinhood::Utilities::Iterator');
-    isa_ok($halts->current, 'Finance::Robinhood::Forex::Account');
+    my $accts = t::Utility::rh_instance(1)->forex_accounts;
+    isa_ok($accts,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($accts->current, 'Finance::Robinhood::Forex::Account');
 }
 
 =head2 C<forex_account_by_id( ... )>
@@ -1933,31 +1933,18 @@ sub _test_forex_order_by_id {
 
     my $holdings = $rh->forex_holdings( );
 
-Returns the related paginated list object filled with
-Finance::Robinhood::Forex::Holding objects.
+Returns an iterator containing Finance::Robinhood::Forex::Holding objects.
 
 You must be logged in.
 
-    my $holdings = $rh->forex_holdings( nonzero => 1 );
-
-You can filter and modify the results. All options are optional.
-
-=over
-
-=item C<nonzero> - true or false. Default is false.
-
-=back
-
 =cut
 
-sub forex_holdings ($s, %filters) {
-    $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false'
-        if defined $filters{nonzero};
+sub forex_holdings ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-        _rh        => $s,
-        _next_page => Mojo::URL->new('https://nummus.robinhood.com/holdings/')
-            ->query(\%filters),
-        _class => 'Finance::Robinhood::Forex::Holding'
+                 _rh => $s,
+                 _next_page =>
+                     Mojo::URL->new('https://nummus.robinhood.com/holdings/'),
+                 _class => 'Finance::Robinhood::Forex::Holding'
     );
 }
 

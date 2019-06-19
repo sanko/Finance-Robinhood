@@ -323,7 +323,7 @@ sub _test_ratings {
 
 =head2 C<options_chains( )>
 
-    $instrument = $rh->search('MSFT')->equity_instruments->[0];
+    $instrument = $rh->equity_instrument_by_symbol('MSFT');
     my $chains = $instrument->options_chains;
 
 Returns an iterator containing chain elements.
