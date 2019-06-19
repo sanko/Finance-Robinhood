@@ -367,6 +367,43 @@ You can filter the results several ways. All of them are optional.
 - `type` - `call` or `put`
 - `expiration_dates` - comma separated list of days; format is YYYY-M-DD
 
+## `options_positions( )`
+
+    my $positions = $rh->options_positions( );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Options::Position objects.
+
+You must be logged in.
+
+    my $positions = $rh->options_positions( nonzero => 1 );
+
+You can filter and modify the results. All options are optional.
+
+- `nonzero` - true or false. Default is false
+- `chains` - list of options chain IDs or Finance::Robinhood::Options::Chain objects
+
+## `options_position_by_id( ... )`
+
+    my $position = $rh->options_position_by_id('b5ad00c0-7861-4582-8e5e-48f635178cb9');
+
+Searches for a single of options position by its id and returns a
+Finance::Robinhood::Options::Position object.
+
+## `options_instrument_by_id( ... )`
+
+    my $instrument = $rh->options_instrument_by_id('3b8f5513-600f-49b8-a4de-db56b52a82cf');
+
+Searches for a single of options instrument by its instrument id and returns a
+Finance::Robinhood::Options::Instrument object.
+
+## `options_chain_by_id( ... )`
+
+    my $chain = $rh->options_chain_by_id('55d7e31c-9105-488b-983c-93e09dd7ff35');
+
+Searches for a single of options chain by its id and returns a
+Finance::Robinhood::Options::Instrument object.
+
 # UNSORTED
 
 ## `user( )`
@@ -428,7 +465,7 @@ Crypto. See https://crypto.robinhood.com/ for more.
 
 ## `forex_accounts( )`
 
-    my $halts = $rh->forex_accounts;
+    my $accts = $rh->forex_accounts;
 
 Returns an iterator full of Finance::Robinhood::Forex::Account objects.
 
@@ -571,16 +608,9 @@ this to work.
 
     my $holdings = $rh->forex_holdings( );
 
-Returns the related paginated list object filled with
-Finance::Robinhood::Forex::Holding objects.
+Returns an iterator containing Finance::Robinhood::Forex::Holding objects.
 
 You must be logged in.
-
-    my $holdings = $rh->forex_holdings( nonzero => 1 );
-
-You can filter and modify the results. All options are optional.
-
-- `nonzero` - true or false. Default is false.
 
 ## `forex_holding_by_id( ... )`
 

@@ -1294,6 +1294,135 @@ sub _test_options_instruments {
     is($options->current->chain_symbol, 'MSFT');
 }
 
+=head2 C<options_positions( )>
+
+    my $positions = $rh->options_positions( );
+
+Returns the related paginated list object filled with
+Finance::Robinhood::Options::Position objects.
+
+You must be logged in.
+
+    my $positions = $rh->options_positions( nonzero => 1 );
+
+You can filter and modify the results. All options are optional.
+
+=over
+
+=item C<nonzero> - true or false. Default is false
+
+=item C<chains> - list of options chain IDs or Finance::Robinhood::Options::Chain objects
+
+=back
+
+=cut
+
+sub options_positions ($s, %filters) {
+    $filters{nonzero} = !!$filters{nonzero} ? 'True' : 'False'
+        if defined $filters{nonzero};
+    $filters{chain_ids} = join ',',
+        map { ref $_ eq 'Finance::Robinhood::Options::Chain' ? $_->id : $_ }
+        @{$filters{chains}}
+        if defined $filters{chains};
+    Finance::Robinhood::Utilities::Iterator->new(
+            _rh => $s,
+            _next_page =>
+                Mojo::URL->new('https://api.robinhood.com/options/positions/')
+                ->query(\%filters),
+            _class => 'Finance::Robinhood::Options::Position'
+    );
+}
+
+sub _test_options_positions {
+    my $positions = t::Utility::rh_instance(1)->options_positions;
+    isa_ok($positions,          'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($positions->current, 'Finance::Robinhood::Options::Position');
+}
+
+=head2 C<options_position_by_id( ... )>
+
+    my $position = $rh->options_position_by_id('b5ad00c0-7861-4582-8e5e-48f635178cb9');
+
+Searches for a single of options position by its id and returns a
+Finance::Robinhood::Options::Position object.
+
+=cut
+
+sub options_position_by_id ($s, $id) {
+    my $res = $s->_get(
+                  'https://api.robinhood.com/options/positions/' . $id . '/');
+    require Finance::Robinhood::Options::Position if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Options::Position->new(_rh => $s, %{$res->json})
+        : Finance::Robinhood::Error->new(
+             $res->is_server_error ? (details => $res->message) : $res->json);
+}
+
+sub _test_options_position_by_id {
+    my $rh     = t::Utility::rh_instance(1);
+    my $holder = $rh->options_positions->next;
+    skip_all('No positions in our history') unless $holder;
+    my $position = $rh->options_position_by_id($holder->id);
+    isa_ok($position, 'Finance::Robinhood::Options::Position');
+}
+
+=head2 C<options_instrument_by_id( ... )>
+
+    my $instrument = $rh->options_instrument_by_id('3b8f5513-600f-49b8-a4de-db56b52a82cf');
+
+Searches for a single of options instrument by its instrument id and returns a
+Finance::Robinhood::Options::Instrument object.
+
+=cut
+
+sub options_instrument_by_id ($s, $id) {
+    my $res = $s->_get(
+                'https://api.robinhood.com/options/instruments/' . $id . '/');
+    require Finance::Robinhood::Options::Instrument if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Options::Instrument->new(_rh => $s,
+                                                       %{$res->json})
+        : Finance::Robinhood::Error->new(
+             $res->is_server_error ? (details => $res->message) : $res->json);
+}
+
+sub _test_options_instrument_by_id {
+    my $rh = t::Utility::rh_instance(1);
+    my $instrument = $rh->options_instrument_by_id(
+                                      '3b8f5513-600f-49b8-a4de-db56b52a82cf');
+    isa_ok($instrument, 'Finance::Robinhood::Options::Instrument');
+    is($instrument->symbol, 'BAC',
+        'options_instrument_by_id( ... ) returned Bank of America');
+}
+
+=head2 C<options_chain_by_id( ... )>
+
+    my $chain = $rh->options_chain_by_id('55d7e31c-9105-488b-983c-93e09dd7ff35');
+
+Searches for a single of options chain by its id and returns a
+Finance::Robinhood::Options::Instrument object.
+
+=cut
+
+sub options_chain_by_id ($s, $id) {
+    my $res
+        = $s->_get('https://api.robinhood.com/options/chains/' . $id . '/');
+    require Finance::Robinhood::Options::Chain if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Options::Chain->new(_rh => $s, %{$res->json})
+        : Finance::Robinhood::Error->new(
+             $res->is_server_error ? (details => $res->message) : $res->json);
+}
+
+sub _test_options_chain_by_id {
+    my $rh = t::Utility::rh_instance(1);
+    my $chain = $rh->options_instrument_by_id(
+                                      '55d7e31c-9105-488b-983c-93e09dd7ff35');
+    isa_ok($chain, 'Finance::Robinhood::Options::Chain');
+    is($chain->symbol, 'BAC',
+        'options_chain_by_id( ... ) returned Bank of America');
+}
+
 =head1 UNSORTED
 
 
