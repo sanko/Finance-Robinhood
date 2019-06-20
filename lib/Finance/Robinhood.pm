@@ -1423,6 +1423,30 @@ sub _test_options_chain_by_id {
         'options_chain_by_id( ... ) returned Bank of America');
 }
 
+=head2 C<options_events( )>
+
+    my $events = $rh->options_events();
+
+Returns an iterator containing Finance::Robinhood::Options::Event objects.
+
+=cut
+
+sub options_events ($s) {
+    Finance::Robinhood::Utilities::Iterator->new(
+              _rh => $s,
+              _next_page =>
+                  Mojo::URL->new('https://api.robinhood.com/options/events/'),
+              _class => 'Finance::Robinhood::Options::Event'
+    );
+}
+
+sub _test_options_events {
+    my $rh     = t::Utility::rh_instance(1);
+    my $events = $rh->options_events();
+    isa_ok($events,       'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($events->next, 'Finance::Robinhood::Options::Event');
+}
+
 =head1 UNSORTED
 
 
