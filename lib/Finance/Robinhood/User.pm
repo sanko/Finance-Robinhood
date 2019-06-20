@@ -12,7 +12,7 @@ Finance::Robinhood::User - Represents a Single Authorized User
 
     use Finance::Robinhood;
     my $rh = Finance::Robinhood->new;
-    
+
     my $user = $rh->user();
     CORE::say $user->first_name . ' ' . $user->last_name;
 
@@ -78,7 +78,8 @@ Returns a Finance::Robinhood::User::AdditionalInfo object.
 =cut
 
 sub additional_info($s) {
-    my $res = $s->_rh->_get($s->{additional_info});
+    my $res
+        = $s->_rh->_get('https://api.robinhood.com/user/additional_info/');
     $_[0] = $res->is_success
         ? Finance::Robinhood::User::AdditionalInfo->new(_rh => $s->_rh,
                                                         %{$res->json})
@@ -101,7 +102,7 @@ Returns a Finance::Robinhood::User::BasicInfo object.
 =cut
 
 sub basic_info($s) {
-    my $res = $s->_rh->_get($s->{basic_info});
+    my $res = $s->_rh->_get('https://api.robinhood.com/user/basic_info/');
     $_[0] = $res->is_success
         ? Finance::Robinhood::User::BasicInfo->new(_rh => $s->_rh,
                                                    %{$res->json})
@@ -141,7 +142,7 @@ Returns a Finance::Robinhood::User::Employment object.
 =cut
 
 sub employment($s) {
-    my $res = $s->_rh->_get($s->{employment});
+    my $res = $s->_rh->_get('https://api.robinhood.com/user/employment/');
     $_[0] = $res->is_success
         ? Finance::Robinhood::User::Employment->new(_rh => $s->_rh,
                                                     %{$res->json})
@@ -188,7 +189,8 @@ non-US citizen.
 =cut
 
 sub international_info($s) {
-    my $res = $s->_rh->_get($s->{international_info});
+    my $res
+        = $s->_rh->_get('https://api.robinhood.com/user/international_info/');
     $_[0] = $res->is_success
         ? Finance::Robinhood::User::InternationalInfo->new(_rh => $s->_rh,
                                                            %{$res->json})
@@ -215,7 +217,8 @@ Returns a Finance::Robinhood::User::Profile object.
 =cut
 
 sub profile($s) {
-    my $res = $s->_rh->_get($s->{investment_profile});
+    my $res
+        = $s->_rh->_get('https://api.robinhood.com/user/investment_profile/');
     $_[0]
         = $res->is_success
         ? Finance::Robinhood::User::Profile->new(_rh => $s->_rh,
