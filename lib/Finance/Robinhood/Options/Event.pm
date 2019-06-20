@@ -122,8 +122,9 @@ sub equity_components ($s) {
 
 sub _test_equity_components {
     t::Utility::stash('EVENT') // skip_all('No event object in stash');
-    my ($equity_components) = t::Utility::stash('EVENT')->equity_components;
-    isa_ok($equity_components,
+    my ($equity_component) = t::Utility::stash('EVENT')->equity_components;
+    $equity_component // skip_all('Event does not contain equity components');
+    isa_ok($equity_component,
            'Finance::Robinhood::Options::Event::EquityComponent');
 }
 
@@ -161,7 +162,7 @@ sub instrument ($s) {
 
 sub _test_instrument {
     t::Utility::stash('EVENT') // skip_all('No event object in stash');
-    isa_ok(t::Utility::stash('EVENT')->chain,
+    isa_ok(t::Utility::stash('EVENT')->instrument,
            'Finance::Robinhood::Options::Instrument');
 }
 
@@ -182,7 +183,7 @@ sub position ($s) {
 
 sub _test_position {
     t::Utility::stash('EVENT') // skip_all('No event object in stash');
-    isa_ok(t::Utility::stash('EVENT')->chain,
+    isa_ok(t::Utility::stash('EVENT')->position,
            'Finance::Robinhood::Options::Position');
 }
 

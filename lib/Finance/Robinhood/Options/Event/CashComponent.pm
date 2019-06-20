@@ -27,6 +27,7 @@ use Mojo::URL;
 sub _test__init {
     my $rh        = t::Utility::rh_instance(1);
     my $component = $rh->options_events->next->cash_component;
+    $component // skip_all('No cash component in event');
     isa_ok($component, __PACKAGE__);
     t::Utility::stash('COMPONENT', $component);    #  Store it for later
 }

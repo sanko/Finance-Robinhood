@@ -238,7 +238,6 @@ sub historicals ($s, %filters) {
 
 sub _test_historicals {
     t::Utility::stash('PAIR') // skip_all();
-    warn t::Utility::stash('PAIR')->historicals(interval => 'hour');
     isa_ok(t::Utility::stash('PAIR')->historicals(interval => 'hour'),
            'Finance::Robinhood::Forex::Historicals');
 }

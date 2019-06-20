@@ -25,21 +25,21 @@ use Mojo::URL;
 
 sub _test__init {
     my $rh = t::Utility::rh_instance(1);
-
-#my $instrument = $rh->options_instruments(
-#    chain_id    => $rh->search('MSFT')->equity_instruments->[0]->tradable_chain_id,
-#    tradability => 'tradable'
-#)->current;
-#isa_ok( $instrument, __PACKAGE__ );
-#t::Utility::stash( 'INSTRUMENT', $instrument );    #  Store it for later
-    todo("Write actual tests!" => sub { pass('ugh') });
+    my ($instrument)
+        = $rh->equity_instrument_by_symbol('MSFT')
+        ->options_chains->current->underlying_instruments();
+    isa_ok($instrument, __PACKAGE__);
+    t::Utility::stash('UNDERLYING', $instrument);    #  Store it for later
 }
-use overload '""' => sub ($s, @) { $s->{instrument} }, fallback => 1;
+use overload '""' => sub ($s, @) {
+    'https://api.robinhood.com/options/chains/' . $s->{id} . '/';
+    },
+    fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('UNDERLYING') // skip_all();
     like(+t::Utility::stash('UNDERLYING'),
-         qr'^https://api.robinhood.com/instruments/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/$'i
+         qr'^https://api.robinhood.com/options/chains/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/$'i
     );
 }
 #

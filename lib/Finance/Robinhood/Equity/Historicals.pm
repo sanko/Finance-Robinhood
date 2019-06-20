@@ -25,7 +25,7 @@ use Mojo::URL;
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $msft = $rh->equity_instrument_by_symbol('MSFT');
-    isa_ok($msft, __PACKAGE__);
+    isa_ok($msft, 'Finance::Robinhood::Equity::Instrument');
     t::Utility::stash('MSFT', $msft);    #  Store it for later
     my $historicals = $msft->historicals(interval => '5minute');
     isa_ok($historicals, __PACKAGE__);
@@ -150,7 +150,7 @@ sub _test_quote {
     t::Utility::stash('HISTORICALS')
         // skip_all('No historicals object in stash');
     isa_ok(t::Utility::stash('HISTORICALS')->quote,
-           'Finance::Robinhood::Equity::Instrument::Quote');
+           'Finance::Robinhood::Equity::Quote');
 }
 
 =head1 LEGAL

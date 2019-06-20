@@ -2,7 +2,7 @@ package Finance::Robinhood::Options::Quote;
 
 =encoding utf-8
 
-=for stopwords watchlist watchlists untradable urls
+=for stopwords watchlist watchlists untradable urls vega
 
 =head1 NAME
 

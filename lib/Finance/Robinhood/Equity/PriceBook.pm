@@ -25,11 +25,14 @@ use Mojo::URL;
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $msft = $rh->equity_instrument_by_symbol('MSFT');
-    isa_ok($msft, __PACKAGE__);
+    isa_ok($msft, 'Finance::Robinhood::Equity::Instrument');
     t::Utility::stash('MSFT', $msft);    #  Store it for later
-    my $l2 = $msft->pricebook;
-    isa_ok($l2, __PACKAGE__);
-    t::Utility::stash('L2', $l2);        #  Store it for later
+    {
+        my $todo = todo("I'm not a current Gold subscriber");
+        my $l2   = eval { $msft->pricebook };
+        isa_ok($l2, __PACKAGE__);
+        t::Utility::stash('L2', $l2);    #  Store it for later
+    }
 }
 ##
 

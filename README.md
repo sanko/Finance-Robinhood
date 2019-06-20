@@ -118,6 +118,12 @@ if this is successful.
 
 This method expects a Finance::Robinhood::OAuth2::Token object.
 
+## `refresh_login_token( )`
+
+OAuth2 authorization tokens expire after a defined amount of time (24 hours
+from login). To continue your session, you must refresh this token by calling
+this method.
+
 ## `search( ... )`
 
     my $results = $rh->search('microsoft');
@@ -403,6 +409,12 @@ Finance::Robinhood::Options::Instrument object.
 
 Searches for a single of options chain by its id and returns a
 Finance::Robinhood::Options::Instrument object.
+
+## `options_events( )`
+
+    my $events = $rh->options_events();
+
+Returns an iterator containing Finance::Robinhood::Options::Event objects.
 
 # UNSORTED
 

@@ -96,10 +96,11 @@ sub _get ($s, $url, %data) {
     $url = Mojo::URL->new($url);
     $url->query(\%data);
 
-#warn 'GET  ' . $url;
-#warn '  Auth: ' . (
-#    ( $s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$] ) ? $s->oauth2_token->token_type :
-#        'none' );
+    #warn 'GET  ' . $url;
+    #warn '  Auth: ' .
+    #    (($s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$])
+    #     ? $s->oauth2_token->token_type
+    #     : 'none');
     my $retval = $s->_ua->get(
            $url => {
                ($s->oauth2_token &&
@@ -112,22 +113,24 @@ sub _get ($s, $url, %data) {
            }
     );
 
-    #use Data::Dump;
-    #warn '  Result: ' . $retval->res->code;
-    #die if $retval->res->code == 401;
-    #use Data::Dump;
-    #ddx $retval->res->headers;
-    #ddx $retval;
-    #warn $retval->res->code;
-    #ddx $retval->res;
-    #warn $retval->res->body;
-    #use Data::Dump;
-    #ddx $retval->res->json;
-    #$retval->res->is_error &&
-    #    $retval->res->code == 401 &&
-    #    $s->_refresh_login_token
-    #    ? $s->_get($url, %data)    # Retry with new auth info
-    #    : $retval->res;
+#use Data::Dump;
+#ddx $retval;
+#warn '  Result: ' . $retval->res->code;
+#die if $retval->res->code == 401;
+#use Data::Dump;
+#ddx $retval->res->headers;
+#ddx $retval;
+#warn $retval->res->code;
+#ddx $retval->res;
+#warn $retval->res->body;
+#use Data::Dump;
+#ddx $retval->res->json;
+#$retval->res->is_error &&
+#    $retval->res->code == 401 &&
+#    $s->_refresh_login_token
+#    ? $s->_get($url, %data)    # Retry with new auth info
+#    : $retval->res;
+#$retval->res->is_error ? Finance::Robinhood::Error->new(detail => $retval->res->body, code => $retval->res->code) :
     $retval->res;
 }
 
@@ -469,6 +472,8 @@ sub refresh_login_token ($s, %opt)
             ->(__PACKAGE__),
     );
     if ($res->is_success) {
+
+        #ddx $res->json;
         require Finance::Robinhood::OAuth2::Token;
         $s->oauth2_token(Finance::Robinhood::OAuth2::Token->new($res->json));
     }
@@ -1411,7 +1416,8 @@ sub _test_options_instrument_by_id {
     my $instrument = $rh->options_instrument_by_id(
                                       '3b8f5513-600f-49b8-a4de-db56b52a82cf');
     isa_ok($instrument, 'Finance::Robinhood::Options::Instrument');
-    is($instrument->symbol, 'BAC',
+    is($instrument->id,
+        '3b8f5513-600f-49b8-a4de-db56b52a82cf',
         'options_instrument_by_id( ... ) returned Bank of America');
 }
 
@@ -1436,8 +1442,8 @@ sub options_chain_by_id ($s, $id) {
 
 sub _test_options_chain_by_id {
     my $rh = t::Utility::rh_instance(1);
-    my $chain = $rh->options_instrument_by_id(
-                                      '55d7e31c-9105-488b-983c-93e09dd7ff35');
+    my $chain
+        = $rh->options_chain_by_id('55d7e31c-9105-488b-983c-93e09dd7ff35');
     isa_ok($chain, 'Finance::Robinhood::Options::Chain');
     is($chain->symbol, 'BAC',
         'options_chain_by_id( ... ) returned Bank of America');

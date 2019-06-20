@@ -497,10 +497,12 @@ sub pricebook ($s) {
 
 sub _test_pricebook {
     t::Utility::stash('MSFT_AUTH') // skip_all();
-
-    # TODO: I need to check Gold status
-    isa_ok(t::Utility::stash('MSFT_AUTH')->pricebook(),
-           'Finance::Robinhood::Equity::Historicals');
+    todo(
+        'requires Robinhood Gold' => sub {
+            isa_ok(eval { t::Utility::stash('MSFT_AUTH')->pricebook() },
+                   'Finance::Robinhood::Equity::Pricebook');
+        }
+    );
 }
 
 =head2 C<buy( ... )>

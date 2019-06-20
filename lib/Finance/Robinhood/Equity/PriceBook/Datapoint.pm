@@ -24,10 +24,13 @@ use Mojo::URL;
 
 sub _test__init {
     my $rh = t::Utility::rh_instance(1);
-    my ($datapoint)
-        = $rh->equity_instrument_by_symbol('MSFT')->pricebook->asks;
-    isa_ok($datapoint, __PACKAGE__);
-    t::Utility::stash('DATAPOINT', $datapoint);    #  Store it for later
+    {
+        my $todo = todo("I'm not a current Gold subscriber");
+        my ($datapoint)
+            = eval { $rh->equity_instrument_by_symbol('MSFT')->pricebook->asks };
+        isa_ok($datapoint, __PACKAGE__);
+        t::Utility::stash('DATAPOINT', $datapoint);    #  Store it for later
+    }
 }
 ##
 
