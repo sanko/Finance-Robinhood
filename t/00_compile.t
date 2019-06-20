@@ -80,6 +80,9 @@ my @classes = (
     'Finance::Robinhood::Options::Event::CashComponent',
     'Finance::Robinhood::Options::Event::EquityComponent',
     'Finance::Robinhood::Options::Position',
+    'Finance::Robinhood::Options::Quote',
+    'Finance::Robinhood::Options::Historicals',
+    'Finance::Robinhood::Options::Historicals::Datapoint',
 
     # Generic
     'Finance::Robinhood::News', 'Finance::Robinhood::Notification',

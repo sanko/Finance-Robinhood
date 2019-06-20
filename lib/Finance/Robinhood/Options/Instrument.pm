@@ -24,6 +24,7 @@ Instrument
 our $VERSION = '0.92_003';
 use Mojo::Base-base, -signatures;
 use Mojo::URL;
+use Finance::Robinhood::Options::Quote;
 
 sub _test__init {
     my $rh = t::Utility::rh_instance(1);
@@ -101,7 +102,7 @@ has ['chain_id',        'chain_symbol', 'id',           'min_ticks',
      'type',
 ];
 
-=head2 C<expiration_date( )> 
+=head2 C<expiration_date( )>
 
 Returns a Time::Moment object.
 
@@ -116,7 +117,7 @@ sub _test_expiration_date {
     isa_ok(t::Utility::stash('INSTRUMENT')->expiration_date, 'Time::Moment');
 }
 
-=head2 C<issue_date( )> 
+=head2 C<issue_date( )>
 
 Returns a Time::Moment object.
 
@@ -131,7 +132,7 @@ sub _test_issue_date {
     isa_ok(t::Utility::stash('INSTRUMENT')->issue_date, 'Time::Moment');
 }
 
-=head2 C<created_at( )> 
+=head2 C<created_at( )>
 
 Returns a Time::Moment object.
 
@@ -146,7 +147,7 @@ sub _test_created_at {
     isa_ok(t::Utility::stash('INSTRUMENT')->created_at, 'Time::Moment');
 }
 
-=head2 C<updated_at( )> 
+=head2 C<updated_at( )>
 
 Returns a Time::Moment object.
 
@@ -159,6 +160,120 @@ sub updated_at ($s) {
 sub _test_updated_at {
     t::Utility::stash('INSTRUMENT') // skip_all();
     isa_ok(t::Utility::stash('INSTRUMENT')->updated_at, 'Time::Moment');
+}
+
+=head2 C<historicals( ... )>
+
+    my $data = $instrument->historicals( interval => '15second' );
+
+Returns a Finance::Robinhood::Options::Historicals object.
+
+You may provide the following arguments:
+
+=over
+
+=item C<interval> Required and must be on eof the following:
+
+=over
+
+=item C<15second>
+
+=item C<5minute>
+
+=item C<10minute>
+
+=item C<hour>
+
+=item C<day>
+
+=item C<week>
+
+=item C<month>
+
+=back
+
+=item C<span> - Optional and must be one of the following:
+
+=over
+
+=item C<hour>
+
+=item C<day>
+
+=item C<week>
+
+=item C<month>
+
+=item C<year>
+
+=item C<5year>
+
+=item C<all>
+
+=back
+
+=item C<bounds> - Optional and must be one of the following:
+
+=over
+
+=item C<regular> - Default
+
+=item C<extended>
+
+=item C<24_7>
+
+=back
+
+=back
+
+=cut
+
+sub historicals ($s, %filters) {
+    my $res = $s->_rh->_get(
+             Mojo::URL->new(
+                 'https://api.robinhood.com/marketdata/options/historicals/' .
+                     $s->id . '/'
+             )->query(\%filters),
+    );
+    require Finance::Robinhood::Options::Historicals if $res->is_success;
+    $res->is_success
+        ? Finance::Robinhood::Options::Historicals->new(_rh => $s->_rh,
+                                                        %{$res->json})
+        : Finance::Robinhood::Error->new(
+             $res->is_server_error ? (details => $res->message) : $res->json);
+}
+
+sub _test_historicals {
+    t::Utility::stash('INSTRUMENT') // skip_all();
+    isa_ok(t::Utility::stash('INSTRUMENT')->historicals(interval => 'hour'),
+           'Finance::Robinhood::Options::Historicals');
+}
+
+=head2 C<quote( )>
+
+    my $quote = $instrument->quote();
+
+Builds a Finance::Robinhood::Options::Quote object with this instrument's quote
+data.
+
+You do not need to be logged in for this to work.
+
+=cut
+
+sub quote ($s) {
+    my $res = $s->_rh->_get(
+            'https://api.robinhood.com/marketdata/options/' . $s->{id} . '/');
+    $res->is_success
+        ? Finance::Robinhood::Options::Quote->new(_rh => $s->_rh,
+                                                  %{$res->json})
+        : Finance::Robinhood::Error->new(
+             $res->is_server_error ? (details => $res->message) : $res->json);
+}
+
+sub _test_quote {
+    t::Utility::stash('INSTRUMENT') // skip_all();
+    isa_ok(t::Utility::stash('INSTRUMENT')->quote(),
+           'Finance::Robinhood::Options::Quote');
 }
 
 =head1 LEGAL
