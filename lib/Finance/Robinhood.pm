@@ -123,11 +123,12 @@ sub _get ($s, $url, %data) {
     #warn $retval->res->body;
     #use Data::Dump;
     #ddx $retval->res->json;
-    $retval->res->is_error &&
-        $retval->res->code == 401 &&
-        $s->_refresh_login_token
-        ? $s->_get($url, %data)    # Retry with new auth info
-        : $retval->res;
+    #$retval->res->is_error &&
+    #    $retval->res->code == 401 &&
+    #    $s->_refresh_login_token
+    #    ? $s->_get($url, %data)    # Retry with new auth info
+    #    : $retval->res;
+    $retval->res;
 }
 
 sub _test_get {
@@ -153,11 +154,13 @@ sub _options ($s, $url, %data) {
                : ()
            } => json => \%data
     );
-    $retval->res->is_error &&
-        $retval->res->code == 401 &&
-        $s->_refresh_login_token
-        ? $s->_option($url, %data)    # Retry with new auth info
-        : $retval->res;
+
+    #$retval->res->is_error &&
+    #    $retval->res->code == 401 &&
+    #    $s->_refresh_login_token
+    #    ? $s->_option($url, %data)    # Retry with new auth info
+    #    : $retval->res;
+    $retval->res;
 }
 
 sub _test_options {
@@ -173,7 +176,10 @@ sub _post ($s, $url, %data) {
 #use Data::Dump;
 #ddx \%data;
 #$data{$_} = ref $data{$_} eq 'ARRAY' ? join ',', @{ $data{$_} } : $data{$_} for keys %data;
-#warn '  Auth: ' . (($s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$]) ? $s->oauth2_token->token_type : 'none');
+#warn '  Auth: ' .
+#    (($s->oauth2_token && $url =~ m[^https://[a-z]+\.robinhood\.com/.+$])
+#     ? $s->oauth2_token->token_type
+#     : 'none');
     my $retval = $s->_ua->post(
            Mojo::URL->new($url) => {
                ($s->oauth2_token &&
@@ -201,11 +207,13 @@ sub _post ($s, $url, %data) {
     #warn $retval->res->code;
     #ddx $retval->res;
     #warn $retval->res->body;
-    $retval->res->is_error &&
-        $retval->res->code == 401 &&
-        $s->_refresh_login_token
-        ? $s->_post($url, %data)    # Retry with new auth info
-        : $retval->res;
+    #ddx $retval->res->json;
+    #$retval->res->is_error &&
+    #    $retval->res->code == 401 &&
+    #    $s->_refresh_login_token
+    #    ? $s->_post($url, %data)    # Retry with new auth info
+    #    : $retval->res;
+    $retval->res;
 }
 
 sub _test_post {
@@ -235,11 +243,13 @@ sub _patch ($s, $url, %data) {
                : ()
            } => json => \%data
     );
-    $retval->res->is_error &&
-        $retval->res->code == 401 &&
-        $s->_refresh_login_token
-        ? $s->_patch($url, %data)    # Retry with new auth info
-        : $retval->res;
+
+    #$retval->res->is_error &&
+    #    $retval->res->code == 401 &&
+    #    $s->_refresh_login_token
+    #    ? $s->_patch($url, %data)    # Retry with new auth info
+    #    : $retval->res;
+    $retval->res;
 }
 
 sub _test_patch {
@@ -265,11 +275,13 @@ sub _delete ($s, $url, %data) {
                : ()
            } => json => \%data
     );
-    $retval->res->is_error &&
-        $retval->res->code == 401 &&
-        $s->_refresh_login_token
-        ? $s->_delete($url, %data)    # Retry with new auth info
-        : $retval->res;
+
+    #$retval->res->is_error &&
+    #    $retval->res->code == 401 &&
+    #    $s->_refresh_login_token
+    #    ? $s->_delete($url, %data)    # Retry with new auth info
+    #    : $retval->res;
+    $retval->res;
 }
 
 sub _test_delete {
@@ -425,8 +437,16 @@ sub _test_login {
     isa_ok($rh->oauth2_token, 'Finance::Robinhood::OAuth2::Token');
 }
 
+=head2 C<refresh_login_token( )>
+
+OAuth2 authorization tokens expire after a defined amount of time (24 hours
+from login). To continue your session, you must refresh this token by calling
+this method.
+
+=cut
+
 # Cannot test this without using the same token for 24hrs and letting it expire
-sub _refresh_login_token ($s, %opt)
+sub refresh_login_token ($s, %opt)
 {    # TODO: Store %opt from login and reuse it here
 
     #$s->oauth2_token // return;    # OAUTH2
