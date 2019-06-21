@@ -112,9 +112,9 @@ sub _get ($s, $url, %data) {
                : ()
            }
     );
+    #use Data::Dump;
+    #ddx $retval;
 
-#use Data::Dump;
-#ddx $retval;
 #warn '  Result: ' . $retval->res->code;
 #die if $retval->res->code == 401;
 #use Data::Dump;
@@ -1471,6 +1471,80 @@ sub _test_options_events {
     my $events = $rh->options_events();
     isa_ok($events,       'Finance::Robinhood::Utilities::Iterator');
     isa_ok($events->next, 'Finance::Robinhood::Options::Event');
+}
+
+=head2 C<options_orders( [...] )>
+
+    my $orders = $rh->options_orders();
+
+An iterator containing Finance::Robinhood::Options::Order objects is returned.
+You need to be logged in for this to work.
+
+    my $orders = $rh->options_orders(instrument => $msft_call_130_Jun_2020);
+
+If you would only like orders after a certain date, you can do that!
+
+    my $orders = $rh->options_orders(after => Time::Moment->now->minus_days(7));
+    # Also accepts ISO 8601
+
+If you would only like orders before a certain date, you can do that!
+
+    my $orders = $rh->options_orders(before => Time::Moment->now->minus_years(2));
+    # Also accepts ISO 8601
+
+=cut
+
+sub options_orders ($s, %opts) {
+
+ #- `updated_at[gte]` - greater than or equal to a date; timestamp or ISO 8601
+ #- `updated_at[lte]` - less than or equal to a date; timestamp or ISO 8601
+ #- `instrument` - options instrument URL
+    Finance::Robinhood::Utilities::Iterator->new(
+           _rh => $s,
+           _next_page =>
+               Mojo::URL->new('https://api.robinhood.com/options/orders/')
+               ->query(
+               {$opts{instrument}
+                ? (instrument => $opts{instrument}->url)
+                : (),
+                $opts{before} ? ('updated_at[lte]' => +$opts{before}) : (),
+                $opts{after}  ? ('updated_at[gte]' => +$opts{after})  : ()
+               }
+               ),
+           _class => 'Finance::Robinhood::Options::Order'
+    );
+}
+
+sub _test_options_orders {
+    my $rh     = t::Utility::rh_instance(1);
+    my $orders = $rh->options_orders;
+    isa_ok($orders,       'Finance::Robinhood::Utilities::Iterator');
+    isa_ok($orders->next, 'Finance::Robinhood::Options::Order');
+}
+
+=head2 C<options_order_by_id( ... )>
+
+    my $order = $rh->options_order_by_id($id);
+
+Returns a Finance::Robinhood::Options::Order object. You need to be logged in
+for this to work.
+
+=cut
+
+sub options_order_by_id ($s, $id) {
+    my $res
+        = $s->_get('https://api.robinhood.com/options/orders/' . $id . '/');
+    require Finance::Robinhood::Options::Order if $res->is_success;
+    return $res->is_success
+        ? Finance::Robinhood::Options::Order->new(_rh => $s, %{$res->json})
+        : Finance::Robinhood::Error->new(
+             $res->is_server_error ? (details => $res->message) : $res->json);
+}
+
+sub _test_options_order_by_id {
+    my $rh    = t::Utility::rh_instance(1);
+    my $order = $rh->options_order_by_id($rh->options_orders->current->id);
+    isa_ok($order, 'Finance::Robinhood::Options::Order');
 }
 
 =head1 UNSORTED

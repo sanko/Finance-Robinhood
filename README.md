@@ -416,6 +416,32 @@ Finance::Robinhood::Options::Instrument object.
 
 Returns an iterator containing Finance::Robinhood::Options::Event objects.
 
+## `options_orders( [...] )`
+
+    my $orders = $rh->options_orders();
+
+An iterator containing Finance::Robinhood::Options::Order objects is returned.
+You need to be logged in for this to work.
+
+    my $orders = $rh->options_orders(instrument => $msft_call_130_Jun_2020);
+
+If you would only like orders after a certain date, you can do that!
+
+    my $orders = $rh->options_orders(after => Time::Moment->now->minus_days(7));
+    # Also accepts ISO 8601
+
+If you would only like orders before a certain date, you can do that!
+
+    my $orders = $rh->options_orders(before => Time::Moment->now->minus_years(2));
+    # Also accepts ISO 8601
+
+## `options_order_by_id( ... )`
+
+    my $order = $rh->options_order_by_id($id);
+
+Returns a Finance::Robinhood::Options::Order object. You need to be logged in
+for this to work.
+
 # UNSORTED
 
 ## `user( )`

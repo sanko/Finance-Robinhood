@@ -79,6 +79,9 @@ my @classes = (
     'Finance::Robinhood::Options::Event',
     'Finance::Robinhood::Options::Event::CashComponent',
     'Finance::Robinhood::Options::Event::EquityComponent',
+    'Finance::Robinhood::Options::Order',
+    'Finance::Robinhood::Options::Order::Execution',
+    'Finance::Robinhood::Options::Order::Leg',
     'Finance::Robinhood::Options::Position',
     'Finance::Robinhood::Options::Quote',
     'Finance::Robinhood::Options::Historicals',
@@ -91,6 +94,7 @@ my @classes = (
     # Utility
     'Finance::Robinhood::Utilities', 'Finance::Robinhood::Utilities::Iterator'
 );
+
 for my $class (sort @classes) {
     subtest_streamed $class => sub {
         eval <<"T"; bail_out("$class did not compile: $@") if $@;
