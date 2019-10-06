@@ -27,6 +27,7 @@ use Finance::Robinhood::Equity::Market::Hours;
 sub _test__init {
     my $rh    = t::Utility::rh_instance(0);
     my $split = $rh->equity_instrument_by_symbol('JNUG')->splits->current;
+    skip_all('Robinhood is not providing split data') unless $split;
     isa_ok($split, __PACKAGE__);
     t::Utility::stash('SPLIT', $split);    #  Store it for later
 }

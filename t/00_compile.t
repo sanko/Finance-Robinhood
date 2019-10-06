@@ -1,11 +1,21 @@
 use Test2::V0;
 use Test2::Tools::Subtest qw/subtest_streamed/;
+use Dotenv;
 use lib '../../lib', '../lib', 'lib';
 $|++;
 
-# DEV note: To run *all* tests, you need to provide login info.
-# Do this by setting RHUSER, RHPASS, and RHDEVICE environment variables.
-#
+=for dev testing
+
+DEV note: To run *all* tests, you need to provide login info. Do this by setting RHUSER, RHPASS, and RHDEVICE
+environment variables. The easiest way to do that is to put in a .env file in the dist's base directory which will be
+loaded in this file. It should look like this...
+
+    RHDEVICE = c893a722-5674-4924-85ac-3d3620eb80ba
+    RHUSER = yourusername
+    RHPASS = yourpasswordhere
+
+=cut
+eval { Dotenv->load };
 my @classes = (
     'Finance::Robinhood',
 
@@ -82,6 +92,8 @@ my @classes = (
     'Finance::Robinhood::Options::Order',
     'Finance::Robinhood::Options::Order::Execution',
     'Finance::Robinhood::Options::Order::Leg',
+    'Finance::Robinhood::Options::OrderBuilder',
+    'Finance::Robinhood::Options::OrderBuilder::Leg',
     'Finance::Robinhood::Options::Position',
     'Finance::Robinhood::Options::Quote',
     'Finance::Robinhood::Options::Historicals',
@@ -94,6 +106,9 @@ my @classes = (
     # Utility
     'Finance::Robinhood::Utilities', 'Finance::Robinhood::Utilities::Iterator'
 );
+
+diag('No auth info in environment. Some tests will be skipped')
+    unless $ENV{RHUSER} && $ENV{RHPASS} && $ENV{RHDEVICE};
 
 for my $class (sort @classes) {
     subtest_streamed $class => sub {
@@ -133,8 +148,22 @@ sub rh_instance {
                 = ($ENV{RHUSER}, $ENV{RHPASS}, $ENV{RHDEVICE});
             skip_all('No auth info in environment')
                 unless $user && $pass && $device;
-            $state{$auth} = Finance::Robinhood->new(device_token => $device)
-                ->login($user, $pass);
+            $state{$auth}
+                = Finance::Robinhood->new(device_token => $device)->login(
+                $user, $pass,
+                mfa_callback => sub {
+                    promptUser('MFA code required');
+                },
+                challenge_callback => sub {
+                    my ($challenge) = @_;
+                    my $response =
+                        promptUser(
+                               sprintf 'Login challenge issued (sent via %s)',
+                               $challenge->type);
+                    warn $response;
+                    $challenge->respond($response);
+                }
+                );
         }
         else {
             $state{$auth} = Finance::Robinhood->new;
@@ -151,3 +180,21 @@ sub stash {
     $stash{$package}{$key};
 }
 sub clear_stash { delete $stash{+shift} }
+
+sub promptUser {
+    my ($prompt, $default) = @_;
+    my $retval;
+    if (-t STDIN && -t STDOUT) {
+        print $prompt . (length $default ? " [$default]" : '') . ': ';
+        $retval = readline(STDIN);
+        chomp $retval;
+    }
+    else {
+        require Prima;
+        require Prima::Application;
+        Prima::Application->import();
+        require Prima::MsgBox;
+        $retval = Prima::MsgBox::input_box($prompt, $prompt, $default // '');
+    }
+    $retval ? $retval : $default ? $default : $retval;
+}

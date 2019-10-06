@@ -234,7 +234,7 @@ Use this if you think the status or some other info might have changed.
 =cut
 
 sub reload($s) {
-    my $res = $s->_rh->_get(+$s); # Stringify
+    my $res = $s->_rh->_get(+$s);    # Stringify
     $_[0] = $res->is_success
         ? Finance::Robinhood::Options::Order->new(_rh => $s->_rh,
                                                   %{$res->json})

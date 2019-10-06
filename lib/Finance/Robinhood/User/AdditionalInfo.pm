@@ -27,7 +27,7 @@ sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $user = $rh->user;
     isa_ok($user, 'Finance::Robinhood::User');
-    t::Utility::stash('USER', $user);    #  Store it for later
+    t::Utility::stash('USER', $user);            #  Store it for later
     my $add_info = $user->additional_info();
     isa_ok($add_info, __PACKAGE__);
     t::Utility::stash('USER_ADD_INFO', $add_info);

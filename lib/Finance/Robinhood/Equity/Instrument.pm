@@ -35,7 +35,7 @@ sub _test__init {
     my $rh   = t::Utility::rh_instance(0);
     my $msft = $rh->equity_instrument_by_symbol('MSFT');
     isa_ok($msft, __PACKAGE__);
-    t::Utility::stash('MSFT', $msft);    #  Store it for later
+    t::Utility::stash('MSFT', $msft);           #  Store it for later
     t::Utility::rh_instance(1) // skip_all();
     $rh   = t::Utility::rh_instance(1);
     $msft = $rh->equity_instrument_by_symbol('MSFT');
@@ -237,10 +237,12 @@ sub splits ( $s ) {
 }
 
 sub _test_splits {
-    my $rh     = t::Utility::rh_instance(0);
+    my $rh     = t::Utility::rh_instance(1) // skip_all();
     my $splits = $rh->equity_instrument_by_symbol('JNUG')->splits;
-    isa_ok($splits,       'Finance::Robinhood::Utilities::Iterator');
-    isa_ok($splits->next, 'Finance::Robinhood::Equity::Split');
+    isa_ok($splits, 'Finance::Robinhood::Utilities::Iterator');
+    $splits->has_next
+        ? isa_ok($splits->next, 'Finance::Robinhood::Equity::Split')
+        : skip_all('Robinhood is not returning stock split data');
 }
 
 =head2 C<market( )>
@@ -351,7 +353,8 @@ Returns an iterator containing Finance::Robinhood::News elements.
 sub news ($s) { $s->_rh->news($s->symbol) }
 
 sub _test_news {
-    my $news = t::Utility::stash('MSFT')->news;
+    t::Utility::stash('MSFT_AUTH') // skip_all();
+    my $news = t::Utility::stash('MSFT_AUTH')->news;
     isa_ok($news,          'Finance::Robinhood::Utilities::Iterator');
     isa_ok($news->current, 'Finance::Robinhood::News');
 }

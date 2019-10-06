@@ -27,7 +27,7 @@ sub _test__init {
     my ($cost) = $rh->forex_holdings->current->cost_bases;
     $cost // skip_all('No cost basis found');
     isa_ok($cost, __PACKAGE__);
-    t::Utility::stash('COST_BASIS', $cost);    #  Store it for later
+    t::Utility::stash('COST_BASIS', $cost);     #  Store it for later
 }
 use overload '""' => sub ($s, @) { $s->{id} }, fallback => 1;
 

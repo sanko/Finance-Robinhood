@@ -12,6 +12,7 @@ requires 'Exporter::Tiny';
 
 on 'test' => sub {
     requires 'Test2::V0';
+    requires 'Dotenv';
 };
 
 on 'develop' => sub {
@@ -23,4 +24,5 @@ on 'develop' => sub {
     requires 'Test::PAUSE::Permissions';
     requires 'Test::Pod', '1.41';
     requires 'Test::Spellunker';
+    requires 'Dotenv';
 }

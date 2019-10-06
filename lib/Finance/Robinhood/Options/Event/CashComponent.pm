@@ -29,7 +29,7 @@ sub _test__init {
     my $component = $rh->options_events->next->cash_component;
     $component // skip_all('No cash component in event');
     isa_ok($component, __PACKAGE__);
-    t::Utility::stash('COMPONENT', $component);    #  Store it for later
+    t::Utility::stash('COMPONENT', $component);          #  Store it for later
 }
 use overload '""' => sub ($s, @) { $s->{id}; }, fallback => 1;
 
