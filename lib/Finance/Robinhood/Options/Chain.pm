@@ -1,4 +1,5 @@
 package Finance::Robinhood::Options::Chain;
+our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -19,12 +20,16 @@ Finance::Robinhood::Options::Chain - Represents a Single Options Chain
 
 =cut
 
-our $VERSION = '0.92_003';
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
+use Moo;
+use MooX::Enumeration;
+use Types::Standard
+    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use URI;
 use Time::Moment;
-use Finance::Robinhood::Options::Chain::Ticks;
-use Finance::Robinhood::Options::Chain::Underlying;
+use Data::Dump;
+use experimental 'signatures';
+#
+use Finance::Robinhood::Equity;
 
 sub _test__init {
     my $rh     = t::Utility::rh_instance(0);
@@ -51,7 +56,8 @@ sub _test_stringify {
          qr'^https://api.robinhood.com/options/chains/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/$'i
     );
 }
-has _rh => undef => weak => 1;
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
 
 =head2 C<can_open_position( )>
 
@@ -59,11 +65,33 @@ Returns a boolean value. True if you may open a new position.
 
 =head2 C<cash_compenent( )>
 
-If defined, a dollar amount.
+If defined, a dollar amount
+
+=head2 C<has_cash_component( )>.
+
+Returns a boolean value. True if there's a cash component. Otherwise, false.
+
+=head2 C<expiration_dates( )>
+
+Returns a list of C<YYYY-MM-DD> dates.
 
 =head2 C<id( )>
 
 Returns a UUID.
+
+=head2 C<min_ticks( )>
+
+Returns a hash reference with the following keys:
+
+=over
+
+=item C<above_tick> - Minimum tick size when applicable.
+
+=item C<below_tick> - Minimum tick size when applicable.
+
+=item C<cutoff_price> - At this price or more, the C<above_tick> will apply. Below this price, the C<below_tick> is required.
+
+=back
 
 =head2 C<symbol( )>
 
@@ -75,62 +103,100 @@ Chain's ticker symbol.
 
 =cut
 
-has ['can_open_position', 'cash_component',
-     'id',                'symbol',
-     'trade_value_multiplier'
-];
+has can_open_position => (is       => 'ro',
+                          isa      => Bool,
+                          coerce   => sub ($bool) { !!$bool },
+                          required => 1
+);
+has cash_component =>
+    (is => 'ro', isa => Maybe [Num], predicate => 1, required => 1);
+has expiration_dates => (
+                        is  => 'ro',
+                        isa => ArrayRef [StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]]],
+                        required => 1
+);
+has id => (
+    is  => 'ro',
+    isa => StrMatch [
+        qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
+    ],
+    required => 1
+);
+has min_ticks => (
+      is  => 'ro',
+      isa => Dict [above_tick => Num, below_tick => Num, cutoff_price => Num],
+      required => 1
+);
+has symbol                 => (is => 'ro', isa => Str, required => 1);
+has trade_value_multiplier => (is => 'ro', isa => Num, required => 1);
+has _underlying_instruments => (
+    is => 'ro',
+    isa =>
+        ArrayRef [
+        Dict [
+            id =>
+                StrMatch [
+                qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
+                ],
+            instrument => Str,
+            quantity   => Num
+        ]
+        ],
+    required => 1,
+    init_arg => 'underlying_instruments'
+);
 
-=head2 C<expiration_dates( )>
+=head2 C<underlying_equities( )>
 
-Returns a list of Time::Moment objects.
+Returns the underlying equities as a list of hash references. These hases
+contain the following keys:
+
+=over
+
+=item C<id> - UUID
+
+=item C<equity> - Finance::Robinhood::Equity object
+
+=item C<quantity> - Number of shares
+
+=back
 
 =cut
 
-sub expiration_dates($s) {
-    map { Time::Moment->from_string($_ . 'T00:00:00Z') }
-        @{$s->{expiration_dates}};
+has underlying_equities => (
+    is => 'ro',
+    isa =>
+        ArrayRef [
+        Dict [
+            id =>
+                StrMatch [
+                qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
+                ],
+            equity   => InstanceOf ['Finance::Robinhood::Equity'],
+            quantity => Num
+        ]
+        ],
+    lazy     => 1,
+    builder  => 1,
+    init_arg => undef
+);
+
+sub _build_underlying_equities($s) {
+    [map {
+         {id     => $_->{id},
+          equity => $s->robinhood->_req(GET => $_->{instrument},
+                                        as  => 'Finance::Robinhood::Equity'
+          ),
+          quantity => $_->{quantity}
+         }
+     } @{$s->_underlying_instruments}
+    ];
 }
 
-sub _test_expiration_dates {
+sub _test_underlying_equities {
     t::Utility::stash('CHAIN') // skip_all();
-    my ($date) = t::Utility::stash('CHAIN')->expiration_dates;
-    isa_ok($date, 'Time::Moment');
-}
-
-=head2 C<underlying_instruments( )>
-
-Returns a list of Finance::Robinhood::Options::Chain::Underlying objects.
-
-=cut
-
-sub underlying_instruments($s) {
-    map {
-        Finance::Robinhood::Options::Chain::Underlying->new(_rh => $s->_rh,
-                                                            %$_)
-    } @{$s->{underlying_instruments}};
-}
-
-sub _test_underlying_instruments {
-    t::Utility::stash('CHAIN') // skip_all();
-    my ($underlying) = t::Utility::stash('CHAIN')->underlying_instruments;
-    isa_ok($underlying, 'Finance::Robinhood::Options::Chain::Underlying');
-}
-
-=head2 C<min_ticks( )>
-
-Returns a Finance::Robinhood::Options::Chain::Ticks object.
-
-=cut
-
-sub min_ticks ($s) {
-    Finance::Robinhood::Options::Chain::Ticks->new(_rh => $s->_rh,
-                                                   %{$s->{min_ticks}});
-}
-
-sub _test_min_ticks {
-    t::Utility::stash('CHAIN') // skip_all();
-    isa_ok(t::Utility::stash('CHAIN')->min_ticks,
-           'Finance::Robinhood::Options::Chain::Ticks');
+    my ($underlying) = t::Utility::stash('CHAIN')->underlying_equities;
+    isa_ok($underlying->{equity}, 'Finance::Robinhood::Equity');
 }
 
 =head2 C<underlying_instruments( )>
@@ -170,11 +236,11 @@ sub instruments ($s, %filter) {
         @{$filter{expiration_dates}}
         if $filter{expiration_dates};
     Finance::Robinhood::Utilities::Iterator->new(
-          _rh => $s->_rh,
-          _next_page =>
+          robinhood => $s->_rh,
+          url =>
               Mojo::URL->new('https://api.robinhood.com/options/instruments/')
               ->query(chain_id => $s->id, %filter),
-          _class => 'Finance::Robinhood::Options::Instrument'
+          as => 'Finance::Robinhood::Options::Instrument'
     );
 }
 

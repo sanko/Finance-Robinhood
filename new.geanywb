@@ -1,0 +1,6 @@
+[General]
+filetype=workbench
+version=1.0
+RescanProjectsOnOpen=true
+EnableLiveUpdate=true
+ExpandOnHover=false

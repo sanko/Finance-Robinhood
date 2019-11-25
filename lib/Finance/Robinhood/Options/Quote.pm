@@ -1,4 +1,5 @@
 package Finance::Robinhood::Options::Quote;
+our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -13,19 +14,24 @@ Instrument
 
     use Finance::Robinhood;
     my $rh = Finance::Robinhood->new;
-    my $instruments = $rh->instruments();
+    my $instruments = $rh->options();
 
-    for my $instrument ($instruments->all) {
+    for my $instrument ($instruments->take(3)) {
         CORE::say $instrument->quote->last_trade_price;
     }
 
 =cut
 
-our $VERSION = '0.92_003';
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
+use Moo;
+use MooX::Enumeration;
+use Types::Standard
+    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use URI;
 use Time::Moment;
-use Finance::Robinhood::Options::Instrument;
+use Data::Dump;
+use experimental 'signatures';
+#
+use Finance::Robinhood::Options;
 
 sub _test__init {
     my $rh = t::Utility::rh_instance(1);
@@ -35,7 +41,8 @@ sub _test__init {
     t::Utility::stash('QUOTE', $quote);    #  Store it for later
 }
 #
-has _rh => undef => weak => 1;
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
 
 =head1 METHODS
 
@@ -127,7 +134,7 @@ has ['adjusted_mark_price',      'ask_price',
      'open_interest',            'previous_close_price',
      'rho',                      'theta',
      'vega',                     'volume',
-];
+] => (is => 'ro', isa => Str, required => 1);
 
 =head2 C<previous_close_date( )>
 

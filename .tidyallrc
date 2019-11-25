@@ -2,8 +2,7 @@ ignore = **/*.bak
 
 [PerlTidy]
 select = **/*.{pl,pm,t}
-;argv = -noll -it=2 -l=100 -i=4 -ci=4 -se -b -bar -boc -vt=0 -vtc=0 -cti=0 -pt=1 -bt=1 -sbt=1 -bbt=1 -nolq -npro -nsfs --opening-hash-brace-right --no-outdent-long-comments -wbb="% + - * / x != == >= <= =~ !~ < > | & >= < = **= += *= &= <<= &&= -= /= |= >>= ||= .= %= ^= x=" --iterations=2
-argv = --brace-tightness=2 --block-brace-tightness=1 --block-brace-vertical-tightness=2 --paren-tightness=2 --paren-vertical-tightness=2 --square-bracket-tightness=2 --square-bracket-vertical-tightness=2 --brace-tightness=2 --brace-vertical-tightness=2 --check-syntax --delete-old-whitespace --no-indent-closing-brace --line-up-parentheses --no-outdent-keywords --no-outdent-long-quotes --no-space-for-semicolon --swallow-optional-blank-lines --continuation-indentation=4 --maximum-line-length=78 --want-break-before='% + - * / x != == >= <= =~ !~ < > | & >= < = **= += *= &= <<= &&= -= /= |= \ >>= ||= .= %= ^= x= ? :' --standard-error-output --backup-and-modify-in-place
+argv = -anl -baao --check-syntax --closing-side-comments-balanced -nce -dnl --delete-old-whitespace --delete-semicolons -fs -nhsc -ibc -bar -nbl -ohbr -opr -osbr -nsbl -nasbl -otr -olc --perl-best-practices --nostandard-output -sbc -nssc --break-at-old-logical-breakpoints --break-at-old-keyword-breakpoints --break-at-old-ternary-breakpoints --ignore-old-breakpoints --swallow-optional-blank-lines --iterations=2 --maximum-line-length=100 --paren-vertical-tightness=0 --trim-qw -b -bext=old --standard-error-output --backup-and-modify-in-place
 
 ;[PerlCritic]
 ;select = lib/**/*.pm

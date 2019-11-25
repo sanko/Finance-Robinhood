@@ -1,4 +1,5 @@
 package Finance::Robinhood::Options::Order;
+our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -11,7 +12,7 @@ Finance::Robinhood::Options::Order - Represents a Single Options Order
 =head1 SYNOPSIS
 
     use Finance::Robinhood;
-    my $rh = Finance::Robinhood->new->login('user', 'pass');
+    my $rh = Finance::Robinhood->new( ... );
     my $orders = $rh->options_orders();
 
     for my $order ($orders->all) {
@@ -22,12 +23,14 @@ Finance::Robinhood::Options::Order - Represents a Single Options Order
 
 =cut
 
-our $VERSION = '0.92_003';
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
-use lib '../../../';
-use Finance::Robinhood::Error;
-use Finance::Robinhood::Options::Order::Leg;
+use Moo;
+use MooX::Enumeration;
+use Types::Standard
+    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use URI;
+use Time::Moment;
+use Data::Dump;
+use experimental 'signatures';
 
 sub _test__init {
     my $rh    = t::Utility::rh_instance(1);
@@ -46,7 +49,8 @@ sub _test_stringify {
          qr'https://api.robinhood.com/options/orders/.+/');
 }
 #
-has _rh => undef => weak => 1;
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
 
 =head2 C<canceled_quantity( )>
 
@@ -90,25 +94,67 @@ Returns the order type. C<limit> or C<market>.
 
 =cut
 
-has ['canceled_quantity', 'chain_id',
-     'chain_symbol',      'closing_strategy',
-     'direction',         'id',
-     'opening_strategy',  'pending_quantity',
-     'premium',           'price',
-     'processed_premium', 'processed_quantity',
-     'quantity',          'ref_id',
-     'response_category', 'state',
-     'time_in_force',     'trigger',
-     'type',
-];
+has [qw[cancelled_quantity stop_price]] => (is => 'ro', isa => Maybe [Num]);
+has [qw[premium processed_premium price quantity processed_quantity]] =>
+    (is => 'ro', isa => Num, required => 1);
+has chain_symbol => (is => 'ro', isa => Str, requried => 1);
+has [qw[closing_strategy opening_strategy]] => (
+      is => 'ro',
+      isa =>
+          Maybe [Enum [qw[long_call short_call long_put short_put strangle]]],
+      required  => 1,
+      predicate => 1
+);
+has direction => (is       => 'ro',
+                  isa      => Enum [qw[credit debit]],
+                  handles  => [qw[is_credit is_debit]],
+                  requried => 1
+);
+
+# I have non-v4 UUIDs in a few ref_id slots
+has [qw[id ref_id]] => (
+     is  => 'ro',
+     isa => StrMatch [
+         qr[^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$]i],
+     required => 1
+);
+has response_category => (
+                         is  => 'ro',
+                         isa => Maybe [Enum [qw[end_of_day success unknown]]],
+                         required => 1
+);
+has state => (is       => 'ro',
+              isa      => Enum [qw[cancelled filled]],
+              handles  => [qw[is_cancelled is_filled]],
+              required => 1
+);
+has time_in_force => (is       => 'ro',
+                      isa      => Enum [qw[gfd gtc]],
+                      handles  => [qw[is_gfd is_gtc]],
+                      required => 1
+);
+has trigger => (is       => 'ro',
+                isa      => Enum [qw[immediate stop]],
+                handles  => [qw[is_stop]],
+                required => 1
+);
+has type => (is       => 'ro',
+             isa      => Enum [qw[limit market]],
+             handles  => [qw[is_limit is_market]],
+             required => 1
+);
 
 =head2 C<can_cancel( )>
 
 Returns true if the order can be cancelled.
 
 =cut
-
-sub can_cancel ($s) { defined $s->{cancel_url} ? !0 : !1 }
+has cancel_url => (is        => 'ro',
+                   isa       => Maybe [InstanceOf ['URI']],
+                   coerce    => sub ($url) { $url ? URI->new($url) : () },
+                   required  => 1,
+                   predicate => 'can_cancel'
+);
 
 sub _test_can_cancel {
     my $rh     = t::Utility::rh_instance(1);
@@ -150,42 +196,53 @@ correctly.
 =cut
 
 sub cancel ($s) {
-    $s->can_cancel // return $s;
-    my $res = $s->_rh->_post($s->{cancel});
-    $s->reload && return $s if $res->is_success;
-    Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+    $s->can_cancel // return;
+    $s->robinhood->_req(POST => $s->cancel_url)->{success};
 }
 
 =head2 C<chain( )>
 
-Returns the related Finance::Robinhood::Options::Chain object.
+Returns the related Finance::Robinhood::Options object.
 
 =cut
 
 sub chain ($s) {
-    $s->_rh->options_chain_by_id($s->{chain_id});
+    $s->robinhood->options_chain_by_id($s->chain_id);
 }
 
 sub _test_chain {
     t::Utility::stash('POSITION') // skip_all('No position object in stash');
     isa_ok(t::Utility::stash('POSITION')->chain,
-           'Finance::Robinhood::Options::Chain');
+           'Finance::Robinhood::Options');
 }
 
 =head2 C<created_at( )>
 
 Returns a Time::Moment object.
 
+=head2 C<updated_at( )>
+
+Returns a Time::Moment object.
+
 =cut
 
-sub created_at ($s) {
-    Time::Moment->from_string($s->{created_at});
-}
+has [qw[created_at updated_at]] => (
+    is     => 'ro',
+    isa    => InstanceOf ['Time::Moment'],
+    coerce => sub ($time) {
+        Time::Moment->from_string($time);
+    },
+    required => 1
+);
 
 sub _test_created_at {
     t::Utility::stash('ORDER') // skip_all('No order object in stash');
     isa_ok(t::Utility::stash('ORDER')->created_at, 'Time::Moment');
+}
+
+sub _test_updated_at {
+    t::Utility::stash('ORDER') // skip_all('No order object in stash');
+    isa_ok(t::Utility::stash('ORDER')->updated_at, 'Time::Moment');
 }
 
 =head2 C<legs( )>
@@ -195,32 +252,41 @@ applicable.
 
 =cut
 
-sub legs ($s) {
-    map {
-        Finance::Robinhood::Options::Order::Leg->new(_rh => $s->_rh, %{$_})
-    } @{$s->{legs}};
-}
+has legs => (
+    is  => 'ro',
+    isa => ArrayRef [
+        Dict [
+            executions => ArrayRef [
+                Dict [
+                    id =>
+                        StrMatch [
+                        qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
+                        ],
+                    price           => Num,
+                    quantity        => Num,
+                    settlement_date => StrMatch [qr[\d\d\d\d-\d\d-\d\d]],
+                    timestamp =>
+                        Str    # TODO: coerce this into Time::Moment objects
+                ]
+            ],
+            id => StrMatch [
+                qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
+            ],
+            option => Str,     # TODO: URL to the instrument
+            position_effect => Enum [qw[close open]],
+            ratio_quantity  => Num,
+            side            => Enum [qw[buy sell]]
+        ]
+    ]
+);
 
 sub _test_legs {
     my $rh     = t::Utility::rh_instance(1);
     my $orders = $rh->options_orders;
     my ($leg)  = $orders->current->legs;
-    isa_ok($leg, 'Finance::Robinhood::Options::Order::Leg');
-}
 
-=head2 C<updated_at( )>
-
-Returns a Time::Moment object.
-
-=cut
-
-sub updated_at($s) {
-    Time::Moment->from_string($s->{updated_at});
-}
-
-sub _test_updated_at {
-    t::Utility::stash('ORDER') // skip_all('No order object in stash');
-    isa_ok(t::Utility::stash('ORDER')->updated_at, 'Time::Moment');
+    # TODO: This needs to be a hash ref check...
+    #isa_ok($leg, 'Finance::Robinhood::Options::Order::Leg');
 }
 
 =head2 C<reload( )>
@@ -234,12 +300,10 @@ Use this if you think the status or some other info might have changed.
 =cut
 
 sub reload($s) {
-    my $res = $s->_rh->_get(+$s);    # Stringify
-    $_[0] = $res->is_success
-        ? Finance::Robinhood::Options::Order->new(_rh => $s->_rh,
-                                                  %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+    my $order = $s->robinhood->_req(GET => $s->_url,
+                                    as => 'Finance::Robinhood::Options::Order'
+    );
+    return $order->{success} ? $_[0] = $order : $order;
 }
 
 sub _test_reload {

@@ -1,8 +1,8 @@
 requires 'perl', '5.020';
 requires 'IO::Socket::SSL', '2.060';
-requires 'Mojo::Base';
-requires 'Mojo::URL';
-requires 'Mojo::UserAgent';
+requires 'URI';
+requires 'Moo';
+requires 'HTTP::Tiny';
 requires 'strictures', '2';
 requires 'Role::Tiny', '2.000001';
 
@@ -25,4 +25,5 @@ on 'develop' => sub {
     requires 'Test::Pod', '1.41';
     requires 'Test::Spellunker';
     requires 'Dotenv';
+	requires 'MooX::StrictConstructor';
 }

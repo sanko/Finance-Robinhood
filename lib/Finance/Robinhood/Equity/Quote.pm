@@ -13,36 +13,37 @@ Instrument
 
     use Finance::Robinhood;
     my $rh = Finance::Robinhood->new;
-    my $instruments = $rh->instruments();
 
-    for my $instrument ($instruments->all) {
-        CORE::say $instrument->quote->last_trade_price;
-    }
+    # TODO
 
 =cut
 
 our $VERSION = '0.92_003';
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
-use Time::Moment;
-use Finance::Robinhood::Equity::Instrument;
-
+use Moo;
+use Data::Dump;
+use HTTP::Tiny;
+use JSON::Tiny;
+use Types::Standard qw[Bool Enum InstanceOf Maybe Num StrMatch Str];
+use URI;
+use experimental 'signatures';
+#
+use Finance::Robinhood::Equity;
+use Finance::Robinhood::Types qw[:all];
+#
 sub _test__init {
     my $rh    = t::Utility::rh_instance(1);
-    my $quote = $rh->equity_instrument_by_symbol('MSFT')->quote();
-    isa_ok($quote, __PACKAGE__);
-    t::Utility::stash('QUOTE', $quote);    #  Store it for later
+    my $quote = $rh->equity('MSFT')->quote();
+    isa_ok( $quote, __PACKAGE__ );
+    t::Utility::stash( 'QUOTE', $quote );    #  Store it for later
 }
 #
-has _rh => undef => weak => 1;
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head1 METHODS
 
-
-
 =head2 C<adjusted_previous_close( )>
 
-
+Price at the end of Robinhood's trading period.
 
 =head2 C<ask_price( )>
 
@@ -50,7 +51,7 @@ Delayed ask price.
 
 =head2 C<ask_size( )>
 
-Delayed ask size.
+How many shares are available at the current (delayed) ask price.
 
 =head2 C<bid_price( )>
 
@@ -58,17 +59,19 @@ Delayed bid price.
 
 =head2 C<bid_size( )>
 
-Delayed bid size.
+How many shares are available at the current (delayed) bid price.
 
 =head2 C<has_traded( )>
 
-Boolean value... no idea what this means yet.
+Returns a boolean value. True if this instrument has been traaded by the user.
 
 =head2 C<last_extended_hours_trade_price( )>
 
-Last pre- or after-hours trading price.
+Last pre- or after-hours trading price, if defined.
 
 =head2 C<last_trade_price( )>
+
+Price of the most recent live trade.
 
 =head2 C<last_trade_price_source( )>
 
@@ -76,83 +79,67 @@ Which venue provided the last trade price.
 
 =head2 C<previous_close( )>
 
-The price at the most recent close.
-
-=head2 C<symbol( )>
-
-The ticker symbol of the instrument related to this quote data. See
-C<instrument( )> to be given the instrument object itself.
-
-=head2 C<trading_halted( )>
-
-Returns a boolean value; true if trading is halted.
-
-=cut
-
-has ['adjusted_previous_close',         'ask_price',
-     'ask_size',                        'bid_price',
-     'bid_size',                        'has_traded',
-     'last_extended_hours_trade_price', 'last_trade_price',
-     'last_trade_price_source',         'previous_close',
-     'symbol',                          'trading_halted'
-];
+Price of last trade before the close of trading.
 
 =head2 C<previous_close_date( )>
 
-    $quote->previous_close_date();
+Returns the date in YYYY-MM-DD format.
+
+=head2 C<symbol( )>
+
+The ticker symbol of the instrument related to this quote data. See C<equity(
+)> to be given the object itself.
+
+=head2 C<trading_halted( )>
+
+Returns a boolean value. True if trading of this instrument is currently
+halted.
+
+=head2 C<updated_at( )>
 
 Returns a Time::Moment object.
 
 =cut
 
-sub previous_close_date ($s) {
-    Time::Moment->from_string($s->{previous_close_date} . 'T16:30:00-05:00');
-}
+has [
+    qw[adjusted_previous_close ask_price ask_size bid_price bid_size last_trade_price previous_close]
+] => ( is => 'ro', isa => Num, required => 1 );
+has last_extended_hours_trade_price => ( is => 'ro', isa => Maybe [Num], required => 1 );
+has [qw[has_traded trading_halted]] => ( is => 'ro', isa => Bool, coerce => 1, required => 1 );
+has last_trade_price_source => ( is => 'ro', isa => Enum [qw[consolidated nls]], required => 1 );
+has previous_close_date =>
+    ( is => 'ro', isa => StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]], required => 1 );
+has symbol => ( is => 'ro', isa => Str, required => 1 );
 
-sub _test_previous_close_date {
+=head2 C<equity( )>
+
+    my $instrument = $quote->equity();
+
+Loops back to a Finance::Robinhood::Equity object.
+
+=cut
+has instrument => ( is => 'ro', isa => URL, coerce => 1, required => 1 );
+has equity     => (
+    is   => 'ro',
+    isa  => InstanceOf ['Finance::Robinhood::Equity'],
+    lazy => 1,
+    builder =>
+        sub ($s) { $s->robinhood->_req( GET => $s->instrument )->as('Finance::Robinhood::Equity') },
+    init_arg => undef
+);
+
+sub _test_equity {
     t::Utility::stash('QUOTE') // skip_all();
-    isa_ok(t::Utility::stash('QUOTE')->previous_close_date(), 'Time::Moment');
+    isa_ok( t::Utility::stash('QUOTE')->equity(), 'Finance::Robinhood::Equity' );
 }
 
 =head2 C<updated_at( )>
 
-    $quote->updated_at();
-
 Returns a Time::Moment object.
 
 =cut
 
-sub updated_at ($s) {
-    Time::Moment->from_string($s->{updated_at});
-}
-
-sub _test_updated_at {
-    t::Utility::stash('QUOTE') // skip_all();
-    isa_ok(t::Utility::stash('QUOTE')->updated_at(), 'Time::Moment');
-}
-
-=head2 C<instrument( )>
-
-    my $instrument = $quote->instrument();
-
-Loops back to a Finance::Robinhood::Equity::Instrument object.
-
-=cut
-
-sub instrument ($s) {
-    my $res = $s->_rh->_get($s->{instrument});
-    $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
-                                                      %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
-}
-
-sub _test_instrument {
-    t::Utility::stash('QUOTE') // skip_all();
-    isa_ok(t::Utility::stash('QUOTE')->instrument(),
-           'Finance::Robinhood::Equity::Instrument');
-}
+has updated_at => ( is => 'ro', isa => Timestamp, coerce => 1, required => 1 );
 
 =head1 LEGAL
 

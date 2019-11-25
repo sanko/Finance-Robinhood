@@ -24,9 +24,13 @@ Equity Instrument has Moved
 
 =cut
 
-our $VERSION = '0.92_003';
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
+use Moo;
+use Data::Dump;
+use HTTP::Tiny;
+use JSON::Tiny;
+use Types::Standard qw[InstanceOf Num];
+use URI;
+use experimental 'signatures';
 
 sub _test__init {
     my $rh  = t::Utility::rh_instance(1);
@@ -42,7 +46,8 @@ sub _test_stringify {
     like(+t::Utility::stash('MOVEMENT'), qr[^\-?\d+\.\d+$],);
 }
 #
-has _rh => undef => weak => 1;
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
 
 =head2 C<market_hours_last_movement_pct( )>
 
@@ -54,7 +59,8 @@ Returns the actual price.
 
 =cut
 
-has ['market_hours_last_movement_pct', 'market_hours_last_price'];
+has [qw[market_hours_last_movement_pct market_hours_last_price]] =>
+    (is => 'ro', isa => Num, required => 1);
 
 =head1 LEGAL
 

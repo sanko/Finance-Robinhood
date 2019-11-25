@@ -1,145 +1,247 @@
 package Finance::Robinhood::Equity::Earnings;
+our $VERSION = '0.92_003';
 
 =encoding utf-8
 
-=for stopwords watchlist watchlists untradable urls st nd rd th
+=for stopwords watchlist watchlists untradable urls btw
 
 =head1 NAME
 
-Finance::Robinhood::Equity::Earnings - Earnings Call and Report Data
+Finance::Robinhood::Equity::Earnings - Represents Speculative or Actual Equity
+Earnings Holding
 
 =head1 SYNOPSIS
 
     use Finance::Robinhood;
     my $rh = Finance::Robinhood->new;
-    
-    my $earnings = $rh->equity_earnings;
-
-    for my $earnings ( $rh->equity_earnings('7d')->all ) {
-        CORE::say 'Earnings for ' . $earnings->symbol . ' expected ' . $earnings->report->date;
-    }    
-
-=cut
-
-our $VERSION = '0.92_003';
-
-sub _test__init {
-    my $rh   = t::Utility::rh_instance(1);
-    my $past = $rh->equity_earnings(range => -7)->current;
-    isa_ok($past, __PACKAGE__);
-    t::Utility::stash('PAST', $past);
-    my $future = $rh->equity_earnings(range => 7)->current;
-    isa_ok($future, __PACKAGE__);
-    t::Utility::stash('FUTURE', $future);
-}
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
-#
-use Finance::Robinhood::Equity::Earnings::Call;
-use Finance::Robinhood::Equity::Earnings::EPS;
-use Finance::Robinhood::Equity::Earnings::Report;
-use Finance::Robinhood::Equity::Instrument;
-#
-has _rh => undef => weak => 1;
+    # TODO
 
 =head1 METHODS
 
+=cut
+
+use Moo;
+use Data::Dump;
+use HTTP::Tiny;
+use JSON::Tiny;
+use Time::Moment;
+use Types::Standard
+    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use URI;
+use experimental 'signatures';
+#
+use Finance::Robinhood::Types qw[URL UUID UUIDBroken Timestamp];
+#
+sub _test__init {
+    my $rh = t::Utility::rh_instance(1);
+    my $earnings
+        = $rh->equity_earnings(instrument => $rh->equity('MSFT'))->current;
+    isa_ok($earnings, __PACKAGE__);
+    t::Utility::stash('EARNINGS', $earnings);    #  Store it for later
+}
+use overload '""' => sub ($s, @) {
+    join '', $s->symbol, $s->year, $s->quarter;
+    },
+    fallback => 1;
+
+sub _test_stringify {
+    t::Utility::stash('EARNINGS') // skip_all();
+    like(+t::Utility::stash('EARNINGS'), qr'^\w+\d{4}\d$'i);
+}
+#
+has robinhood => (is        => 'ro',
+                  predicate => 1,
+                  isa       => InstanceOf ['Finance::Robinhood'],
+                  required  => 1
+);
+
 =head2 C<call( )>
 
-Returns a Finance::Robinhood::Equity::Earnings::Call object if the call is
-active or has been archived.
+If defined, this returns and object with the following methods:
+
+=over
+
+=item C<broadcast_url( )>
+
+If defined, this returns a URI object to listen to the call live.
+
+=item C<datetime( )>
+
+Returns a Time::Moment object.
+
+=item C<replay_url( )>
+
+If defined, this returns a URI object to listen to a replay of the call.
+
+=back
 
 =cut
 
-sub call ($s) {
-    defined $s->{call}
-        ? Finance::Robinhood::Equity::Earnings::Call->new(_rh => $s->_rh,
-                                                          %{$s->{call}})
-        : ();
+{
+    package    # Hide it!
+        Finance::Robinhood::Equity::Earnings::Call;
+    use Moo;
+    use MooX::Enumeration;
+    use Types::Standard
+        qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+    use experimental 'signatures';
+    #
+    use Finance::Robinhood::Types qw[URL UUID Timestamp];
+    has broadcast_url =>
+        (is => 'ro', isa => Maybe [URL], coerce => 1, required => 1);
+    has datetime =>
+        (is => 'ro', isa => Timestamp, coerce => 1, required => 1);
+    has replay_url =>
+        (is => 'ro', isa => Maybe [URL], coerce => 1, required => 1);
 }
-
-sub _test_call {
-    t::Utility::stash('PAST') // skip_all();
-    isa_ok(t::Utility::stash('PAST')->call(),
-           'Finance::Robinhood::Equity::Earnings::Call');
-}
+has call => (
+    is  => 'ro',
+    isa => Maybe [InstanceOf ['Finance::Robinhood::Equity::Earnings::Call']],
+    coerce => sub ($data) {
+        defined $data
+            ? Finance::Robinhood::Equity::Earnings::Call->new(%$data)
+            : ();
+    }
+);
 
 =head2 C<eps( )>
 
-Returns a Finance::Robinhood::Equity::Earnings::EPS object.
+If defined, this returns and object with the following methods:
+
+=over
+
+=item C<actual( )>
+
+If defined, the actual earnings per share.
+
+=item C<estimate( )>
+
+If defined, the expected earnings per share.
+
+=back
 
 =cut
 
-sub eps ($s) {
-    defined $s->{eps}
-        ? Finance::Robinhood::Equity::Earnings::EPS->new(_rh => $s->_rh,
-                                                         %{$s->{eps}})
-        : ();
+{
+    package    # Hide it!
+        Finance::Robinhood::Equity::Earnings::EPS;
+    use Moo;
+    use MooX::Enumeration;
+    use Types::Standard
+        qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+    use experimental 'signatures';
+    #
+    use Finance::Robinhood::Types qw[URL UUID Timestamp];
+    has [qw[actual estimate]] =>
+        (is => 'ro', isa => Maybe [Num], predicate => 1, required => 1);
 }
+has eps => (
+    is  => 'ro',
+    isa => Maybe [InstanceOf ['Finance::Robinhood::Equity::Earnings::EPS']],
+    coerce => sub ($data) {
+        defined $data
+            ? Finance::Robinhood::Equity::Earnings::EPS->new(%$data)
+            : ();
+    }
+);
 
-sub _test_eps {
-    t::Utility::stash('PAST') // skip_all();
-    isa_ok(t::Utility::stash('PAST')->eps(),
-           'Finance::Robinhood::Equity::Earnings::EPS');
+=head2 C<equity( )>
+
+Returns the related Finance::Robinhood::Equity object.
+
+=cut
+
+has _equity => (is       => 'ro',
+                isa      => UUID,
+                coerce   => 1,
+                required => 1,
+                init_arg => 'instrument'
+);
+has equity => (is      => 'ro',
+               isa     => InstanceOf ['Finance::Robinhood::Equity'],
+               lazy    => 1,
+               builder => 1
+);
+
+sub _build_equity($s) {
+    my ($blah) = $s->robinhood->equities_by_id($s->_equity);
+    $blah;
 }
 
 =head2 C<quarter( )>
 
-C<1>st, C<2>nd, C<3>rd, or C<4>th.
+Returns C<1>, C<2>, C<3>, or C<4>.
+
+=cut
+has quarter => (is => 'ro', isa => Enum [qw[1 2 3 4]], required => 1);
 
 =head2 C<report( )>
 
-Returns a Fiance::Robinhood::Earnings::Report object.
+If defined, this returns and object with the following methods:
+
+=over
+
+=item C<date( )>
+
+The date as YYYY-MM-DD.
+
+=item C<timing( )>
+
+Either C<am> or C<pm>.
+
+=item C<verified( )>
+
+Returns a boolean value.
+
+=back
 
 =cut
 
-sub report ($s) {
-    defined $s->{report}
-        ? Finance::Robinhood::Equity::Earnings::Report->new(_rh => $s->_rh,
-                                                            %{$s->{report}})
-        : ();
+{
+    package    # Hide it!
+        Finance::Robinhood::Equity::Earnings::Report;
+    use Moo;
+    use MooX::Enumeration;
+    use Types::Standard
+        qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+    use experimental 'signatures';
+    #
+    use Finance::Robinhood::Types qw[URL UUID Timestamp];
+    has date => (is       => 'ro',
+                 isa      => StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]],
+                 required => 1
+    );
+    has timing =>
+        (is => 'ro', isa => Maybe [Enum [qw[am pm]]], required => 1);
+    has verified => (is => 'ro', isa => Bool, coerce => 1, required => 1);
 }
-
-sub _test_report {
-    t::Utility::stash('PAST') // skip_all();
-    isa_ok(t::Utility::stash('PAST')->report(),
-           'Finance::Robinhood::Equity::Earnings::Report');
-}
+has report => (
+    is => 'ro',
+    isa =>
+        Maybe [InstanceOf ['Finance::Robinhood::Equity::Earnings::Report']],
+    coerce => sub ($data) {
+        defined $data
+            ? Finance::Robinhood::Equity::Earnings::Report->new(%$data)
+            : ();
+    },
+    required => 1
+);
 
 =head2 C<symbol( )>
 
-The related ticker symbol.
+Returns the ticker symbol of the related equity instrument.
+
+=cut
+
+has symbol => (is => 'ro', isa => Str, required => 1);
 
 =head2 C<year( )>
 
-Four digit year.
+Returns the year.
 
 =cut
 
-has ['quarter', 'symbol', 'year'];
-
-=head2 C<instrument( )>
-
-    my $instrument = $quote->instrument();
-
-Loops back to a Finance::Robinhood::Equity::Instrument object.
-
-=cut
-
-sub instrument ($s) {
-    my $res = $s->_rh->_get($s->{instrument});
-    $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
-                                                      %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
-}
-
-sub _test_instrument {
-    t::Utility::stash('PAST') // skip_all();
-    isa_ok(t::Utility::stash('PAST')->instrument(),
-           'Finance::Robinhood::Equity::Instrument');
-}
+has year => (is => 'ro', isa => Num, required => 1);
 
 =head1 LEGAL
 

@@ -1,4 +1,8 @@
 package Finance::Robinhood::Utilities::Iterator;
+our $VERSION = '0.92_003';
+
+# Destructive iterator because memory isn't free
+# inspired by Array::Iterator and rust's Vec and IntoIter
 
 =encoding utf-8
 
@@ -20,24 +24,53 @@ Finance::Robinhood::Utilities::Iterator - Sugary Access to Paginated Data
 
 =cut
 
-our $VERSION = '0.92_003';
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
+#
+use strictures 2;
+use namespace::clean;
+use HTTP::Tiny;
+use JSON::Tiny;
+use URI;
+use Moo;
+use Types::Standard qw[InstanceOf Maybe Str ArrayRef Any];
+use Finance::Robinhood::Types qw[URL];
+use experimental 'signatures';
+#
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+#
+has _results => (is => 'rwp', default => sub { [] }, isa => ArrayRef [Any]);
+has as => (is        => 'rwp',
+           required  => 0,
+           isa       => Maybe [InstanceOf ['Type::Tiny'] | Str],
+           predicate => 1
+);
+has _next_page => (is       => 'rwp',
+                   isa      => Maybe [URL],
+                   required => 1,
+                   init_arg => 'url',
+                   coerce   => 1
+);
+has _current => (is => 'rwp', isa => Maybe [Any], predicate => 1);
+has _first_page =>
+    (is => 'rwp', isa => Maybe [InstanceOf ['URI']], predicate => 1);
+
+# midlands returns a count with news and feed which is nice
+has count => (is        => 'rwp',
+              builder   => 1,
+              lazy      => 1,
+              clearer   => '_clear_count',
+              predicate => 1
+);
+
+sub _build_count($s) {
+
+    #use Data::Dump;
+    #ddx $s;
+    my @all = $s->all;
+    scalar @all;
+}
 
 =head1 METHODS
-
-=cut
-
-# Destructive iterator because memory isn't free
-# inspired by Array::Iterator and rust's Vec and IntoIter
-has _rh => undef => weak => 1;
-has [
-    '_current', '_next_page', '_class', '_first_page',
-
-    # midlands returns a count with news and feed which is nice
-    'count'
-];
-has _results => sub { [] };
 
 =head2 C<reset( )>
 
@@ -47,14 +80,15 @@ from scratch.
 =cut
 
 sub reset($s) {
-    $s->_next_page($s->_first_page // $s->_next_page);
-    $s->_current(());
-    $s->_results([]);
+    $s->_set__next_page($s->_first_page // $s->_next_page);
+    $s->_set__current(());
+    $s->_set__results([]);
+    $s->_clear_count;
 }
 
 sub _test_reset {
     my $rh          = t::Utility::rh_instance(0);
-    my $instruments = $rh->equity_instruments;
+    my $instruments = $rh->equities;
     isa_ok($instruments, __PACKAGE__);
     my $next = $instruments->next;
     $instruments->take(300);
@@ -70,16 +104,20 @@ non-destructive but will move the cursor if there is no current element.
 =cut
 
 sub current($s) {
-    $s->_current // $s->next;
+    $s->_has_current || $s->_set__current($s->peek);
     $s->_current;
 }
 
 sub _test_current {
     my $rh          = t::Utility::rh_instance(0);
-    my $instruments = $rh->equity_instruments;
-    isa_ok($instruments, __PACKAGE__);
+    my $instruments = $rh->equities;
+
+    # Make sure the first element is auto-loaded
+    isa_ok($instruments,          __PACKAGE__);
+    isa_ok($instruments->current, 'Finance::Robinhood::Equity');
+
+    # Make sure next() loads current() properly
     my $next = $instruments->next;
-    isa_ok($instruments->current, 'Finance::Robinhood::Equity::Instrument');
     is($instruments->current, $next);
 }
 
@@ -93,8 +131,8 @@ and all pages have been exhausted, this will return an undefined value.
 sub next($s) {
     $s->_check_next_page;
     my ($retval, @values) = @{$s->_results};
-    $s->_results(\@values);
-    $s->_current($retval);
+    $s->_set__results(\@values);
+    $s->_set__current($retval);
     $retval;
 }
 
@@ -114,7 +152,7 @@ sub peek ($s, $pos = 1) {
 
 sub _test_peek {
     my $rh          = t::Utility::rh_instance(0);
-    my $instruments = $rh->equity_instruments;
+    my $instruments = $rh->equities;
     isa_ok($instruments, __PACKAGE__);
     my $peek = $instruments->peek;
     is($instruments->next, $peek);
@@ -144,13 +182,13 @@ sub take ($s, $count = 1) {
     $s->_check_next_page($count);
     my @retval;
     for (1 .. $count) { push @retval, $s->next; last if !$s->has_next }
-    $s->_current($retval[-1]);
+    $s->_set__current($retval[-1]);
     @retval;
 }
 
 sub _test_take {
     my $rh          = t::Utility::rh_instance(0);
-    my $instruments = $rh->equity_instruments;
+    my $instruments = $rh->equities;
     isa_ok($instruments, __PACKAGE__);
     {
         my @take = $instruments->take(3);
@@ -170,14 +208,15 @@ Grabs every page and returns every element we see.
 
 sub all($s) {
     my @retval;
-    push @retval, $s->take($s->count // 1000) until !$s->has_next;
-    $s->_current($retval[-1]);
-    @retval;
+    push @retval, $s->take($s->has_count ? $s->count : 1000)
+        until !$s->has_next;
+    $s->_set__current($retval[-1]);
+    wantarray ? @retval : \@retval;
 }
 
 sub _test_all_and_has_next {
     my $rh          = t::Utility::rh_instance(0);    # Do not log in!
-    my $instruments = $rh->equity_instruments;
+    my $instruments = $rh->equities;
     isa_ok($instruments, __PACKAGE__);
     diag('Grabbing all instruments... please hold...');
     my @take = $instruments->all;
@@ -191,39 +230,34 @@ sub _test_all_and_has_next {
 sub _check_next_page ($s, $count = 1) {
     my @push = @{$s->_results};
     my $pre  = scalar @push;
-    $s->_first_page // $s->_first_page($s->_next_page);
-    while (($count > scalar @push) && defined $s->_next_page) {
-        my $res = $s->_rh->_get($s->_next_page);
+    $s->_first_page // $s->_set__first_page($s->_next_page);
+    while (($count > scalar @push) && $s->_next_page) {
+        my $res = $s->robinhood->_req(GET => $s->_next_page);
+        if ($res->success) {
+            $s->_set__next_page($res->json->{next} &&
+                                    $res->json->{next} ne $s->_next_page
+                                ? $res->json->{next}
+                                : ());
 
-        #use Data::Dump;
-        #ddx $res;
-        #ddx $res->json;
-        #die;
-        if ($res->is_success) {
-            my $json = $res->json;
-            $s->_next_page($json->{next});
-            push @push, map {
-                      defined $_
-                    ? defined $s->_class
-                        ? do {
-                            eval 'require ' . $s->_class;
-                            $s->_class->new(_rh => $s->_rh, %$_);
-                        }
-                        : $_
-                    : ()
-            } @{$json->{results}};
+            #require($s->class) if $s->has_class;
+            push @push,
+                $s->has_as
+                ? @{$res->as($s->as)->{results}}
+                : @{$res->json->{results}};
+            $s->_set_count($res->json->{count})
+                if defined $res->json->{count};
         }
         else {    # Trouble! Let's not try another page
-            $s->_next_page(undef);
+            $s->_set__next_page(undef);
         }
     }
-    $s->_results(\@push) if scalar @push > $pre;
+    $s->_set__results(\@push) if scalar @push > $pre;
 }
 
 sub _test_check_next_page {
     my $rh = t::Utility::rh_instance(0);    # Do not log in!
-    is($rh->equity_instruments_by_id('c7d4323d-9512-4b15-977a-7cb2d1381d00'),
-        ());                                # Fake id
+    is($rh->equities_by_id('c7d4323d-9512-4b15-977a-7cb2d1381d00'), ())
+        ;                                   # Fake id
 }
 
 =head1 LEGAL

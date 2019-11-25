@@ -34,13 +34,25 @@ sub _test__init {
     isa_ok($tag, __PACKAGE__);
     t::Utility::stash('TAG', $tag);      #  Store it for later
 }
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
-use Finance::Robinhood::Equity::Tag;
-use Finance::Robinhood::Forex::Pair;
-use Finance::Robinhood::Equity::Instrument;
 #
-has _rh => undef => weak => 1;
+use Moo;
+use Time::Moment;
+use Types::Standard qw[ArrayRef InstanceOf Maybe];
+use experimental 'signatures';
+#
+use Finance::Robinhood::Equity::Collection;
+use Finance::Robinhood::Currency::Pair;
+use Finance::Robinhood::Equity;
+#
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+#
+around BUILDARGS => sub {
+    my ($orig, $class, %args) = @_;
+    $_->{robinhood} = $args{robinhood}
+        for @{$args{currency_pairs}}, @{$args{instruments}}, @{$args{tags}};
+    $class->$orig(%args);
+};
 
 =head2 C<currency_pairs( )>
 
@@ -49,10 +61,15 @@ objects.
 
 =cut
 
-sub currency_pairs ( $s ) {
-    map { Finance::Robinhood::Forex::Pair->new(_rh => $s->_rh, %$_) }
-        @{$s->{currency_pairs}};
-}
+has currency_pairs => (
+    is => 'rw',
+    isa =>
+        Maybe [ArrayRef [InstanceOf ['Finance::Robinhood::Currency::Pair']]],
+    coerce => sub ( $pairs ) {
+        [map { Finance::Robinhood::Currency::Pair->new(%$_) } @$pairs];
+    },
+    predicate => 'has_currency_pairs'
+);
 
 sub _test_currency_pairs {
     t::Utility::stash('BTC') // skip_all();
@@ -62,20 +79,23 @@ sub _test_currency_pairs {
 
 =head2 C<equity_instruments( )>
 
-If available, this will return a list of Finance::Robinhood::Equity::Instrument
-objects.
+If available, this will return a list of Finance::Robinhood::Equity objects.
 
 =cut
 
-sub equity_instruments ( $s ) {
-    map { Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh, %$_) }
-        @{$s->{instruments}};
-}
+has instruments => (
+    is     => 'rw',
+    isa    => Maybe [ArrayRef [InstanceOf ['Finance::Robinhood::Equity']]],
+    coerce => sub ( $pairs ) {
+        [map { Finance::Robinhood::Equity->new(%$_) } @$pairs]
+    },
+    predicate => 'has_instruments'
+);
 
 sub _test_equity_instruments {
     t::Utility::stash('MSFT') // skip_all();
     my ($instrument) = t::Utility::stash('MSFT')->equity_instruments;
-    isa_ok($instrument, 'Finance::Robinhood::Equity::Instrument');
+    isa_ok($instrument, 'Finance::Robinhood::Equity');
 }
 
 =head2 C<tags( )>
@@ -86,10 +106,14 @@ objects.
 
 =cut
 
-sub tags ( $s ) {
-    map { Finance::Robinhood::Equity::Tag->new(_rh => $s->_rh, %$_) }
-        @{$s->{tags}};
-}
+has tags => (
+    is  => 'rw',
+    isa => Maybe [ArrayRef [InstanceOf ['Finance::Robinhood::Equity::Tag']]],
+    coerce => sub ( $pairs ) {
+        [map { Finance::Robinhood::Equity::Tag->new(%$_) } @$pairs]
+    },
+    predicate => 'has_tags'
+);
 
 sub _test_tags {
     t::Utility::stash('TAG') // skip_all();

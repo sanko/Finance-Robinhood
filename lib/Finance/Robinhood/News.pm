@@ -1,4 +1,5 @@
 package Finance::Robinhood::News;
+our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -19,8 +20,17 @@ Finance::Robinhood::News - Represents a Single News Article
 
 =cut
 
-our $VERSION = '0.92_003';
-
+use Moo;
+use Data::Dump;
+use HTTP::Tiny;
+use JSON::Tiny;
+use Time::Moment;
+use Types::Standard qw[ArrayRef Bool Enum InstanceOf Maybe Num Str StrMatch];
+use URI;
+use experimental 'signatures';
+#
+use Finance::Robinhood::Types qw[UUIDBroken UUID URL Timestamp];
+#
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $msft = $rh->news('MSFT')->current;
@@ -30,15 +40,21 @@ sub _test__init {
     isa_ok($btc, __PACKAGE__);
     t::Utility::stash('BTC', $btc);      #  Store it for later
 }
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
-use Time::Moment;
 #
-has _rh => undef => weak => 1;
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
 
 =head2 C<api_source( )>
 
-Returns the article's source.
+Returns the article's source if available.
+
+These are short tags such as C<reuters> and C<benzinga>.
+
+=head2 C<source( )>
+
+Returns the article's source in a format suited for display.
+
+These would be text like C<Reuters> and C<Benzinga>.
 
 =head2 C<author( )>
 
@@ -48,10 +64,6 @@ If available, this will return the author who wrote the article.
 
 The current total number of times this article has been clicked by Robinhod's
 users.
-
-=head2 C<source( )>
-
-Returns the article's source in a format suited for display.
 
 =head2 C<summary( )>
 
@@ -67,99 +79,99 @@ Returns the article's unique ID.
 
 =cut
 
-has ['api_source', 'author', 'num_clicks', 'source',
-     'summary',    'title',  'uuid'
-];
+has [qw[api_source source]] => (is => 'ro', isa => Str, required => 1);
+has author => (is => 'ro', isa => Maybe [Str], required => 1, predicate => 1);
+has currency_id =>
+    (is => 'ro', isa => UUIDBroken | StrMatch [qr[^None$]], predicate => 1);
+has num_clicks => (is => 'ro', isa => Num, required => 1);
+has [qw[summary title]] => (is => 'ro', isa => Str, required => 1);
+has preview_text =>
+    (is => 'ro', isa => Maybe [Str], required => 1, predicate => 1);
+has uuid => (is => 'ro', isa => UUID | UUIDBroken, required => 1);
 
 =head2 C<preview_image_url( )>
 
-If this article has a thumbnail, this will return the URL as a Mojo::Url
-object.
-
-=cut
-
-sub preview_image_url($s) {
-    $s->{preview_image_url} ? Mojo::URL->new($s->{preview_image_url}) : ();
-}
-
-sub _test_preview_image_url {
-    t::Utility::stash('MSFT') // skip_all();
-    isa_ok(t::Utility::stash('MSFT')->preview_image_url, 'Mojo::URL');
-    t::Utility::stash('BTC') // skip_all();
-    isa_ok(t::Utility::stash('BTC')->preview_image_url, 'Mojo::URL');
-}
+If this article has a thumbnail, this will return the URL as a URI object.
 
 =head2 C<relay_url( )>
 
-Returns a Mojo::URL object containing the URL Robinhood would like you to use.
-This will register as a click and will then redirect to the article itself.
-
-=cut
-
-sub relay_url($s) {
-    $s->{relay_url} ? Mojo::URL->new($s->{relay_url}) : ();
-}
-
-sub _test_relay_url {
-    t::Utility::stash('MSFT') // skip_all();
-    isa_ok(t::Utility::stash('MSFT')->relay_url, 'Mojo::URL');
-    t::Utility::stash('BTC') // skip_all();
-    isa_ok(t::Utility::stash('BTC')->relay_url, 'Mojo::URL');
-}
+Returns a URI object containing the URL Robinhood would like you to use. This
+will register as a click and will then redirect to the article itself.
 
 =head2 C<url( )>
 
-Mojo::URL object containing a direct link to the article.
+URI object containing a direct link to the article.
 
 =cut
 
-sub url($s) {
-    $s->{url} ? Mojo::URL->new($s->{url}) : ();
-}
-
-sub _test_url {
-    t::Utility::stash('MSFT') // skip_all();
-    isa_ok(t::Utility::stash('MSFT')->url, 'Mojo::URL');
-    t::Utility::stash('BTC') // skip_all();
-    isa_ok(t::Utility::stash('BTC')->url, 'Mojo::URL');
-}
+has [qw[preview_image_url relay_url url]] =>
+    (is => 'ro', isa => URL, coerce => 1, requried => 1);
 
 =head2 C<currency_id( )>
 
+If the news is related to a particular forex currency, this will return a UUID.
+
+=head2 C<currency( )>
+
 If the news is related to a particular forex currency, this will return the
-Finance::Robinhood::Forex::Currency object.
+Finance::Robinhood::Currency object.
 
 =cut
 
-sub currency($s) {
-    $s->{currency_id} ? $s->_rh->forex_currency_by_id($s->{currency_id}) : ();
+has currency => (is  => 'ro',
+                 isa => Maybe [InstanceOf ['Finance::Robinhood::Currency']],
+                 builder  => 1,
+                 lazy     => 1,
+                 init_arg => undef
+);
+
+sub _build_currency($s) {
+    $s->has_currency_id &&
+        $s->currency_id ne 'None'
+        ? $s->robinhood->currency_by_id($s->currency_id)
+        : ();
 }
 
 sub _test_currency {
     t::Utility::stash('BTC') // skip_all();
     isa_ok(t::Utility::stash('BTC')->currency,
-           'Finance::Robinhood::Forex::Currency');
+           'Finance::Robinhood::Currency');
 }
 
-=head2 C<instrument( )>
+=head2 C<related_equities( )>
 
-If the new is related to a particular equity instrument, this will return the
-Finance::Robihood::Equity::Instrument object.
+If the news is related to any particular equity instruments, this will return
+the Finance::Robihood::Equity objects as a list reference.
 
 =cut
 
-sub instrument($s) {
-    $s->{instrument}
-        ? $s->_rh->equity_instruments_by_id($s->{instrument}
-        =~ m'^.+/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/$'i
-        )
-        : ();
+has '_related_instruments' => (is       => 'ro',
+                               isa      => ArrayRef [UUID],
+                               requried => 1,
+                               init_arg => 'related_instruments',
+                               coerce   => 1
+);
+has related_equities => (
+                  is  => 'ro',
+                  isa => ArrayRef [InstanceOf ['Finance::Robinhood::Equity']],
+                  builder  => 1,
+                  lazy     => 1,
+                  init_arg => undef
+);
+
+sub _build_related_equities($s) {
+    scalar $s->_related_instruments
+        ? [$s->robinhood->equities_by_id(@{$s->_related_instruments})]
+        : [];
 }
 
-sub _test_instrument {
+sub _test_related_equities {
     t::Utility::stash('MSFT') // skip_all();
-    isa_ok(t::Utility::stash('MSFT')->instrument,
-           'Finance::Robinhood::Equity::Instrument');
+
+    # List might be empty. :(
+    scalar(t::Utility::stash('MSFT')->related_equities) || skip_all();
+    isa_ok(t::Utility::stash('MSFT')->related_equities->[0],
+           'Finance::Robinhood::Equity');
 }
 
 =head2 C<published_at( )>
@@ -167,17 +179,6 @@ sub _test_instrument {
     $article->published_at->to_string;
 
 Returns the time the article was published as a Time::Moment object.
-
-=cut
-
-sub published_at($s) {
-    Time::Moment->from_string($s->{published_at});
-}
-
-sub _test_published_at {
-    t::Utility::stash('MSFT') // skip_all();
-    isa_ok(t::Utility::stash('MSFT')->published_at, 'Time::Moment');
-}
 
 =head2 C<updated_at( )>
 
@@ -188,8 +189,12 @@ object.
 
 =cut
 
-sub updated_at($s) {
-    Time::Moment->from_string($s->{updated_at});
+has [qw[published_at updated_at]] =>
+    (is => 'ro', isa => Timestamp, coerce => 1, required => 1);
+
+sub _test_published_at {
+    t::Utility::stash('MSFT') // skip_all();
+    isa_ok(t::Utility::stash('MSFT')->published_at, 'Time::Moment');
 }
 
 sub _test_updated_at {

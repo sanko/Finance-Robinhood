@@ -1,4 +1,5 @@
 package Finance::Robinhood::Equity::Market;
+our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -12,16 +13,19 @@ Finance::Robinhood::Equity::Market - Represents a Single Equity Market
 
     use Finance::Robinhood;
     my $rh = Finance::Robinhood->new;
-    my $msft = $rh->equity_instrument_by_symbol('MSFT');
+    my $msft = $rh->equity('MSFT');
 
     CORE::say $msft->symbol . ' is traded on ' . $msft->market->name;
 
 =cut
 
-our $VERSION = '0.92_003';
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
+use Moo;
+use MooX::Enumeration;
+use Types::Standard qw[Bool Enum InstanceOf Maybe Num Str StrMatch];
+use URI;
 use Time::Moment;
+use Data::Dump;
+use experimental 'signatures';
 use Finance::Robinhood::Equity::Market::Hours;
 
 sub _test__init {
@@ -38,7 +42,8 @@ sub _test_stringify {
         'https://api.robinhood.com/markets/XNAS/');
 }
 #
-has _rh => undef => weak => 1;
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'],);
 
 =head1 METHODS
 
@@ -73,18 +78,19 @@ Timezone of the exchange/market.
 
 =cut
 
-has ['acronym', 'city', 'country', 'mic', 'name', 'operating_mic',
-     'timezone'];
+has [qw[acronym city country mic name operating_mic timezone]] =>
+    (is => 'ro', isa => Str, required => 1);
 
 =head2 C<website()>
 
 Website of the exchange in a Mojo::URL object.
 
 =cut
-
-sub website ($s) {
-    Mojo::URL->new($s->{website});
-}
+has [qw[website url]] => (is       => 'ro',
+                          isa      => InstanceOf ['URI'],
+                          coerce   => sub ($url) { URI->new($url) },
+                          required => 1
+);
 
 sub _test_website {
     t::Utility::stash('MARKET') // skip_all();
@@ -101,12 +107,8 @@ Return a Finance::Robinhood::Equity::Market::Hours object with today's data.
 =cut
 
 sub todays_hours ( $s ) {
-    my $res = $s->_rh->_get($s->{todays_hours});
-    $res->is_success
-        ? Finance::Robinhood::Equity::Market::Hours->new(_rh => $s->_rh,
-                                                         %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+    $s->robinhood->_req(GET => $s->_todays_hours,
+                        as  => 'Finance::Robinhood::Equity::Market::Hours');
 }
 
 sub _test_todays_hours {
@@ -116,23 +118,21 @@ sub _test_todays_hours {
     ok($hours->date <= Time::Moment->now_utc);
 }
 
-=head2 C<hours( ... )>
+=head2 C<hours( [...] )>
 
-    my $hours = $market->hours( $date );
+    my $hours = $market->hours( Time::Moment->from_string('2019-12-25T00:00Z') );
+    my $hours = $market->hours( );
 
-Returns the Finance::Robinhood::Equity::Market::Hours object for the given
-date. This method expects C<$date> to be a Time::Moment object.
+Returns the Finance::Robinhood::Equity::Market::Hours object. By default, the
+current day's hours are returned but you may pass a Time::Moment object to
+gather data for any supported date.
 
 =cut
 
-sub hours ($s, $date) {
-    my $res = $s->_rh->_get(
-                    $s->{url} . 'hours/' . $date->strftime('%Y-%m-%d') . '/');
-    $res->is_success
-        ? Finance::Robinhood::Equity::Market::Hours->new(_rh => $s->_rh,
-                                                         %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+sub hours ($s, $date = Time::Moment->now) {
+    $s->robinhood->_req(
+                GET => $s->url . 'hours/' . $date->strftime('%Y-%m-%d') . '/',
+                as  => 'Finance::Robinhood::Equity::Market::Hours');
 }
 
 sub _test_hours {

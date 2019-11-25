@@ -1,4 +1,5 @@
 package Finance::Robinhood::Equity::Fundamentals;
+our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -21,19 +22,24 @@ Finance::Robinhood::Equity::Fundamentals - Equity Instrument's Fundamental Data
     }
 
 =cut
-
-our $VERSION = '0.92_003';
-use Mojo::Base-base, -signatures;
-use Finance::Robinhood::Equity::Instrument;
+use Moo;
+use MooX::Enumeration;
+use Types::Standard qw[Bool Enum InstanceOf Maybe Num Str StrMatch];
+use URI;
+use Time::Moment;
+use Data::Dump;
+use experimental 'signatures';
+use Finance::Robinhood::Equity;
 
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
-    my $tsla = $rh->equity_instrument_by_symbol('TSLA')->fundamentals();
+    my $tsla = $rh->equity('TSLA')->fundamentals();
     isa_ok($tsla, __PACKAGE__);
     t::Utility::stash('TSLA', $tsla);    #  Store it for later
 }
 #
-has _rh => undef => weak => 1;
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'],);
 
 =head1 METHODS
 
@@ -57,7 +63,7 @@ Plain text description suited for display.
 
 =head2 C<dividend_yield( )>
 
-
+=head2 C<float( )>
 
 =head2 C<headquarters_city( )>
 
@@ -97,7 +103,7 @@ If applicable, the number of employees as reported by the company.
 
 =head2 C<open( )>
 
-
+=head2 C<pb_ratio( )>
 
 =head2 C<pe_ratio( )>
 
@@ -121,17 +127,21 @@ The year the company was founded, if applicable.
 
 =cut
 
-has ['average_volume',     'average_volume_2_weeks',
-     'ceo',                'description',
-     'dividend_yield',     'headquarters_city',
-     'headquarters_state', 'high',
-     'high_52_weeks',      'industry',
-     'low',                'low_52_weeks',
-     'market_cap',         'num_employees',
-     'open',               'pe_ratio',
-     'sector',             'shares_outstanding',
-     'volume',             'year_founded',
-];
+has [
+    qw[average_volume average_volume_2_weeks
+        dividend_yield float high high_52_weeks
+        low low_52_weeks
+        market_cap
+        num_employees
+        open
+        pb_ratio pe_ratio
+        shares_outstanding volume year_founded]
+] => (is => 'ro', isa => Maybe [Num], required => 1);
+has [
+    qw[ceo description
+        headquarters_city headquarters_state
+        industry sector]
+] => (is => 'ro', isa => Str, required => 1);
 
 =head2 C<instrument( )>
 
@@ -139,19 +149,28 @@ Loop back to the equity instrument.
 
 =cut
 
-sub instrument($s) {
-    my $res = $s->_rh->_get($s->{instrument});
-    $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
-                                                      %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+has _instrument => (is       => 'ro',
+                    isa      => InstanceOf ['URI'],
+                    coerce   => sub ($url) { URI->new($url) },
+                    required => 1,
+                    init_arg => 'instrument'
+);
+has instrument => (is       => 'ro',
+                   isa      => InstanceOf ['Finance::Robinhood::Equity'],
+                   builder  => 1,
+                   lazy     => 1,
+                   init_arg => undef
+);
+
+sub _build_instrument($s) {
+    $s->robinhood->_req(GET => $s->_instrument,
+                        as  => 'Finance::Robinhood::Equity');
 }
 
 sub _test_instrument {
     t::Utility::stash('TSLA') // skip_all();
     isa_ok(t::Utility::stash('TSLA')->instrument,
-           'Finance::Robinhood::Equity::Instrument');
+           'Finance::Robinhood::Equity');
 }
 
 =head1 LEGAL

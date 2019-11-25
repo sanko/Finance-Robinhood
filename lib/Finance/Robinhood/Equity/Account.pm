@@ -1,4 +1,5 @@
 package Finance::Robinhood::Equity::Account;
+our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -20,33 +21,35 @@ Finance::Robinhood::Equity::Account - Represents a Single Robinhood Account
 
 =cut
 
-our $VERSION = '0.92_003';
+#
+use Moo;
+use MooX::Enumeration;
+use Types::Standard qw[Bool Enum InstanceOf Maybe Num Str StrMatch];
+use URI;
+use Time::Moment;
+use Data::Dump;
+use experimental 'signatures';
+#
+use Finance::Robinhood::Types qw[Timestamp UUID URL];
+use Finance::Robinhood::Equity::Account::CashBalances;
+use Finance::Robinhood::Equity::Account::MarginBalances;
+use Finance::Robinhood::Equity::Account::MarginEligibility;
+use Finance::Robinhood::Equity::Account::Portfolio;
+use Finance::Robinhood::Equity::Position;
 
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $acct = $rh->equity_accounts->current;
-    isa_ok($acct, __PACKAGE__);
-    t::Utility::stash('ACCT', $acct);    #  Store it for later
+    isa_ok( $acct, __PACKAGE__ );
+    t::Utility::stash( 'ACCT', $acct );    #  Store it for later
 }
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
-use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
-use Finance::Robinhood::Equity::Account::Portfolio;
-use Finance::Robinhood::Equity::Account::InstantEligibility;
-use Finance::Robinhood::Equity::Account::MarginBalances;
-
-sub _test_stringify {
-    t::Utility::stash('ACCT') // skip_all();
-    like(+t::Utility::stash('ACCT'),
-         qr'https://api.robinhood.com/accounts/.+/');
-}
-##
 
 =head1 METHODS
 
 =cut
 
-has _rh => undef => weak => 1;
+#
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head2 C<account_number( )>
 
@@ -143,35 +146,74 @@ accounts.
 
 True if the account has been flagged and ACH withdrawal has been disabled.
 
+=head2 C<user( )>
+
+Returns the related Finance::Robinhood::Equity::User object.
+
+=head2 C<can_downgrade_to_cash( )>
+
+This method returns a true value if your account is currently eligible for
+downgrading from a margin account (Instant or Gold) to a cash account.
+
+=head2 C<received_ach_debit_locked( )>
+
+Boolean.
+
+=head2 C<cash_management_enabled( )>
+
+Returns a boolean value.
+
 =cut
 
-has ['account_number',              'cash',
-     'buying_power',                'cash_available_for_withdrawal',
-     'cash_held_for_orders',        'deactivated',
-     'deposit_halted',              'is_pinnacle_account',
-     'max_ach_early_access_amount', 'only_position_closing_trades',
-     'option_level',                'rhs_account_number',
-     'sma',                         'sma_held_for_orders',
-     'sweep_enabled',               'type',
-     'uncleared_deposits',          'unsettled_debit',
-     'unsettled_funds',             'url',
-     'withdrawal_halted'
-];
+has url => ( is => 'ro', required => 1, isa => URL, coerce => 1, );
+has '_' . $_ => ( is => 'ro', required => 1, isa => URL, coerce => 1, init_arg => $_ )
+    for qw[can_downgrade_to_cash portfolio positions user];
+has user => (
+    is       => 'ro',
+    isa      => InstanceOf ['Finance::Robinhood::User'],
+    lazy     => 1,
+    builder  => 1,
+    init_arg => undef
+);
+
+sub _build_user ($s) {    # _url() is malformed by RH. They forget the protocol.
+    $s->robinhood->_req( GET => 'https://api.robinhood.com/user/' )->as('Finance::Robinhood::User');
+}
+
+sub _test_user {
+    t::Utility::stash('ACCT') // skip_all('No account object in stash');
+    isa_ok( t::Utility::stash('ACCT')->user, 'Finance::Robinhood::User' );
+}
+has can_downgrade_to_cash =>
+    ( is => 'ro', isa => Bool, lazy => 1, builder => 1, coerce => 1, init_arg => undef );
+
+sub _build_can_downgrade_to_cash ($s) {
+    $s->robinhood->_req( GET => $s->_can_downgrade_to_cash )->json->{can_downgrade_to_cash} ? 1 : 0;
+}
+
+sub _test_can_downgrade_to_cash {
+    t::Utility::stash('ACCT') // skip_all('No account object in stash');
+    my $can_downgrade_to_cash = t::Utility::stash('ACCT')->can_downgrade_to_cash;
+    pass('TODO: Somehow check that $can_downgrade_to_cash is true or false');
+}
+has cash_management_enabled => ( is => 'ro', isa => Bool, coerce   => 1, required => 1 );
+has account_number          => ( is => 'ro', isa => Str,  required => 1 );
+has [
+    qw[buying_power cash cash_available_for_withdrawal cash_held_for_orders crypto_buying_power
+        max_ach_early_access_amount portfolio_cash
+        rhs_account_number
+        sma
+        sma_held_for_orders
+        uncleared_deposits
+        unsettled_debit
+        unsettled_funds
+        ]
+] => ( is => 'ro', isa => Num, required => 1 );
+has received_ach_debit_locked => ( is => 'ro', isa => Bool, coerce => 1, required => 1 );
 
 =head2 C<created_at( )>
 
 Returns a Time::Moment object.
-
-=cut
-
-sub created_at ($s) {
-    Time::Moment->from_string($s->{created_at});
-}
-
-sub _test_created_at {
-    t::Utility::stash('ACCT') // skip_all('No account object in stash');
-    isa_ok(t::Utility::stash('ACCT')->created_at, 'Time::Moment');
-}
 
 =head2 C<updated_at( )>
 
@@ -179,117 +221,88 @@ Returns a Time::Moment object.
 
 =cut
 
-sub updated_at ($s) {
-    Time::Moment->from_string($s->{updated_at});
+has $_ => ( is => 'ro', required => 1, coerce => 1, isa => Timestamp )
+    for qw[created_at updated_at];
+
+sub _test_created_at {
+    t::Utility::stash('ACCT') // skip_all('No account object in stash');
+    isa_ok( t::Utility::stash('ACCT')->created_at, 'Time::Moment' );
 }
 
 sub _test_updated_at {
     t::Utility::stash('ACCT') // skip_all('No account object in stash');
-    isa_ok(t::Utility::stash('ACCT')->updated_at, 'Time::Moment');
+    isa_ok( t::Utility::stash('ACCT')->updated_at, 'Time::Moment' );
 }
-
-=head2 C<user( )>
-
-Returns the related Finance::Robinhood::Equity::Account object.
-
-=cut
-
-sub user ($s) {
-    my $res = $s->_rh->_get($s->{user});
-    require Finance::Robinhood::User;
-    $res->is_success
-        ? Finance::Robinhood::User->new(_rh => $s->_rh, %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
-}
-
-sub _test_user {
-    t::Utility::stash('ACCT') // skip_all('No account object in stash');
-    isa_ok(t::Utility::stash('ACCT')->user, 'Finance::Robinhood::User');
-}
-
-=head2 C<can_downgrade_to_cash( )>
-
-This method returns a true value if your account is currently eligible for
-downgrading from a margin account (Instant or Gold) to a cash account.
-
-=cut
-
-sub can_downgrade_to_cash ($s) {
-    my $res = $s->_rh->_get($s->{can_downgrade_to_cash});
-    $res->is_success
-        ? $res->json->{can_downgrade_to_cash}
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
-}
-
-sub _test_can_downgrade_to_cash {
-    t::Utility::stash('ACCT') // skip_all('No account object in stash');
-    my $can_downgrade_to_cash
-        = t::Utility::stash('ACCT')->can_downgrade_to_cash;
-    isa_ok($can_downgrade_to_cash, 'JSON::PP::Boolean');
-}
-
-=head2 C<instant_eligibility( )>
-
-Returns the related Finance::Robinhood::Equity::Account::InstantEligibility
-object.
-
-=cut
-
-sub instant_eligibility ($s) {
-    Finance::Robinhood::Equity::Account::InstantEligibility->new(
-                                                  _rh => $s->_rh,
-                                                  %{$s->{instant_eligibility}}
-    );
-}
-
-sub _test_instant_eligibility {
-    t::Utility::stash('ACCT') // skip_all('No account object in stash');
-    my $instant_eligibility = t::Utility::stash('ACCT')->instant_eligibility;
-    isa_ok($instant_eligibility,
-           'Finance::Robinhood::Equity::Account::InstantEligibility');
-}
-
-=head2 C<margin_balances( )>
-
-Returns the related Finance::Robinhood::Equity::Account::MarginBalances object.
-
-=cut
-
-sub margin_balances ($s) {
-    Finance::Robinhood::Equity::Account::MarginBalances->new(
-                                                      _rh => $s->_rh,
-                                                      %{$s->{margin_balances}}
-    );
-}
-
-sub _test_margin_balances {
-    t::Utility::stash('ACCT') // skip_all('No account object in stash');
-    my $margin_balances = t::Utility::stash('ACCT')->margin_balances;
-    isa_ok($margin_balances,
-           'Finance::Robinhood::Equity::Account::MarginBalances');
-}
+has margin_eligibility => (
+    is       => 'ro',
+    required => 1,
+    init_arg => 'instant_eligibility',
+    coerce   => sub ($data) {
+        Finance::Robinhood::Equity::Account::MarginEligibility->new(%$data);
+    },
+    isa => InstanceOf ['Finance::Robinhood::Equity::Account::MarginEligibility'],
+);
+has active_subscription_id => ( is => 'ro', required => 1, isa => Maybe [UUID] );
+has [
+    qw[deactivated deposit_halted is_pinnacle_account locked
+        permanently_deactivated sweep_enabled withdrawal_halted
+        only_position_closing_trades
+        ]
+] => ( is => 'ro', isa => Bool, required => 1, coerce => sub($bool) { !!$bool } );
+has type => (
+    is       => 'ro',
+    required => 1,
+    isa      => Enum [qw[cash margin]],
+    handles  => [qw[is_cash is_margin]]
+);
+has state => ( is => 'ro', required => 1, isa => Enum [qw[active]], handles => [qw[is_active]] );
+has option_level => (
+    is       => 'ro',
+    required => 1,
+    isa      => Enum [qw[option_level_1 option_level_2 option_level_3]],
+    handles  => [qw[is_option_level_1 is_option_level_2 is_option_level_3]]
+);
+has cash_balances => (
+    is        => 'ro',
+    required  => 1,
+    predicate => 'has_cash_balances',
+    coerce    => sub ($data) {
+        $data ? Finance::Robinhood::Equity::Account::CashBalances->new(%$data) : ();
+    },
+    isa => Maybe [ InstanceOf ['Finance::Robinhood::Equity::Account::CashBalances'] ],
+);
+has margin_balances => (
+    is        => 'ro',
+    required  => 1,
+    predicate => 'has_margin_balances',
+    coerce    => sub ($data) {
+        $data ? Finance::Robinhood::Equity::Account::MarginBalances->new(%$data) : ();
+    },
+    isa => Maybe [ InstanceOf ['Finance::Robinhood::Equity::Account::MarginBalances'] ],
+);
 
 =head2 C<portfolio( )>
 
 Returns the related Finance::Robinhood::Equity::Account::Portfolio object.
 
 =cut
+has portfolio => (
+    is       => 'ro',
+    isa      => InstanceOf ['Finance::Robinhood::Equity::Account::Portfolio'],
+    lazy     => 1,
+    builder  => 1,
+    init_arg => undef
+);
 
-sub portfolio ($s) {
-    my $res = $s->_rh->_get($s->{portfolio});
-    $res->is_success
-        ? Finance::Robinhood::Equity::Account::Portfolio->new(_rh => $s->_rh,
-                                                              %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+sub _build_portfolio ($s) {
+    $s->robinhood->_req( GET => $s->_portfolio )
+        ->as('Finance::Robinhood::Equity::Account::Portfolio');
 }
 
 sub _test_portfolio {
     t::Utility::stash('ACCT') // skip_all('No account object in stash');
     my $portfolio = t::Utility::stash('ACCT')->portfolio;
-    isa_ok($portfolio, 'Finance::Robinhood::Equity::Account::Portfolio');
+    isa_ok( $portfolio, 'Finance::Robinhood::Equity::Account::Portfolio' );
 }
 
 =head2 C<positions( )>
@@ -313,21 +326,22 @@ You can filter and modify the results. All options are optional.
 
 =cut
 
-sub positions ($s, %filters) {
-    $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false'
-        if defined $filters{nonzero};
+sub positions ( $s, %filters ) {
+    $filters{nonzero} = !!$filters{nonzero} ? 'true' : 'false' if defined $filters{nonzero};
+    my $url = URI->new( $s->_positions );
+    $url->query_form(%filters);
     Finance::Robinhood::Utilities::Iterator->new(
-              _rh        => $s->_rh,
-              _next_page => Mojo::URL->new($s->{positions})->query(\%filters),
-              _class     => 'Finance::Robinhood::Equity::Position'
+        robinhood => $s->robinhood,
+        url       => $url,
+        as        => 'Finance::Robinhood::Equity::Position'
     );
 }
 
 sub _test_positions {
     t::Utility::stash('ACCT') // skip_all('No account object in stash');
     my $positions = t::Utility::stash('ACCT')->positions;
-    isa_ok($positions,          'Finance::Robinhood::Utilities::Iterator');
-    isa_ok($positions->current, 'Finance::Robinhood::Equity::Position');
+    isa_ok( $positions,          'Finance::Robinhood::Utilities::Iterator' );
+    isa_ok( $positions->current, 'Finance::Robinhood::Equity::Position' );
 }
 
 =head1 LEGAL

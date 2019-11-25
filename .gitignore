@@ -41,6 +41,7 @@ eg/trailing_stop.*
 SciTE.session
 
 /lib/Finance/Robinhood/old/
+/lib/XFinance/
 /t/old/
 .vscode/
 .vstags
@@ -57,3 +58,5 @@ old-*/
 git/
 
 .env
+/.idea/
+.*prj

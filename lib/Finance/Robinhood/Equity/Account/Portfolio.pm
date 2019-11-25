@@ -1,4 +1,5 @@
 package Finance::Robinhood::Equity::Account::Portfolio;
+our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -12,16 +13,11 @@ attached to a Robinhood Account
 =head1 SYNOPSIS
 
     use Finance::Robinhood;
-    my $rh = Finance::Robinhood->new->login('user', 'pass');
-    my $portfolios = $rh->equity_portfolios->current();
-
-    for my $portfolio ($portfolios->all) {
-        CORE::say $portfolio->equity;
-    }
+    my $rh = Finance::Robinhood->new( ... );
+    my $portfolio = $rh->equity_portfolio;
+    CORE::say $portfolio->equity;
 
 =cut
-
-our $VERSION = '0.92_003';
 
 sub _test__init {
     my $rh        = t::Utility::rh_instance(1);
@@ -30,10 +26,15 @@ sub _test__init {
     isa_ok($portfolio, __PACKAGE__);
     t::Utility::stash('PORTFOLIO', $portfolio);    #  Store it for later
 }
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
-use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
-use Finance::Robinhood::Equity::Instrument;
+#
+use Moo;
+use MooX::Enumeration;
+use Types::Standard qw[Bool Enum InstanceOf Maybe Num Str StrMatch];
+use URI;
+use Time::Moment;
+use Data::Dump;
+use experimental 'signatures';
+use overload '""' => sub ($s, @) { $s->url }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('PORTFOLIO') // skip_all();
@@ -45,9 +46,12 @@ sub _test_stringify {
 
 =cut
 
-has _rh => undef => weak => 1;
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
 
 =head2 C<adjusted_equity_previous_close( )>
+
+=head2 C<adjusted_portfolio_equity_previous_close( )>
 
 =head2 C<equity( )>
 
@@ -69,7 +73,11 @@ has _rh => undef => weak => 1;
 
 =head2 C<last_core_market_value( )>
 
+=head2 C<last_core_portfolio_equity( )>
+
 =head2 C<market_value( )>
+
+=head2 C<portfolio_equity_previous_close( )>
 
 =head2 C<unwithdrawable_deposits( )>
 
@@ -80,25 +88,37 @@ has _rh => undef => weak => 1;
 
 =cut
 
-has ['adjusted_equity_previous_close',             'equity',
-     'equity_previous_close',                      'excess_maintenance',
-     'excess_maintenance_with_uncleared_deposits', 'excess_margin',
-     'excess_margin_with_uncleared_deposits',      'extended_hours_equity',
-     'extended_hours_market_value',                'last_core_equity',
-     'last_core_market_value',                     'market_value',
-     'unwithdrawable_deposits',                    'unwithdrawable_grants',
-     'withdrawable_amount'
-];
+has url => (is       => 'ro',
+            isa      => InstanceOf ['URI'],
+            coerce   => sub ($url) { URI->new($url) },
+            required => 1
+);
+has [
+    qw[adjusted_equity_previous_close adjusted_portfolio_equity_previous_close equity
+        equity_previous_close excess_maintenance excess_maintenance_with_uncleared_deposits
+        excess_margin excess_margin_with_uncleared_deposits
+        last_core_equity last_core_market_value last_core_portfolio_equity
+        market_value
+        portfolio_equity_previous_close
+        unwithdrawable_deposits unwithdrawable_grants
+        withdrawable_amount]
+] => (is => 'ro', isa => Num, required => 1);
+has [
+    qw[extended_hours_equity extended_hours_market_value extended_hours_portfolio_equity]
+] => (is => 'ro', isa => Maybe [Num], required => 1);
 
 =head2 C<start_date( )>
 
 Returns a Time::Moment object.
 
 =cut
-
-sub start_date ($s) {
-    Time::Moment->from_string($s->{start_date} . 'T00:00:00Z');
-}
+has start_date => (
+    is     => 'ro',
+    isa    => InstanceOf ['Time::Moment'],
+    coerce => sub ($date) {
+        Time::Moment->from_string($date . 'T00:00:00.00000Z');
+    }
+);
 
 sub _test_start_date {
     t::Utility::stash('PORTFOLIO')
@@ -111,14 +131,22 @@ sub _test_start_date {
 Returns the related Finance::Robinhood::Equity::Account object.
 
 =cut
+has '_account' => (is       => 'ro',
+                   required => 1,
+                   isa      => InstanceOf ['URI'],
+                   coerce   => sub ($url) { URI->new($url) },
+                   init_arg => 'account'
+);
+has account => (is      => 'ro',
+                isa     => InstanceOf ['Finance::Robinhood::Equity::Account'],
+                builder => 1,
+                lazy    => 1,
+                init_arg => undef
+);
 
-sub account ($s) {
-    my $res = $s->_rh->_get($s->{account});
-    return $res->is_success
-        ? Finance::Robinhood::Equity::Account->new(_rh => $s->_rh,
-                                                   %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+sub _build_account ($s) {
+    $s->robinhood->_req(GET => $s->_account,
+                        as  => 'Finance::Robinhood::Equity::Account');
 }
 
 sub _test_account {

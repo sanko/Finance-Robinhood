@@ -1,4 +1,5 @@
 package Finance::Robinhood::Equity::Mover;
+our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -22,11 +23,14 @@ Finance::Robinhood::Equity::Mover - Represents a Top Moving Equity Instrument
 =head1 METHODS
 
 =cut
-
-our $VERSION = '0.92_003';
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
+use Moo;
+use MooX::Enumeration;
+use Types::Standard qw[Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use URI;
 use Time::Moment;
+use Data::Dump;
+use experimental 'signatures';
+#
 use Finance::Robinhood::Equity::PriceMovement;
 
 sub _test__init {
@@ -35,7 +39,7 @@ sub _test__init {
     isa_ok($top, __PACKAGE__);
     t::Utility::stash('MOVER', $top);    #  Store it for later
 }
-use overload '""' => sub ($s, @) { $s->{instrument_url} }, fallback => 1;
+use overload '""' => sub ($s, @) { $s->instrument_url }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('MOVER') // skip_all();
@@ -43,7 +47,8 @@ sub _test_stringify {
          qr'https://api.robinhood.com/instruments/.+/',);
 }
 #
-has _rh => undef => weak => 1;
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'],);
 
 =head2 C<description( )>
 
@@ -55,7 +60,7 @@ Returns the ticker symbol of the instrument.
 
 =cut
 
-has ['description', 'symbol'];
+has [qw[description symbol]] => (is => 'ro', isa => Str, requried => 1);
 
 =head2 C<updated_at( )>
 
@@ -66,9 +71,11 @@ object.
 
 =cut
 
-sub updated_at($s) {
-    Time::Moment->from_string($s->{updated_at});
-}
+has updated_at => (is     => 'ro',
+                   isa    => InstanceOf ['Time::Moment'],
+                   coerce => sub ($date) { Time::Moment->from_string($date) },
+                   required => 1
+);
 
 sub _test_updated_at {
     t::Utility::stash('MOVER') // skip_all();
@@ -83,13 +90,21 @@ Builds a Finance::Robinhood::Equity::Instrument object.
 
 =cut
 
-sub instrument ($s) {
-    my $res = $s->_rh->_get($s->{instrument_url});
-    $res->is_success
-        ? Finance::Robinhood::Equity::Instrument->new(_rh => $s->_rh,
-                                                      %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+has instrument_url => (is       => 'ro',
+                       isa      => InstanceOf ['URI'],
+                       coerce   => sub ($url) { URI->new($url) },
+                       required => 1
+);
+has instrument => (is      => 'ro',
+                   isa     => InstanceOf ['Finance::Robinhood::Equity'],
+                   builder => 1,
+                   lazy    => 1
+);
+
+sub _build_instrument ($s) {
+    ddx $s;
+    $s->robinhood->_req(GET => $s->instrument_url,
+                        as  => 'Finance::Robinhood::Equity');
 }
 
 sub _test_instrument {
@@ -102,19 +117,33 @@ sub _test_instrument {
 
     my $price_movement = $mover->price_movement();
 
-Builds a Finance::Robinhood::Equity::PriceMovement object.
+Returns a hash with the following keys:
+
+=over
+
+=item C<market_hours_last_movement_pct>
+
+Returns a number of positive of negative percentage points.
+
+=item C<market_hours_last_price>
+
+Returns the actual price.
+
+=back
 
 =cut
 
-sub price_movement ($s) {
-    Finance::Robinhood::Equity::PriceMovement->new(_rh => $s->_rh,
-                                                   %{$s->{price_movement}});
-}
+has price_movement => (is  => 'ro',
+                       isa => Dict [market_hours_last_movement_pct => Num,
+                                    market_hours_last_price        => Num
+                       ],
+                       required => 1
+);
 
 sub _test_price_movement {
     t::Utility::stash('MOVER') // skip_all();
-    isa_ok(t::Utility::stash('MOVER')->price_movement(),
-           'Finance::Robinhood::Equity::PriceMovement');
+    ref_ok(t::Utility::stash('MOVER')->price_movement,
+           'HASH', 'price_movement is a hash');
 }
 
 =head1 LEGAL

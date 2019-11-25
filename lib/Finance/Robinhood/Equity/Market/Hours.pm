@@ -1,4 +1,5 @@
 package Finance::Robinhood::Equity::Market::Hours;
+our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -19,9 +20,13 @@ Operating Hours
 
 =cut
 
-our $VERSION = '0.92_003';
-use Mojo::Base-base, -signatures;
-use Mojo::URL;
+use Moo;
+use MooX::Enumeration;
+use Types::Standard qw[Bool Enum InstanceOf Maybe Num Str StrMatch];
+use URI;
+use Time::Moment;
+use Data::Dump;
+use experimental 'signatures';
 use Time::Moment;
 
 sub _test__init {
@@ -46,7 +51,8 @@ sub _test_stringify {
     is(+t::Utility::stash('HOURS_CLOSED'), '2019-03-16');
 }
 #
-has _rh => undef => weak => 1;
+has robinhood =>
+    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'],);
 
 =head1 METHODS
 
@@ -56,7 +62,11 @@ Returns a true value if opens for trading on this date.
 
 =cut
 
-has ['is_open'];
+has is_open => (is       => 'ro',
+                isa      => Bool,
+                coerce   => sub($bool) { !!$bool },
+                required => 1
+);
 
 =head2 C<opens_at( )>
 
@@ -64,19 +74,6 @@ has ['is_open'];
 
 If the market opens today, this returns a Time::Moment object.
 
-=cut
-
-sub opens_at ($s) {
-    $s->{closes_at} ? Time::Moment->from_string($s->{opens_at}) : ();
-}
-
-sub _test_opens_at {
-    t::Utility::stash('HOURS_OPEN') // skip_all();
-    is(t::Utility::stash('HOURS_OPEN')->opens_at->to_string,
-        '2019-03-15T13:30:00Z');
-    t::Utility::stash('HOURS_CLOSED') // skip_all();
-    is(t::Utility::stash('HOURS_CLOSED')->opens_at, ());
-}
 
 =head2 C<closes_at( )>
 
@@ -84,19 +81,6 @@ sub _test_opens_at {
 
 If the market was open, this returns a Time::Moment object.
 
-=cut
-
-sub closes_at ($s) {
-    $s->{closes_at} ? Time::Moment->from_string($s->{closes_at}) : ();
-}
-
-sub _test_closes_at {
-    t::Utility::stash('HOURS_OPEN') // skip_all();
-    is(t::Utility::stash('HOURS_OPEN')->closes_at->to_string,
-        '2019-03-15T20:00:00Z');
-    t::Utility::stash('HOURS_CLOSED') // skip_all();
-    is(t::Utility::stash('HOURS_CLOSED')->closes_at, ());
-}
 
 =head2 C<extended_opens_at( )>
 
@@ -105,21 +89,6 @@ sub _test_closes_at {
 If the market was open and had an extended hours trading session, this returns
 a Time::Moment object.
 
-=cut
-
-sub extended_opens_at ($s) {
-    $s->{extended_opens_at}
-        ? Time::Moment->from_string($s->{extended_opens_at})
-        : ();
-}
-
-sub _test_extended_opens_at {
-    t::Utility::stash('HOURS_OPEN') // skip_all();
-    is(t::Utility::stash('HOURS_OPEN')->extended_opens_at->to_string,
-        '2019-03-15T13:00:00Z');
-    t::Utility::stash('HOURS_CLOSED') // skip_all();
-    is(t::Utility::stash('HOURS_CLOSED')->extended_opens_at, ());
-}
 
 =head2 C<extended_closes_at( )>
 
@@ -130,10 +99,36 @@ a Time::Moment object.
 
 =cut
 
-sub extended_closes_at ($s) {
-    $s->{extended_closes_at}
-        ? Time::Moment->from_string($s->{extended_closes_at})
-        : ();
+has [qw[opens_at closes_at extended_opens_at extended_closes_at]] => (
+        is  => 'ro',
+        isa => Maybe [InstanceOf ['Time::Moment']],
+        coerce =>
+            sub ($time) { $time // return; Time::Moment->from_string($time) },
+        required => 1
+);
+
+sub _test_opens_at {
+    t::Utility::stash('HOURS_OPEN') // skip_all();
+    is(t::Utility::stash('HOURS_OPEN')->opens_at->to_string,
+        '2019-03-15T13:30:00Z');
+    t::Utility::stash('HOURS_CLOSED') // skip_all();
+    is(t::Utility::stash('HOURS_CLOSED')->opens_at, ());
+}
+
+sub _test_closes_at {
+    t::Utility::stash('HOURS_OPEN') // skip_all();
+    is(t::Utility::stash('HOURS_OPEN')->closes_at->to_string,
+        '2019-03-15T20:00:00Z');
+    t::Utility::stash('HOURS_CLOSED') // skip_all();
+    is(t::Utility::stash('HOURS_CLOSED')->closes_at, ());
+}
+
+sub _test_extended_opens_at {
+    t::Utility::stash('HOURS_OPEN') // skip_all();
+    is(t::Utility::stash('HOURS_OPEN')->extended_opens_at->to_string,
+        '2019-03-15T13:00:00Z');
+    t::Utility::stash('HOURS_CLOSED') // skip_all();
+    is(t::Utility::stash('HOURS_CLOSED')->extended_opens_at, ());
 }
 
 sub _test_extended_closes_at {
@@ -152,9 +147,14 @@ Returns a Time::Moment object.
 
 =cut
 
-sub date ($s) {
-    Time::Moment->from_string($s->{date} . 'T00:00:00Z');
-}
+has date => (
+    is     => 'ro',
+    isa    => InstanceOf ['Time::Moment'],
+    coerce => sub ($date) {
+        Time::Moment->from_string($date . 'T00:00:00Z');
+    },
+    required => 1
+);
 
 sub _test_date {
     t::Utility::stash('HOURS_OPEN') // skip_all();
@@ -170,15 +170,36 @@ sub _test_date {
 This returns a Finance::Robinhood::Equity::Market::Hours object for the next
 day the market is open.
 
+=head2 C<previous_open_hours( )>
+
+This returns a Finance::Robinhood::Equity::Market::Hours object for the
+previous day the market was open.
+
 =cut
 
-sub next_open_hours( $s ) {
-    my $res = $s->_rh->_get($s->{next_open_hours});
-    $res->is_success
-        ? Finance::Robinhood::Equity::Market::Hours->new(_rh => $s->_rh,
-                                                         %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+has '_'
+    .
+    $_ => (is       => 'ro',
+           isa      => Maybe [InstanceOf ['URI']],
+           coerce   => sub($url) { $url ? URI->new($url) : () },
+           init_arg => $_
+    ) for qw[next_open_hours previous_open_hours];
+has [qw[next_open_hours previous_open_hours]] => (
+              is  => 'ro',
+              isa => InstanceOf ['Finance::Robinhood::Equity::Market::Hours'],
+              builder  => 1,
+              lazy     => 1,
+              init_arg => undef
+);
+
+sub _build_next_open_hours($s) {
+    $s->robinhood->_req(GET => $s->_next_open_hours,
+                        as  => 'Finance::Robinhood::Equity::Market::Hours');
+}
+
+sub _build_previous_open_hours($s) {
+    $s->robinhood->_req(GET => $s->_previous_open_hours,
+                        as  => 'Finance::Robinhood::Equity::Market::Hours');
 }
 
 sub _test_next_open_hours {
@@ -188,22 +209,6 @@ sub _test_next_open_hours {
     t::Utility::stash('HOURS_CLOSED') // skip_all();
     is(t::Utility::stash('HOURS_CLOSED')->next_open_hours->date->to_string,
         '2019-03-18T00:00:00Z');
-}
-
-=head2 C<previous_open_hours( )>
-
-This returns a Finance::Robinhood::Equity::Market::Hours object for the
-previous day the market was open.
-
-=cut
-
-sub previous_open_hours( $s ) {
-    my $res = $s->_rh->_get($s->{previous_open_hours});
-    $res->is_success
-        ? Finance::Robinhood::Equity::Market::Hours->new(_rh => $s->_rh,
-                                                         %{$res->json})
-        : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
 }
 
 sub _test_previous_open_hours {
