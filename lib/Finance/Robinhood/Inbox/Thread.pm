@@ -22,30 +22,29 @@ Finance::Robinhood::Inbox::Thread - Represents a Single Conversation Thread
 sub _test__init {
     my $rh     = t::Utility::rh_instance(1);
     my $thread = $rh->inbox->threads->current;
-    isa_ok($thread, __PACKAGE__);
-    t::Utility::stash('THREAD', $thread);    #  Store it for later
+    isa_ok( $thread, __PACKAGE__ );
+    t::Utility::stash( 'THREAD', $thread );    #  Store it for later
 }
 use Moo;
-use Types::Standard
-    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
 use experimental 'signatures';
 #
 use Finance::Robinhood::Types qw[URL UUID Timestamp];
 use Finance::Robinhood::Inbox::Message;
 #
-use overload '""' => sub ($s, @) { $s->id }, fallback => 1;
+use overload '""' => sub ( $s, @ ) { $s->id }, fallback => 1;
 #
 sub _test_stringify {
     t::Utility::stash('THREAD') // skip_all();
-    like(+t::Utility::stash('THREAD'), qr[^\d+$]);
+    like( +t::Utility::stash('THREAD'), qr[^\d+$] );
 }
 #
 
 =head1 METHODS
 
 =cut
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head2 C<avatar_color( )>
 
@@ -53,7 +52,7 @@ If defined, this is a hex color code.
 
 =cut
 
-has avatar_color => (is => 'ro', isa => Str, required => 1);
+has avatar_color => ( is => 'ro', isa => Str, required => 1 );
 
 =head2 C<avatar_url( )>
 
@@ -65,11 +64,12 @@ Returns true if C<avatar_url( )> would return a defined value.
 
 =cut
 
-has avatar_url => (is        => 'ro',
-                   isa       => Maybe [URL],
-                   coerce    => 1,
-                   required  => 1,
-                   predicate => 1
+has avatar_url => (
+    is        => 'ro',
+    isa       => Maybe [URL],
+    coerce    => 1,
+    required  => 1,
+    predicate => 1
 );
 
 =head2 C<display_name( )>
@@ -79,7 +79,7 @@ description).
 
 =cut
 
-has display_name => (is => 'ro', isa => Str, required => 1);
+has display_name => ( is => 'ro', isa => Str, required => 1 );
 
 =head2 C<entity_url( )>
 
@@ -92,11 +92,12 @@ Returns true if C<entity_url( )> would return a defined value.
 
 =cut
 
-has entity_url => (is        => 'ro',
-                   isa       => Maybe [URL],
-                   coerce    => 1,
-                   required  => 1,
-                   predicate => 1
+has entity_url => (
+    is        => 'ro',
+    isa       => Maybe [URL],
+    coerce    => 1,
+    required  => 1,
+    predicate => 1
 );
 
 =head2 C<id( )>
@@ -106,7 +107,7 @@ reason, this is a string of digits and not a UUID.
 
 =cut
 
-has id => (is => 'ro', isa => Str, required => 1);
+has id => ( is => 'ro', isa => Str, required => 1 );
 
 =head2 C<is_critical( )>
 
@@ -122,8 +123,7 @@ Returns true if all messages in this thread have been marked as read.
 
 =cut
 
-has [qw[is_critical is_muted is_read]] =>
-    (is => 'ro', isa => Bool, coerce => 1, required => 1);
+has [qw[is_critical is_muted is_read]] => ( is => 'ro', isa => Bool, coerce => 1, required => 1 );
 
 =head2 C<most_recent_message( )>
 
@@ -131,31 +131,35 @@ Returns the most recent message as a Finance::Robinhood::Inbox::Message object.
 
 =cut
 
-has _most_recent_message => (is        => 'ro',
-                             isa       => Maybe [Dict],
-                             required  => 1,
-                             init_arg  => 'most_recent_message',
-                             predicate => 1
+has _most_recent_message => (
+    is        => 'ro',
+    isa       => Maybe [Dict],
+    required  => 1,
+    init_arg  => 'most_recent_message',
+    predicate => 1
 );
 has most_recent_message => (
-             is  => 'ro',
-             isa => Maybe [InstanceOf ['Finance::Robinhood::Inbox::Message']],
-             lazy     => 1,
-             builder  => 1,
-             init_arg => undef,
-             required => 1
+    is       => 'ro',
+    isa      => Maybe [ InstanceOf ['Finance::Robinhood::Inbox::Message'] ],
+    lazy     => 1,
+    builder  => 1,
+    init_arg => undef,
+    required => 1
 );
 
 sub _build_most_recent_message ($s) {
-    Finance::Robinhood::Inbox::Message->new(robinhood => $s->robinhood,
-                                            %{$s->_most_recent_message});
+    Finance::Robinhood::Inbox::Message->new(
+        robinhood => $s->robinhood,
+        %{ $s->_most_recent_message }
+    );
 }
 
 # Private?
-has options => (is  => 'ro',
-                isa => Dict [allows_free_text => Bool, has_settings => Bool],
-                coerce   => 1,
-                required => 1
+has options => (
+    is       => 'ro',
+    isa      => Dict [ allows_free_text => Bool, has_settings => Bool ],
+    coerce   => 1,
+    required => 1
 );
 
 =head2 C<pagination_id( )>
@@ -164,7 +168,7 @@ Returns the ID used to gather the next page of data.
 
 =cut
 
-has pagination_id => (is => 'ro', isa => Str, required => 1);
+has pagination_id => ( is => 'ro', isa => Str, required => 1 );
 
 =head2 C<short_display_name( )>
 
@@ -173,7 +177,7 @@ a single ticker symbol.
 
 =cut
 
-has short_display_name => (is => 'ro', isa => Str, required => 1);
+has short_display_name => ( is => 'ro', isa => Str, required => 1 );
 
 =head2 C<equity_orders( [...] )>
 
@@ -194,29 +198,34 @@ that!
 
 =cut
 
-sub messages ($s, %opts) {
+sub messages ( $s, %opts ) {
 
     #- `after` - greater than or equal to a date; timestamp or ISO 8601
     #- `before` - less than or equal to a date; timestamp or ISO 8601
-    my $url = URI->new(
-          'https://api.robinhood.com/inbox/threads/' . $s->id . '/messages/');
-    $url->query_form({$opts{before} ? ('before' => +$opts{before}) : (),
-                      $opts{after}  ? ('after'  => +$opts{after})  : ()
-                     }
+    my $url = URI->new( 'https://api.robinhood.com/inbox/threads/' . $s->id . '/messages/' );
+    $url->query_form(
+        {
+            $opts{before} ? ( 'before' => +$opts{before} ) : (),
+            $opts{after}  ? ( 'after'  => +$opts{after} )  : ()
+        }
     );
     Finance::Robinhood::Utilities::Iterator->new(
-                                    robinhood => $s->robinhood,
-                                    url       => $url,
-                                    as => 'Finance::Robinhood::Inbox::Message'
+        robinhood => $s->robinhood,
+        url       => $url,
+        as        => 'Finance::Robinhood::Inbox::Message'
     );
 }
 
 sub _test_messages {
     t::Utility::stash('THREAD') // skip_all();
-    isa_ok(t::Utility::stash('THREAD')->messages,
-           'Finance::Robinhood::Utilities::Iterator');
-    isa_ok(t::Utility::stash('THREAD')->messages->next,
-           'Finance::Robinhood::Inbox::Message');
+    isa_ok(
+        t::Utility::stash('THREAD')->messages,
+        'Finance::Robinhood::Utilities::Iterator'
+    );
+    isa_ok(
+        t::Utility::stash('THREAD')->messages->next,
+        'Finance::Robinhood::Inbox::Message'
+    );
 }
 
 =head1 LEGAL

@@ -17,6 +17,7 @@ Without Fees or Commissions
     $rh->equity('MSFT')->buy(2)->limit(187.34)->submit;
 
 =cut
+
     use strictures 2;
     use namespace::clean;
     use Moo;
@@ -184,10 +185,11 @@ official app and use the C<internal> scope with full access.
             sub {
                 my ( $ctx, $object ) = @_;
                 $ctx->is_blessed || return ();
-                $ctx->class eq 'HTTP::Tiny' ?
-                    { 'dump' => 'HTTP::Tiny object [' . $object->agent . ']' } :
+                $ctx->class eq 'HTTP::Tiny'
+                    ? { 'dump' => 'HTTP::Tiny object [' . $object->agent . ']' }
+                    :
 
-           #$ctx->class eq 'HTTP::Tiny' ? {'dump' => 'HTTP::Tiny object [' . $object->agent . ']'} :
+                    #$ctx->class eq 'HTTP::Tiny' ? {'dump' => 'HTTP::Tiny object [' . $object->agent . ']'} :
                     ();
             }
         ) if $Data::Dump::VERSION && require Data::Dump::Filtered;
@@ -195,21 +197,23 @@ official app and use the C<internal> scope with full access.
 
     sub _req ( $s, $method, $url, %args ) {
         use Data::Dump;
-        ddx \%args;
 
-# TODO:
-# %args may contain the following keys
-#  - headers: key value pairs of http headers
-#  - x_no_auth: boolean value; if true, do not include auth bearer token
-#  - params: key value pairs that will be turned into query params; if value is a ref, it is encoded with json
-#  - json: key value pairs that will be turned into a json encoded body for POST, PUT, PATCH
-#  - form: key value pairs that will be turned into urlencoded body for POST, PUT, PATCH
-#  - query: key value pairs that will be URL encoded
-        $args{query}{$_} = ref $args{query}{$_} eq 'ARRAY' ?
-            join ',', @{ $args{query}{$_} } :
-            $args{query}{$_}
+        #ddx \%args;
+        # TODO:
+        # %args may contain the following keys
+        #  - headers: key value pairs of http headers
+        #  - x_no_auth: boolean value; if true, do not include auth bearer token
+        #  - params: key value pairs that will be turned into query params; if value is a ref, it is encoded with json
+        #  - json: key value pairs that will be turned into a json encoded body for POST, PUT, PATCH
+        #  - form: key value pairs that will be turned into urlencoded body for POST, PUT, PATCH
+        #  - query: key value pairs that will be URL encoded
+        $args{query}{$_}
+            = ref $args{query}{$_} eq 'ARRAY'
+            ? join ',', @{ $args{query}{$_} }
+            : $args{query}{$_}
             for keys %{ $args{query} };
-        ddx \%args;
+
+        #ddx \%args;
         $url = ref $url ? $url->clone : URI->new($url)->clone;    # This clobbers $url otherwise
 
         #$args{query} //= $url->query_form;
@@ -237,19 +241,23 @@ official app and use the C<internal> scope with full access.
             $args{headers}{Authorization} //= join ' ', $s->oauth2_token->token_type,
                 $s->oauth2_token->access_token;
         }
-        carp "$method: $url";
-        ddx \%args;
+
+        #carp "$method: $url";
+        #ddx \%args;
         my $res = Finance::Robinhood::Utilities::Response->new(
             robinhood => $s,
-            %{  $s->client->request(
+            %{
+                $s->client->request(
                     $method => $url,
-                    {   $args{headers} ? ( headers => $args{headers} ) : (),
+                    {
+                        $args{headers} ? ( headers => $args{headers} ) : (),
                         $args{content} ? ( content => $args{content} ) : (),
                     }
                 )
             }
         );
-        ddx $res;
+
+        #ddx $res;
         $res;
     }
 
@@ -261,22 +269,23 @@ official app and use the C<internal> scope with full access.
             POST          => 'https://api.robinhood.com/oauth2/token/',
             no_auth_token => 1,                                           # NO AUTH INFO SENT!
             (
-                $opt{challenge_id} ? (
+                $opt{challenge_id}
+                ? (
                     headers => { 'X-Robinhood-Challenge-Response-ID' => delete $opt{challenge_id} }
-                    ) :
-                    ()
+                    )
+                : ()
             ),
             json => {
                 grant_type => ( $opt{grant_type} // 'password' ),
-                defined $opt{grant_type} &&
-                    $opt{grant_type} eq 'refresh_token' &&
-                    defined $opt{refresh_token} ? ( refresh_token => $opt{refresh_token} ) : (
+                defined $opt{grant_type}
+                    && $opt{grant_type} eq 'refresh_token'
+                    && defined $opt{refresh_token} ? ( refresh_token => $opt{refresh_token} ) : (
                     challenge_type => 'email',
                     device_token   => $opt{device_token},
                     expires_in     => 86400,
-                    scope          => $opt{scope} ?
-                        ( join ',', ref $opt{scope} ? @{ $opt{scope} } : $opt{scope} ) :
-                        'internal',
+                    scope          => $opt{scope}
+                    ? ( join ',', ref $opt{scope} ? @{ $opt{scope} } : $opt{scope} )
+                    : 'internal',
                     ( $opt{username} ? ( username => $opt{username} ) : () ),
                     ( $opt{password} ? ( password => $opt{password} ) : () ),
                     ( $opt{mfa_code} ? ( mfa_code => $opt{mfa_code} ) : () ),
@@ -312,8 +321,9 @@ official app and use the C<internal> scope with full access.
                     %{ $res->json->{challenge} }
                 )
             );                                                        # Call it
-            return $challenge->is_validated ? $s->_login( %opt, challenge_id => $challenge->id ) :
-                $challenge;
+            return $challenge->is_validated
+                ? $s->_login( %opt, challenge_id => $challenge->id )
+                : $challenge;
         }
         return $_[0] = $res;
     }
@@ -409,10 +419,12 @@ An iterator containing Finance::Robinhood::News objects is returned.
 
     sub news ( $s, $symbol_or_id ) {
         my $uri = URI->new('https://midlands.robinhood.com/news/');
-        $uri->query_form( $symbol_or_id
-                =~ /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i ?
-                'currency_id' :
-                'symbol' => uc $symbol_or_id );
+        $uri->query_form(
+            $symbol_or_id
+                =~ /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            ? 'currency_id'
+            : 'symbol' => uc $symbol_or_id
+        );
         Finance::Robinhood::Utilities::Iterator->new(
             robinhood => $s,
             url       => $uri,
@@ -424,12 +436,14 @@ An iterator containing Finance::Robinhood::News objects is returned.
         my $rh   = t::Utility::rh_instance();
         my $msft = $rh->news('MSFT');
         isa_ok( $msft, 'Finance::Robinhood::Utilities::Iterator' );
-        $msft->has_next ? isa_ok( $msft->next, 'Finance::Robinhood::News' ) :
-            pass('Fake it... Might not be any news on the weekend');
+        $msft->has_next
+            ? isa_ok( $msft->next, 'Finance::Robinhood::News' )
+            : pass('Fake it... Might not be any news on the weekend');
         my $btc = $rh->news('d674efea-e623-4396-9026-39574b92b093');
         isa_ok( $btc, 'Finance::Robinhood::Utilities::Iterator' );
-        $btc->has_next ? isa_ok( $btc->next, 'Finance::Robinhood::News' ) :
-            pass('Fake it... Might not be any news on the weekend');
+        $btc->has_next
+            ? isa_ok( $btc->next, 'Finance::Robinhood::News' )
+            : pass('Fake it... Might not be any news on the weekend');
     }
 
 =head2 C<feed( )>
@@ -824,7 +838,8 @@ If you would only like orders before a certain date, you can do that!
         #- `instrument` - equity instrument URL
         my $url = URI->new('https://api.robinhood.com/orders/');
         $url->query_form(
-            {   $opts{instrument} ? ( instrument        => $opts{instrument}->url ) : (),
+            {
+                $opts{instrument} ? ( instrument        => $opts{instrument}->url ) : (),
                 $opts{before}     ? ( 'updated_at[lte]' => +$opts{before} )         : (),
                 $opts{after}      ? ( 'updated_at[gte]' => +$opts{after} )          : ()
             }
@@ -1065,11 +1080,11 @@ You do not need to be logged in for this to work.
             (
                 grep {/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i}
                     @symbols_or_ids_or_urls
-            ) ?
-                ( grep {/^https?/i} @symbols_or_ids_or_urls ) ?
-                'instruments' :
-                    'ids' :
-                'symbols' => join( ',', @symbols_or_ids_or_urls )
+            )
+            ? ( grep {/^https?/i} @symbols_or_ids_or_urls )
+                    ? 'instruments'
+                    : 'ids'
+            : 'symbols' => join( ',', @symbols_or_ids_or_urls )
         );
         Finance::Robinhood::Utilities::Iterator->new(
             robinhood => $s,
@@ -1080,10 +1095,14 @@ You do not need to be logged in for this to work.
 
     sub _test_equity_fundamentals {
         my $rh = t::Utility::rh_instance(1);
-        isa_ok( $rh->equity_fundamentals('MSFT')->current,
-            'Finance::Robinhood::Equity::Fundamentals' );
-        isa_ok( $rh->equity_fundamentals('50810c35-d215-4866-9758-0ada4ac79ffa')->current,
-            'Finance::Robinhood::Equity::Fundamentals' );
+        isa_ok(
+            $rh->equity_fundamentals('MSFT')->current,
+            'Finance::Robinhood::Equity::Fundamentals'
+        );
+        isa_ok(
+            $rh->equity_fundamentals('50810c35-d215-4866-9758-0ada4ac79ffa')->current,
+            'Finance::Robinhood::Equity::Fundamentals'
+        );
         isa_ok(
             $rh->equity_fundamentals(
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/')
@@ -1132,8 +1151,10 @@ See also https://en.wikipedia.org/wiki/Market_Identifier_Code
     }
 
     sub _test_equity_market_by_mic {
-        isa_ok( t::Utility::rh_instance(0)->equity_market_by_mic('XNAS'),
-            'Finance::Robinhood::Equity::Market' );
+        isa_ok(
+            t::Utility::rh_instance(0)->equity_market_by_mic('XNAS'),
+            'Finance::Robinhood::Equity::Market'
+        );
     }
 
     # TODO:
@@ -1296,7 +1317,6 @@ Finance::Robinhood::Options::Contract objects.
 =cut
 
     sub options ( $s, @filter ) {
-        ddx \@filter;
         my $url = URI->new('https://api.robinhood.com/options/chains/');
 
         #$url->query_form(
@@ -1310,11 +1330,12 @@ Finance::Robinhood::Options::Contract objects.
         #    ) ? (ids => [map { $_->chain_id } @filter]) : @filter
         #);
         $url->query_form(
-            {   ( grep { ref $_ eq 'Finance::Robinhood::Equity' } @filter ) ?
-                    ( equity_instrument_ids => [ map { $_->id } @filter ] ) :
-                    ( grep { ref $_ eq 'Finance::Robinhood::Options::Contract' } @filter ) ?
-                    ( ids => [ map { $_->chain_id } @filter ] ) :
-                    @filter
+            {
+                  ( grep { ref $_ eq 'Finance::Robinhood::Equity' } @filter )
+                ? ( equity_instrument_ids => [ map { $_->id } @filter ] )
+                : ( grep { ref $_ eq 'Finance::Robinhood::Options::Contract' } @filter )
+                ? ( ids => [ map { $_->chain_id } @filter ] )
+                : @filter
             }
             ),
             Finance::Robinhood::Utilities::Iterator->new(
@@ -1467,9 +1488,9 @@ Finance::Robinhood::Options::Position object.
     sub options_position_by_id ( $s, $id ) {
         my $res = $s->_get( 'https://api.robinhood.com/options/positions/' . $id . '/' );
         require Finance::Robinhood::Options::Position if $res->is_success;
-        return $res->is_success ?
-            Finance::Robinhood::Options::Position->new( robinhood => $s, %{ $res->json } ) :
-            $res;
+        return $res->is_success
+            ? Finance::Robinhood::Options::Position->new( robinhood => $s, %{ $res->json } )
+            : $res;
     }
 
     sub _test_options_position_by_id {
@@ -1577,7 +1598,8 @@ If you would only like orders before a certain date, you can do that!
         #- `contract` - options instrument URL
         my $url = URI->new('https://api.robinhood.com/options/orders/');
         $url->query_form(
-            {   $opts{instrument} ? ( instrument        => $opts{contract}->url ) : (),
+            {
+                $opts{instrument} ? ( instrument        => $opts{contract}->url ) : (),
                 $opts{before}     ? ( 'updated_at[lte]' => +$opts{before} )       : (),
                 $opts{after}      ? ( 'updated_at[gte]' => +$opts{after} )        : ()
             }
@@ -1653,6 +1675,7 @@ Returns a Finance::Robinhood::Currency::Account object.
 You need to be logged in and have access to Robinhood Crypto for this to work.
 
 =cut
+
     has currency_account => (
         is        => 'ro',
         isa       => InstanceOf ['Finance::Robinhood::Currency::Account'],
@@ -1880,7 +1903,8 @@ for this to work.
 =cut
 
     sub currency_pair_by_name ( $s, $id ) {
-        [   grep {
+        [
+            grep {
                 my $asset = $_->asset_currency;
                 ( $id eq $asset->code && $_->quote_currency->code eq 'USD' ) || $id eq $asset->name
             } @{ $s->search($id)->{currency_pairs} }
@@ -2310,8 +2334,8 @@ C<$latitude> and C<$longitude> coordinates must be in decimal degrees.
                 $latitude, $longitude
             ),
 
-# Note: As of today, even though Robinhood returns value in a paginated list with a defined next page,
-# grabbing that second page results in a server error.
+            # Note: As of today, even though Robinhood returns value in a paginated list with a defined next page,
+            # grabbing that second page results in a server error.
             as => 'Finance::Robinhood::Cash::ATM'
         );
     }
@@ -2359,8 +2383,9 @@ contain these keys:
         my $rh       = t::Utility::rh_instance(1);
         my $balances = $rh->cash_flow();
         ref_ok( $balances, 'HASH' );
-        ddx $balances;
-        die;
+
+        #ddx $balances;
+        #die;
         ref_ok( $balances->{$_}, 'HASH' ) for qw[cash_in cash_out];
     }
 

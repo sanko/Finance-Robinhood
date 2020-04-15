@@ -24,8 +24,7 @@ Instrument
 
 use Moo;
 use MooX::Enumeration;
-use Types::Standard
-    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
 use URI;
 use Time::Moment;
 use Data::Dump;
@@ -34,15 +33,13 @@ use experimental 'signatures';
 use Finance::Robinhood::Options;
 
 sub _test__init {
-    my $rh = t::Utility::rh_instance(1);
-    my $quote = $rh->options_instrument_by_id(
-                             '78ff8b76-4886-40bd-bfc8-b563b17c99c0')->quote();
-    isa_ok($quote, __PACKAGE__);
-    t::Utility::stash('QUOTE', $quote);    #  Store it for later
+    my $rh    = t::Utility::rh_instance(1);
+    my $quote = $rh->options_instrument_by_id('78ff8b76-4886-40bd-bfc8-b563b17c99c0')->quote();
+    isa_ok( $quote, __PACKAGE__ );
+    t::Utility::stash( 'QUOTE', $quote );    #  Store it for later
 }
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head1 METHODS
 
@@ -122,19 +119,20 @@ The price at the most recent close.
 
 =cut
 
-has ['adjusted_mark_price',      'ask_price',
-     'ask_size',                 'bid_price',
-     'bid_size',                 'break_even_price',
-     'chance_of_profit_long',    'chance_of_profit_short',
-     'delta',                    'gamma',
-     'high_fill_rate_buy_price', 'high_fill_rate_sell_price',
-     'high_price',               'last_trade_price',
-     'last_trade_size',          'low_fill_rate_buy_price',
-     'low_fill_rate_sell_price', 'low_price',
-     'open_interest',            'previous_close_price',
-     'rho',                      'theta',
-     'vega',                     'volume',
-] => (is => 'ro', isa => Str, required => 1);
+has [
+    'adjusted_mark_price',      'ask_price',
+    'ask_size',                 'bid_price',
+    'bid_size',                 'break_even_price',
+    'chance_of_profit_long',    'chance_of_profit_short',
+    'delta',                    'gamma',
+    'high_fill_rate_buy_price', 'high_fill_rate_sell_price',
+    'high_price',               'last_trade_price',
+    'last_trade_size',          'low_fill_rate_buy_price',
+    'low_fill_rate_sell_price', 'low_price',
+    'open_interest',            'previous_close_price',
+    'rho',                      'theta',
+    'vega',                     'volume',
+] => ( is => 'ro', isa => Str, required => 1 );
 
 =head2 C<previous_close_date( )>
 
@@ -145,12 +143,12 @@ Returns a Time::Moment object.
 =cut
 
 sub previous_close_date ($s) {
-    Time::Moment->from_string($s->{previous_close_date} . 'T16:30:00-05:00');
+    Time::Moment->from_string( $s->{previous_close_date} . 'T16:30:00-05:00' );
 }
 
 sub _test_previous_close_date {
     t::Utility::stash('QUOTE') // skip_all();
-    isa_ok(t::Utility::stash('QUOTE')->previous_close_date(), 'Time::Moment');
+    isa_ok( t::Utility::stash('QUOTE')->previous_close_date(), 'Time::Moment' );
 }
 
 =head2 C<instrument( )>
@@ -162,18 +160,22 @@ Loops back to a Finance::Robinhood::Options::Instrument object.
 =cut
 
 sub instrument ($s) {
-    my $res = $s->_rh->_get($s->{instrument});
+    my $res = $s->_rh->_get( $s->{instrument} );
     $res->is_success
-        ? Finance::Robinhood::Options::Instrument->new(_rh => $s->_rh,
-                                                       %{$res->json})
+        ? Finance::Robinhood::Options::Instrument->new(
+        _rh => $s->_rh,
+        %{ $res->json }
+        )
         : Finance::Robinhood::Error->new(
-             $res->is_server_error ? (details => $res->message) : $res->json);
+        $res->is_server_error ? ( details => $res->message ) : $res->json );
 }
 
 sub _test_instrument {
     t::Utility::stash('QUOTE') // skip_all();
-    isa_ok(t::Utility::stash('QUOTE')->instrument(),
-           'Finance::Robinhood::Options::Instrument');
+    isa_ok(
+        t::Utility::stash('QUOTE')->instrument(),
+        'Finance::Robinhood::Options::Instrument'
+    );
 }
 
 =head1 LEGAL

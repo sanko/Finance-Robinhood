@@ -35,14 +35,13 @@ sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $msft = $rh->news('MSFT')->current;
     my $btc  = $rh->news('d674efea-e623-4396-9026-39574b92b093')->current;
-    isa_ok($msft, __PACKAGE__);
-    t::Utility::stash('MSFT', $msft);    #  Store it for later
-    isa_ok($btc, __PACKAGE__);
-    t::Utility::stash('BTC', $btc);      #  Store it for later
+    isa_ok( $msft, __PACKAGE__ );
+    t::Utility::stash( 'MSFT', $msft );    #  Store it for later
+    isa_ok( $btc, __PACKAGE__ );
+    t::Utility::stash( 'BTC', $btc );      #  Store it for later
 }
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head2 C<api_source( )>
 
@@ -79,15 +78,13 @@ Returns the article's unique ID.
 
 =cut
 
-has [qw[api_source source]] => (is => 'ro', isa => Str, required => 1);
-has author => (is => 'ro', isa => Maybe [Str], required => 1, predicate => 1);
-has currency_id =>
-    (is => 'ro', isa => UUIDBroken | StrMatch [qr[^None$]], predicate => 1);
-has num_clicks => (is => 'ro', isa => Num, required => 1);
-has [qw[summary title]] => (is => 'ro', isa => Str, required => 1);
-has preview_text =>
-    (is => 'ro', isa => Maybe [Str], required => 1, predicate => 1);
-has uuid => (is => 'ro', isa => UUID | UUIDBroken, required => 1);
+has [qw[api_source source]] => ( is => 'ro', isa => Str, required => 1 );
+has author => ( is => 'ro', isa => Maybe [Str], required => 1, predicate => 1 );
+has currency_id => ( is => 'ro', isa => UUIDBroken | StrMatch [qr[^None$]], predicate => 1 );
+has num_clicks  => ( is => 'ro', isa => Num, required => 1 );
+has [qw[summary title]] => ( is => 'ro', isa => Str, required => 1 );
+has preview_text => ( is => 'ro', isa => Maybe [Str],       required => 1, predicate => 1 );
+has uuid         => ( is => 'ro', isa => UUID | UUIDBroken, required => 1 );
 
 =head2 C<preview_image_url( )>
 
@@ -104,8 +101,7 @@ URI object containing a direct link to the article.
 
 =cut
 
-has [qw[preview_image_url relay_url url]] =>
-    (is => 'ro', isa => URL, coerce => 1, requried => 1);
+has [qw[preview_image_url relay_url url]] => ( is => 'ro', isa => URL, coerce => 1, requried => 1 );
 
 =head2 C<currency_id( )>
 
@@ -118,24 +114,26 @@ Finance::Robinhood::Currency object.
 
 =cut
 
-has currency => (is  => 'ro',
-                 isa => Maybe [InstanceOf ['Finance::Robinhood::Currency']],
-                 builder  => 1,
-                 lazy     => 1,
-                 init_arg => undef
+has currency => (
+    is       => 'ro',
+    isa      => Maybe [ InstanceOf ['Finance::Robinhood::Currency'] ],
+    builder  => 1,
+    lazy     => 1,
+    init_arg => undef
 );
 
 sub _build_currency($s) {
-    $s->has_currency_id &&
-        $s->currency_id ne 'None'
-        ? $s->robinhood->currency_by_id($s->currency_id)
+    $s->has_currency_id && $s->currency_id ne 'None'
+        ? $s->robinhood->currency_by_id( $s->currency_id )
         : ();
 }
 
 sub _test_currency {
     t::Utility::stash('BTC') // skip_all();
-    isa_ok(t::Utility::stash('BTC')->currency,
-           'Finance::Robinhood::Currency');
+    isa_ok(
+        t::Utility::stash('BTC')->currency,
+        'Finance::Robinhood::Currency'
+    );
 }
 
 =head2 C<related_equities( )>
@@ -145,23 +143,24 @@ the Finance::Robihood::Equity objects as a list reference.
 
 =cut
 
-has '_related_instruments' => (is       => 'ro',
-                               isa      => ArrayRef [UUID],
-                               requried => 1,
-                               init_arg => 'related_instruments',
-                               coerce   => 1
+has '_related_instruments' => (
+    is       => 'ro',
+    isa      => ArrayRef [UUID],
+    requried => 1,
+    init_arg => 'related_instruments',
+    coerce   => 1
 );
 has related_equities => (
-                  is  => 'ro',
-                  isa => ArrayRef [InstanceOf ['Finance::Robinhood::Equity']],
-                  builder  => 1,
-                  lazy     => 1,
-                  init_arg => undef
+    is       => 'ro',
+    isa      => ArrayRef [ InstanceOf ['Finance::Robinhood::Equity'] ],
+    builder  => 1,
+    lazy     => 1,
+    init_arg => undef
 );
 
 sub _build_related_equities($s) {
     scalar $s->_related_instruments
-        ? [$s->robinhood->equities_by_id(@{$s->_related_instruments})]
+        ? [ $s->robinhood->equities_by_id( @{ $s->_related_instruments } ) ]
         : [];
 }
 
@@ -169,9 +168,11 @@ sub _test_related_equities {
     t::Utility::stash('MSFT') // skip_all();
 
     # List might be empty. :(
-    scalar(t::Utility::stash('MSFT')->related_equities) || skip_all();
-    isa_ok(t::Utility::stash('MSFT')->related_equities->[0],
-           'Finance::Robinhood::Equity');
+    scalar( t::Utility::stash('MSFT')->related_equities ) || skip_all();
+    isa_ok(
+        t::Utility::stash('MSFT')->related_equities->[0],
+        'Finance::Robinhood::Equity'
+    );
 }
 
 =head2 C<published_at( )>
@@ -189,17 +190,16 @@ object.
 
 =cut
 
-has [qw[published_at updated_at]] =>
-    (is => 'ro', isa => Timestamp, coerce => 1, required => 1);
+has [qw[published_at updated_at]] => ( is => 'ro', isa => Timestamp, coerce => 1, required => 1 );
 
 sub _test_published_at {
     t::Utility::stash('MSFT') // skip_all();
-    isa_ok(t::Utility::stash('MSFT')->published_at, 'Time::Moment');
+    isa_ok( t::Utility::stash('MSFT')->published_at, 'Time::Moment' );
 }
 
 sub _test_updated_at {
     t::Utility::stash('MSFT') // skip_all();
-    isa_ok(t::Utility::stash('MSFT')->updated_at, 'Time::Moment');
+    isa_ok( t::Utility::stash('MSFT')->updated_at, 'Time::Moment' );
 }
 
 =head1 LEGAL

@@ -171,6 +171,7 @@ Returns an object with the following methods:
 =back
 
 =cut
+
 {
     package    # Hide it!
         Finance::Robinhood::User::AdditionalInfo;
@@ -232,8 +233,10 @@ sub _build_additional_info($s) {
 
 sub _test_additional_info {
     t::Utility::stash('USER') // skip_all('No user object in stash');
-    isa_ok( t::Utility::stash('USER')->additional_info,
-        'Finance::Robinhood::User::AdditionalInfo' );
+    isa_ok(
+        t::Utility::stash('USER')->additional_info,
+        'Finance::Robinhood::User::AdditionalInfo'
+    );
     isa_ok( t::Utility::stash('USER')->additional_info->updated_at, 'Time::Moment' );
 }
 

@@ -118,6 +118,7 @@ has symbol => ( is => 'ro', isa => Str, required => 1 );
 Loops back to a Finance::Robinhood::Equity object.
 
 =cut
+
 has instrument => ( is => 'ro', isa => URL, coerce => 1, required => 1 );
 has equity     => (
     is   => 'ro',

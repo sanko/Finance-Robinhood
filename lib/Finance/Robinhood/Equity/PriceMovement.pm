@@ -34,20 +34,19 @@ use experimental 'signatures';
 
 sub _test__init {
     my $rh  = t::Utility::rh_instance(1);
-    my $top = $rh->top_movers(direction => 'up')->current->price_movement;
-    isa_ok($top, __PACKAGE__);
-    t::Utility::stash('MOVEMENT', $top);    #  Store it for later
+    my $top = $rh->top_movers( direction => 'up' )->current->price_movement;
+    isa_ok( $top, __PACKAGE__ );
+    t::Utility::stash( 'MOVEMENT', $top );    #  Store it for later
 }
-use overload '""' => sub ($s, @) { $s->{market_hours_last_movement_pct} },
+use overload '""' => sub ( $s, @ ) { $s->{market_hours_last_movement_pct} },
     fallback      => 1;
 
 sub _test_stringify {
     t::Utility::stash('MOVEMENT') // skip_all();
-    like(+t::Utility::stash('MOVEMENT'), qr[^\-?\d+\.\d+$],);
+    like( +t::Utility::stash('MOVEMENT'), qr[^\-?\d+\.\d+$], );
 }
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head2 C<market_hours_last_movement_pct( )>
 
@@ -60,7 +59,7 @@ Returns the actual price.
 =cut
 
 has [qw[market_hours_last_movement_pct market_hours_last_price]] =>
-    (is => 'ro', isa => Num, required => 1);
+    ( is => 'ro', isa => Num, required => 1 );
 
 =head1 LEGAL
 

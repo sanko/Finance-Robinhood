@@ -44,6 +44,7 @@ types such as stop limits that are held up to 90 days:
     $order->stop(24.50)->gtc->limit->submit;
 
 =cut
+
 use strictures 2;
 use namespace::clean;
 use HTTP::Tiny;
@@ -161,12 +162,13 @@ sub _dump ( $s, $test = 0 ) {
         quantity      => $s->quantity,
         time_in_force => $s->time_in_force,
         ref_id        => $test ? '00000000-0000-0000-0000-000000000000' : gen_uuid(),
-        $test ? (
+        $test
+        ? (
         price => _as_price( $s->has_limit ? $s->limit : '5.00' ),
         type  => $s->has_limit ? 'limit' : 'market'
-        ) :
-        $s->has_limit() ? ( price => $s->limit, type => 'limit' ) :
-        ( price => $s->instrument->prices( live => 0 )->price, type => 'market' ),
+        )
+        : $s->has_limit() ? ( price => $s->limit, type => 'limit' )
+        : ( price => $s->instrument->prices( live => 0 )->price, type => 'market' ),
         $s->has_stop() ? ( stop_price => _as_price( $s->stop ) ) : (),
         trigger => $s->trigger,
         $s->is_extended_hours            ? ( extended_hours            => 'true' )           : (),
@@ -191,7 +193,8 @@ sub _test_stop {
     my $order = t::Utility::stash('MSFT')->buy(3)->stop(3.40);
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '5.00',
@@ -238,8 +241,10 @@ You may set a dollar amount based trailing stop with this.
 
 =cut
 
-sub trailing_stop ( $s, $offset,
-    $trailing_stop_price = $s->stop // $s->instrument->prices( live => 0 )->price ) {
+sub trailing_stop (
+    $s, $offset,
+    $trailing_stop_price = $s->stop // $s->instrument->prices( live => 0 )->price
+) {
     $s->trailing_peg(
         $offset =~ m[^(\d+)\%] ? { type => 'percentage', percentage => $offset } : {
             type  => 'price',
@@ -261,7 +266,8 @@ sub _test_trailing_stop {
     my $order = t::Utility::stash('MSFT')->buy(3)->stop(3.40)->trailing_stop(1)->limit(4.93);
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '4.93',
@@ -303,7 +309,8 @@ sub _test_limit {
     my $order = t::Utility::stash('MSFT')->buy(3)->limit(3.40);
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '3.40',
@@ -343,7 +350,8 @@ sub _test_buy {
     my $order = t::Utility::stash('MSFT')->buy(3);
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '5.00',
@@ -364,7 +372,8 @@ sub _test_sell {
     my $order = t::Utility::stash('MSFT')->sell(3);
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '5.00',
@@ -427,7 +436,8 @@ sub _test_gfd {
     my $order = t::Utility::stash('MSFT')->sell(3)->gfd();
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '5.00',
@@ -448,7 +458,8 @@ sub _test_gtc {
     my $order = t::Utility::stash('MSFT')->sell(3)->gtc();
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '5.00',
@@ -469,7 +480,8 @@ sub _test_fok {
     my $order = t::Utility::stash('MSFT')->sell(3)->fok();
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '5.00',
@@ -490,7 +502,8 @@ sub _test_ioc {
     my $order = t::Utility::stash('MSFT')->sell(3)->ioc();
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '5.00',
@@ -511,7 +524,8 @@ sub _test_opg {
     my $order = t::Utility::stash('MSFT')->sell(3)->opg();
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '5.00',
@@ -547,7 +561,8 @@ sub _test_pre_ipo {
     my $order = t::Utility::stash('MSFT')->sell(3)->pre_ipo();
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '5.00',
@@ -566,7 +581,8 @@ sub _test_pre_ipo {
     $order = t::Utility::stash('MSFT')->sell(3)->pre_ipo();
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '5.00',
@@ -601,7 +617,8 @@ sub _test_override_day_trade_checks {
     my $order = t::Utility::stash('MSFT')->sell(3)->override_day_trade_checks();
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price                     => '5.00',
@@ -620,7 +637,8 @@ sub _test_override_day_trade_checks {
     $order = t::Utility::stash('MSFT')->sell(3)->override_day_trade_checks;
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price                     => '5.00',
@@ -656,7 +674,8 @@ sub _test_override_dtbp_checks {
     my $order = t::Utility::stash('MSFT')->sell(3)->override_dtbp_checks();
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price                => '5.00',
@@ -675,7 +694,8 @@ sub _test_override_dtbp_checks {
     $order = t::Utility::stash('MSFT')->sell(3)->override_dtbp_checks;
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price                => '5.00',
@@ -714,7 +734,8 @@ sub _test_extended_hours {
     my $order = t::Utility::stash('MSFT')->sell(3)->extended_hours;
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price          => '5.00',
@@ -733,7 +754,8 @@ sub _test_extended_hours {
     $order = t::Utility::stash('MSFT')->sell(3)->extended_hours;
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price          => '5.00',
@@ -791,7 +813,8 @@ sub _test_z_advanced_orders {
     my $order = t::Utility::stash('MSFT')->sell(3)->stop('4.00')->limit(3.55);
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '3.55',
@@ -809,7 +832,8 @@ sub _test_z_advanced_orders {
     $order = t::Utility::stash('MSFT')->sell(3)->stop('4.00')->gtc;
     is(
         { $order->_dump(1) },
-        {   account => '--private--',
+        {
+            account => '--private--',
             instrument =>
                 'https://api.robinhood.com/instruments/50810c35-d215-4866-9758-0ada4ac79ffa/',
             price         => '5.00',

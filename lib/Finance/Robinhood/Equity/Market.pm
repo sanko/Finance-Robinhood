@@ -31,19 +31,20 @@ use Finance::Robinhood::Equity::Market::Hours;
 sub _test__init {
     my $rh     = t::Utility::rh_instance(0);
     my $market = $rh->equity_market_by_mic('XNAS');    # NASDAQ
-    isa_ok($market, __PACKAGE__);
-    t::Utility::stash('MARKET', $market);              #  Store it for later
+    isa_ok( $market, __PACKAGE__ );
+    t::Utility::stash( 'MARKET', $market );            #  Store it for later
 }
-use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
+use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('MARKET') // skip_all();
-    is(+t::Utility::stash('MARKET'),
-        'https://api.robinhood.com/markets/XNAS/');
+    is(
+        +t::Utility::stash('MARKET'),
+        'https://api.robinhood.com/markets/XNAS/'
+    );
 }
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'],);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'], );
 
 =head1 METHODS
 
@@ -79,23 +80,25 @@ Timezone of the exchange/market.
 =cut
 
 has [qw[acronym city country mic name operating_mic timezone]] =>
-    (is => 'ro', isa => Str, required => 1);
+    ( is => 'ro', isa => Str, required => 1 );
 
 =head2 C<website()>
 
 Website of the exchange in a Mojo::URL object.
 
 =cut
-has [qw[website url]] => (is       => 'ro',
-                          isa      => InstanceOf ['URI'],
-                          coerce   => sub ($url) { URI->new($url) },
-                          required => 1
+
+has [qw[website url]] => (
+    is       => 'ro',
+    isa      => InstanceOf ['URI'],
+    coerce   => sub ($url) { URI->new($url) },
+    required => 1
 );
 
 sub _test_website {
     t::Utility::stash('MARKET') // skip_all();
-    isa_ok(t::Utility::stash('MARKET')->website, 'Mojo::URL');
-    is(+t::Utility::stash('MARKET')->website, 'www.nasdaq.com');
+    isa_ok( t::Utility::stash('MARKET')->website, 'Mojo::URL' );
+    is( +t::Utility::stash('MARKET')->website, 'www.nasdaq.com' );
 }
 
 =head2 C<todays_hours( )>
@@ -107,15 +110,17 @@ Return a Finance::Robinhood::Equity::Market::Hours object with today's data.
 =cut
 
 sub todays_hours ( $s ) {
-    $s->robinhood->_req(GET => $s->_todays_hours,
-                        as  => 'Finance::Robinhood::Equity::Market::Hours');
+    $s->robinhood->_req(
+        GET => $s->_todays_hours,
+        as  => 'Finance::Robinhood::Equity::Market::Hours'
+    );
 }
 
 sub _test_todays_hours {
     t::Utility::stash('MARKET') // skip_all();
     my $hours = t::Utility::stash('MARKET')->todays_hours();
-    isa_ok($hours, 'Finance::Robinhood::Equity::Market::Hours');
-    ok($hours->date <= Time::Moment->now_utc);
+    isa_ok( $hours, 'Finance::Robinhood::Equity::Market::Hours' );
+    ok( $hours->date <= Time::Moment->now_utc );
 }
 
 =head2 C<hours( [...] )>
@@ -129,18 +134,21 @@ gather data for any supported date.
 
 =cut
 
-sub hours ($s, $date = Time::Moment->now) {
+sub hours ( $s, $date = Time::Moment->now ) {
     $s->robinhood->_req(
-                GET => $s->url . 'hours/' . $date->strftime('%Y-%m-%d') . '/',
-                as  => 'Finance::Robinhood::Equity::Market::Hours');
+        GET => $s->url . 'hours/' . $date->strftime('%Y-%m-%d') . '/',
+        as  => 'Finance::Robinhood::Equity::Market::Hours'
+    );
 }
 
 sub _test_hours {
     t::Utility::stash('MARKET') // skip_all();
-    my $hours = t::Utility::stash('MARKET')->hours(Time::Moment->now);
-    isa_ok($hours, 'Finance::Robinhood::Equity::Market::Hours');
-    is($hours->date->strftime('%Y-%m-%d'),
-        Time::Moment->now->strftime('%Y-%m-%d'));
+    my $hours = t::Utility::stash('MARKET')->hours( Time::Moment->now );
+    isa_ok( $hours, 'Finance::Robinhood::Equity::Market::Hours' );
+    is(
+        $hours->date->strftime('%Y-%m-%d'),
+        Time::Moment->now->strftime('%Y-%m-%d')
+    );
 }
 
 =head1 LEGAL

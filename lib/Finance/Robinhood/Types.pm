@@ -9,21 +9,20 @@ use Time::Moment;
 use URI;
 use Data::Dump;
 #
-class_type Timestamp => {class => 'Time::Moment'};
+class_type Timestamp => { class => 'Time::Moment' };
 coerce
     Timestamp => from Int,
     via { Time::Moment->from_epoch($_) }, from Str,
     via { Time::Moment->from_string($_) };
 #
-declare UUID => as StrMatch [
-    qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
-];
+declare UUID =>
+    as StrMatch [qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i];
 
 # Some of my early ref_id UUIDs weren't v4 and RH accepted them anyway...
-declare UUIDBroken => as StrMatch [
-         qr[^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$]i];
+declare UUIDBroken =>
+    as StrMatch [qr[^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$]i];
 #
-class_type URL => {class => 'URI'};
+class_type URL => { class => 'URI' };
 coerce URL     => from Str, via { URI->new($_) };
 #
 coerce

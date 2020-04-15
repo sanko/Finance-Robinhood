@@ -1,26 +1,76 @@
+use strictures 2;
 use Test2::V0;    # Samesame
 use Test2::Tools::Subtest qw[subtest_streamed];
 use Test2::Tools::Compare qw[isnt];
+use Test2::Bundle::Extended;
+use Test2::Tools::AsyncSubtest qw[async_subtest];
 use Dotenv;
 use lib '../../lib', '../lib', 'lib';
 $|++;
 
 =for dev testing
 
-DEV note: To run *all* tests, you need to provide login info. Do this by setting RHUSER, RHPASS, and RHDEVICE
-environment variables. The easiest way to do that is to put in a .env file in the dist's base directory which will be
-loaded in this file. It should look like this...
+DEV notes: To run *all* tests, you need to provide login info. Do this by setting RHUSER, RHPASS,
+and RHDEVICE environment variables. The easiest way to do that is to put in a .env file in the
+dist's base directory which will be loaded in this file. It should look like this:
 
     RHDEVICE = c893a722-5674-4924-85ac-3d3620eb80ba
     RHUSER = yourusername
     RHPASS = yourpasswordhere
+
+If you have MFA enabled or if your account has not been authorized with the defined RHDEVICE token
+before, you wil be prompted for a six digit code sent to you via email or SMS.
+
+Or, if you have a valid auth and refresh token, provide them this way:
+
+	RHTOKEN = longstringhere...likeverylong
+	RHREFRESH = MoTFR&tfr78R^icf6T&EWd57iTYUHJ
+
+To enable some extra dev strictness, (especially pedantic constructors, etc.) set the RHSTRICT
+environment variable. You can toss this into your .env file as well:
+
     RHSTRICT = 1
 
 =cut
 
+our $auth;
 eval {
     Dotenv->load( grep { -f $_ } '../../.env', '../.env', './.env' );
+    if ( defined $ENV{RHTOKEN} && defined $ENV{RHREFRESH} ) {
+        require Finance::Robinhood::OAuth2Token;
+        $auth = {
+            oauth2_token => Finance::Robinhood::OAuth2Token->new(
+                access_token  => $ENV{RHTOKEN},
+                refresh_token => $ENV{RHREFRESH}
+            )
+        };
+        diag('Attempting to log in with stored tokens');
+    }
+    elsif ( defined $ENV{RHUSER} && defined $ENV{RHPASS} && defined $ENV{RHDEVICE} ) {
+        $auth = {
+            username     => $ENV{RHUSER},
+            password     => $ENV{RHPASS},
+            device_token => $ENV{RHDEVICE},
+            mfa_callback => sub {
+                t::Utility::promptUser('MFA code required');
+            },
+            challenge_callback => sub {
+                my ($challenge) = @_;
+                my $response = t::Utility::promptUser(
+                    sprintf 'Login challenge issued (sent via %s)',
+                    $challenge->type
+                );
+                warn $response;
+                $challenge->respond($response);
+            },
+        };
+        diag('Attempting to log in with stored user/pass combo');
+    }
 };
+
+#use Data::Dump;
+#ddx $auth;
+#die;
 my @classes = (
 
     # Working
@@ -172,12 +222,12 @@ my @classes = (
 );
 =cut
 
-diag('No auth info in environment. Some tests will be skipped')
-    unless $ENV{RHUSER} && $ENV{RHPASS} && $ENV{RHDEVICE};
+$auth // diag('No auth info in environment. Some tests will be skipped');
+#
+my @subtests;
 for my $class ( sort @classes ) {
-
-    #subtest_streamed $class => sub {
-    eval <<"T"; bail_out("$class did not compile: $@") if $@;
+    push @subtests, async_subtest $class => sub {
+        eval <<"T"; bail_out("$class did not compile: $@") if $@;
 use lib '../lib';
 {package $class;eval 'use MooX::StrictConstructor;use MooX::InsideOut;' if defined \$ENV{RHSTRICT}};
 use $class;
@@ -185,14 +235,13 @@ package $class;
 use strictures 2;
 use Test2::V0 ':DEFAULT', '!call', call => {-as => 'test_call'};
 T
-
-    #};
-    subtest_streamed $class . '::' . $_ => sub {
-        $class->$_();
-        }
-        for _get_tests($class);
-    t::Utility::clear_stash($class);
+        #
+        subtest_streamed $class . '::' . $_ => sub { $class->$_(); }
+            for _get_tests($class);
+        t::Utility::clear_stash($class);
+    };
 }
+$_->finish for @subtests;
 #
 done_testing();
 
@@ -209,32 +258,18 @@ use Test2::V0;
 use experimental 'signatures';
 
 sub rh_instance($auth = 0) {
-    if ( !defined $state{$auth} ) {
+    unless ( defined $state{$auth} ) {
         eval 'require Finance::Robinhood';
         bail_out("Oh junk!: $@") if $@;
         if ($auth) {
-            my ( $user, $pass, $device ) = ( $ENV{RHUSER}, $ENV{RHPASS}, $ENV{RHDEVICE} );
-            skip_all('No auth info in environment') unless $user && $pass && $device;
-            $state{$auth} = Finance::Robinhood->new(
-                username     => $user,
-                password     => $pass,
-                device_token => $device,
-                mfa_callback => sub {
-                    promptUser('MFA code required');
-                },
-                challenge_callback => sub {
-                    my ($challenge) = @_;
-                    my $response = promptUser( sprintf 'Login challenge issued (sent via %s)',
-                        $challenge->type );
-                    warn $response;
-                    $challenge->respond($response);
-                }
-            );
+            skip_all('No auth info in environment') unless keys %$main::auth;
+            $state{$auth} = Finance::Robinhood->new(%$main::auth);
         }
         else {
             $state{$auth} = Finance::Robinhood->new;
         }
     }
+    #
     $state{$auth};
 }
 my %stash;    # Don't leak

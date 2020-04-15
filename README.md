@@ -754,7 +754,7 @@ Request an ACATS transfer. You may pass the following options:
 
 ## `cash_accounts( )`
 
-Returns an iterator filled with `Finance::Robinhood::Cash` obects.
+Returns an iterator filled with `Finance::Robinhood::Cash` objects.
 
 ## `cash_account_by_id( $id )`
 
@@ -762,7 +762,7 @@ Returns the related Finance::Robinhood::Cash object.
 
 ## `atms( $latitude, $longitude )`
 
-Returns an iterator filled with Finance::Robinhood::Cash::ATM obects.
+Returns an iterator filled with Finance::Robinhood::Cash::ATM objects.
 
 `$latitude` and `$longitude` coordinates must be in decimal degrees.
 
@@ -783,11 +783,11 @@ contain these keys:
 
 ## `debit_cards( )`
 
-Returns an iterator filled with `Finance::Robinhood::Cash::Card` obects.
+Returns an iterator filled with `Finance::Robinhood::Cash::Card` objects.
 
 ## `debit_card_by_id( ... )`
 
-Returns a `Finance::Robinhood::Cash::Card` obect.
+Returns a `Finance::Robinhood::Cash::Card` object.
 
 # 'FUN' METHODS
 

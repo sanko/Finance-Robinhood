@@ -41,8 +41,10 @@ use overload '""' => sub ( $s, @ ) { $s->id }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('POSITIONS') // skip_all();
-    like( +t::Utility::stash('POSITIONS'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$'i );
+    like(
+        +t::Utility::stash('POSITIONS'),
+        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$'i
+    );
 }
 #
 has robinhood =>

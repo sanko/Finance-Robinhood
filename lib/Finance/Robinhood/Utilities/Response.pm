@@ -1,6 +1,6 @@
 package    # hide it
-    Finance::Robinhood::Utilities::Response;
-our $VERSION = '0.92_003';
+    Finance::Robinhood::Utilities::Response {
+    our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -29,26 +29,27 @@ Error objects stringify to the contents of C<detail( )> or 'Unknown error.'
 
 =cut
 
-use Moo;
-use MooX::Enumeration;
-use Types::Standard qw[Any ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
-use URI;
-use Time::Moment;
-use Data::Dump;
-use experimental 'signatures';
-use overload 'bool' => sub ( $s, @ ) { $s->success },
-    '""'            => sub ( $s, @ ) {
-    $s->message // 'Unknown error.';
-    },
-    fallback => 1;
-#
-use Moo;
-use Types::Standard qw[InstanceOf Maybe ArrayRef HashRef Bool Num Str Ref];
-use JSON::Tiny;
-use Finance::Robinhood::Types qw[URL UUID Timestamp];
-use URI;
-use experimental 'signatures';
-#
+    use Moo;
+    use MooX::Enumeration;
+    use MooX::StrictConstructor;
+    use Types::Standard qw[Any ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+    use URI;
+    use Time::Moment;
+    use Data::Dump;
+    use experimental 'signatures';
+    use overload 'bool' => sub ( $s, @ ) { $s->success },
+        '""'            => sub ( $s, @ ) {
+        $s->message // 'Unknown error.';
+        },
+        fallback => 1;
+    #
+    use Moo;
+    use Types::Standard qw[InstanceOf Maybe ArrayRef HashRef Bool Num Str Ref];
+    use JSON::Tiny;
+    use Finance::Robinhood::Types qw[URL UUID Timestamp];
+    use URI;
+    use experimental 'signatures';
+    #
 
 =head2 C<success( )>
 
@@ -98,14 +99,14 @@ Returns a true value if there are redirects in the response.
 
 =cut
 
-has robinhood            => ( is => 'ro', isa => InstanceOf ['Finance::Robinhood'] );
-has protocol             => ( is => 'ro', isa => Str );
-has redirects            => ( is => 'ro', isa => ArrayRef [HashRef], predicate => 'has_redirects' );
-has headers              => ( is => 'ro', isa => HashRef [ ArrayRef [Str] | Str ] );
-has status               => ( is => 'ro', isa => Num );
-has [qw[content reason]] => ( is => 'ro', isa => Str );
-has url                  => ( is => 'ro', isa => URL, coerce => 1 );
-has success              => ( is => 'ro', isa => Bool, coerce => 1 );
+    has robinhood => ( is => 'ro', isa => InstanceOf ['Finance::Robinhood'] );
+    has protocol  => ( is => 'ro', isa => Str );
+    has redirects => ( is => 'ro', isa => ArrayRef [HashRef], predicate => 'has_redirects' );
+    has headers   => ( is => 'ro', isa => HashRef [ ArrayRef [Str] | Str ] );
+    has status    => ( is => 'ro', isa => Num );
+    has [qw[content reason]] => ( is => 'ro', isa => Str );
+    has url     => ( is => 'ro', isa => URL,  coerce => 1 );
+    has success => ( is => 'ro', isa => Bool, coerce => 1 );
 
 =head2 C<json( )>
 
@@ -118,18 +119,18 @@ Attempts to parse the content and returns true if successfull.
 
 =cut
 
-has json => (    # Smartly wrap JSON responses :D
-    is        => 'ro',
-    isa       => Maybe [Ref],
-    init_arg  => undef,
-    lazy      => 1,
-    predicate => 'is_json',
-    builder   => sub ($s) {
-        ( $s->headers->{'content-type'} // '' ) =~ m[application/json] ?
-            JSON::Tiny::decode_json( $s->content ) :
-            ();
-    }
-);
+    has json => (    # Smartly wrap JSON responses :D
+        is        => 'ro',
+        isa       => Maybe [Ref],
+        init_arg  => undef,
+        lazy      => 1,
+        predicate => 'is_json',
+        builder   => sub ($s) {
+            ( $s->headers->{'content-type'} // '' ) =~ m[application/json]
+                ? JSON::Tiny::decode_json( $s->content )
+                : ();
+        }
+    );
 
 =head2 C<as( ... )>
 
@@ -141,48 +142,49 @@ Blesses or coerces the json content in the response.
 
 =cut
 
-sub as ( $s, @class ) {
-    my $json = $s->json;
-    use Data::Dump;
-    ddx $json;
-    if ( @class > 1 ) {
-        my %class = @class;
-        for my $key ( keys %class ) {
-            $json->{$key} = [
-                map {
-                    warn;
-                    ref $class{$key} &&
-                        $class{$key}->isa('Type::Tiny') ? $class{$key}->coerce($_) :
-                        $class{$key}->new( robinhood => $s->robinhood, %$_ );
-                } @{ $json->{$key} }
-            ];
+    sub as ( $s, @class ) {
+        my $json = $s->json;
+
+        #use Data::Dump;
+        #ddx $json;
+        if ( @class > 1 ) {
+            my %class = @class;
+            for my $key ( keys %class ) {
+                $json->{$key} = [
+                    map {
+                        #warn;
+                        ref $class{$key} && $class{$key}->isa('Type::Tiny')
+                            ? $class{$key}->coerce($_)
+                            : $class{$key}->new( robinhood => $s->robinhood, %$_ );
+                    } @{ $json->{$key} }
+                ];
+            }
+            return $json;
         }
-        return $json;
-    }
-    my $class = shift @class;
-    warn $class;
-    $class // return $json;
-    if ( defined $json->{results} ) {
-        $json->{results} = [
-            map {
-                use Data::Dump;
+        my $class = shift @class;
 
-                #ddx \%$_;
-                ref $class &&
-                    $class->isa('Type::Tiny') ? $class->coerce($_) :
-                    $class->new( robinhood => $s->robinhood, %$_ );
-            } grep {defined} @{ delete $json->{results} }
-        ];
-        return $json;
-    }
-    warn ref $class;
+        #warn $class;
+        $class // return $json;
+        if ( defined $json->{results} ) {
+            $json->{results} = [
+                map {
+                    #use Data::Dump;
+                    #ddx \%$_;
+                    ref $class && $class->isa('Type::Tiny')
+                        ? $class->coerce($_)
+                        : $class->new( robinhood => $s->robinhood, %$_ );
+                } grep {defined} @{ delete $json->{results} }
+            ];
+            return $json;
+        }
 
-    #use Data::Dump;
-    #ddx $s->json;
-    ref $class &&
-        $class->isa('Type::Tiny') ? $class->coerce($json) :
-        $class->new( %$json, robinhood => $s->robinhood );
-}
+        #warn ref $class;
+        #use Data::Dump;
+        #ddx $s->json;
+        ref $class && $class->isa('Type::Tiny')
+            ? $class->coerce($json)
+            : $class->new( %$json, robinhood => $s->robinhood );
+    }
 
 =head2 C<message( )>
 
@@ -193,29 +195,30 @@ service is here.
 
 =cut
 
-has message => (
-    is      => 'ro',
-    isa     => Str,
-    lazy    => 1,
-    builder => sub ($s) {
-        !$s->success ? $s->reason : $s->json ? $s->json->{detail} : $s->reason;
-    }
-);
+    has message => (
+        is      => 'ro',
+        isa     => Str,
+        lazy    => 1,
+        builder => sub ($s) {
+            !$s->success ? $s->reason : $s->json ? $s->json->{detail} : $s->reason;
+        }
+    );
 
-sub _test_message {
-    require Finance::Robinhood;
-    my $rh = Finance::Robinhood->new(
-        username => substr( crypt( $< / $), rand $$ ), 0, 5 + rand(6) ),
-        password => substr( crypt( $< / $), rand $$ ), 0, 5 + rand(6) )
-    );    # Wrong, I hope
-    #
-    isa_ok( $rh, __PACKAGE__ );
-    is( $rh->message, 'Bad Request', 'bad log in is an error' );
-    #
-    my $fourhundred = Finance::Robinhood->new->_req( GET => 'https://postman-echo.com/status/400' );
-    isa_ok( $fourhundred, __PACKAGE__ );
-    is( $fourhundred->message, 'Bad Request', 'error page is an error' );
-}
+    sub _test_message {
+        require Finance::Robinhood;
+        my $rh = Finance::Robinhood->new(
+            username => substr( crypt( $< / $), rand $$ ), 0, 5 + rand(6) ),
+            password => substr( crypt( $< / $), rand $$ ), 0, 5 + rand(6) )
+        );    # Wrong, I hope
+              #
+        isa_ok( $rh, __PACKAGE__ );
+        is( $rh->message, 'Bad Request', 'bad log in is an error' );
+        #
+        my $fourhundred
+            = Finance::Robinhood->new->_req( GET => 'https://postman-echo.com/status/400' );
+        isa_ok( $fourhundred, __PACKAGE__ );
+        is( $fourhundred->message, 'Bad Request', 'error page is an error' );
+    }
 
 =head1 LEGAL
 
@@ -242,4 +245,5 @@ Sanko Robinson E<lt>sanko@cpan.orgE<gt>
 
 =cut
 
-1;
+    1;
+}

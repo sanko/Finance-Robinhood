@@ -1,5 +1,5 @@
-package Finance::Robinhood::Notification;
-our $VERSION = '0.92_003';
+package Finance::Robinhood::Notification {
+    our $VERSION = '0.92_003';
 
 =encoding utf-8
 
@@ -20,37 +20,39 @@ Finance::Robinhood::Notification - Represents a Single Notification Card
 
 =cut
 
-use Moo;
-use Data::Dump;
-use HTTP::Tiny;
-use JSON::Tiny;
-use Time::Moment;
-use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
-use URI;
-use experimental 'signatures';
-#
-use Finance::Robinhood::Types qw[URL UUID Timestamp];
-#
-sub _test__init {
-    my $rh = t::Utility::rh_instance(1);
-    my $notification;
-    for my $n ( $rh->notifications->all ) {
-        $notification = $n if $n->type ne 'referral_hook_asset_stock';
+    use Moo;
+    use MooX::StrictConstructor;
+    use Data::Dump;
+    use HTTP::Tiny;
+    use JSON::Tiny;
+    use Time::Moment;
+    use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+    use URI;
+    use experimental 'signatures';
+    #
+    use Finance::Robinhood::Types qw[URL UUID Timestamp];
+    #
+    sub _test__init {
+        my $rh = t::Utility::rh_instance(1);
+        my $notification;
+        for my $n ( $rh->notifications->all ) {
+            $notification = $n if $n->type ne 'referral_hook_asset_stock';
+        }
+        $notification // skip_all('Failed to find notification');
+        isa_ok( $notification, __PACKAGE__ );
+        t::Utility::stash( 'CARD', $notification );    #  Store it for later
     }
-    $notification // skip_all('Failed to find notification');
-    isa_ok( $notification, __PACKAGE__ );
-    t::Utility::stash( 'CARD', $notification );    #  Store it for later
-}
-use overload '""' => sub ( $s, @ ) { $s->url }, fallback => 1;
+    use overload '""' => sub ( $s, @ ) { $s->url }, fallback => 1;
 
-sub _test_stringify {
-    t::Utility::stash('CARD') // skip_all();
-    like( +t::Utility::stash('CARD'),
-        qr'^https://midlands.robinhood.com/notifications/stack/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/$'i
-    );
-}
-#
-has robinhood => ( is => 'ro', predicate => 1, isa => InstanceOf ['Finance::Robinhood'] );
+    sub _test_stringify {
+        t::Utility::stash('CARD') // skip_all();
+        like(
+            +t::Utility::stash('CARD'),
+            qr'^https://midlands.robinhood.com/notifications/stack/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/$'i
+        );
+    }
+    #
+    has robinhood => ( is => 'ro', predicate => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head2 C<action( )>
 
@@ -104,50 +106,53 @@ Returns the article's title.
 What sort of notification is is. C<news>, C<top_sp500_gainers>, etc.
 
 =cut
-has url    => ( is => 'ro', isa => URL, coerce => 1, predicate => 1 );
-has action => ( is => 'ro', isa => URL, coerce => 1, predicate => 1 );
-has call_to_action => ( is => 'ro', isa => Str,  predicate => 1 );
-has fixed          => ( is => 'ro', isa => Bool, coerce    => 1, predicate => 1 );
-has font_size => ( is => 'ro', isa => Enum [qw[normal large]], predicate => 1 );
-has icon      => (
-    is        => 'ro',
-    isa       => Enum [qw[announcement bank bell down news order up star]],
-    predicate => 1
-);
-has message             => ( is => 'ro', isa => Str,  predicate => 1 );
-has show_if_unsupported => ( is => 'ro', isa => Bool, coerce    => 1, predicate => 1 );
-has side_image => (
-    is  => 'ro',
-    isa => Maybe [
-        Dict [
-            android => Dict [ asset_path => Str, width => Num ],
-            ios     => Dict [ asset_path => Str, width => Num ]
-        ]
-    ],
-    predicate => 1
-);
-has time  => ( is => 'ro', isa => Maybe [Timestamp], coerce   => 1, requried => 1 );
-has title => ( is => 'ro', isa => Str,               required => 1 );
-has type => (
-    is  => 'ro',
-    isa => Maybe [
-        Enum [
-            qw[bank
-                currency_sell_executed
-                currency_buy_executed
-                upcoming_earnings pending_withdrawal
-                top_sp500_gainers top_sp500_losers margin_sell_executed news web_welcome
-                user_top_mover earnings_call_now us_uk_announcement]
-        ]
-    ],
-    predicate => 1
-);
-has dismiss_url => ( is => 'ro', isa => Maybe [URL], coerce => 1, predicate => 1 );
 
-sub _test_action {
-    t::Utility::stash('CARD') // skip_all();
-    isa_ok( t::Utility::stash('CARD')->action, 'URI' );
-}
+    has url    => ( is => 'ro', isa => URL, coerce => 1, predicate => 1 );
+    has action => ( is => 'ro', isa => URL, coerce => 1, predicate => 1 );
+    has call_to_action => ( is => 'ro', isa => Str,  predicate => 1 );
+    has fixed          => ( is => 'ro', isa => Bool, coerce    => 1, predicate => 1 );
+    has font_size => ( is => 'ro', isa => Enum [qw[normal large]], predicate => 1 );
+    has icon      => (
+        is        => 'ro',
+        isa       => Enum [qw[announcement bank bell down news order up star]],
+        predicate => 1
+    );
+    has message             => ( is => 'ro', isa => Str,  predicate => 1 );
+    has show_if_unsupported => ( is => 'ro', isa => Bool, coerce    => 1, predicate => 1 );
+    has side_image => (
+        is  => 'ro',
+        isa => Maybe [
+            Dict [
+                android => Dict [ asset_path => Str, width => Num ],
+                ios     => Dict [ asset_path => Str, width => Num ]
+            ]
+        ],
+        predicate => 1
+    );
+    has time  => ( is => 'ro', isa => Maybe [Timestamp], coerce   => 1, requried => 1 );
+    has title => ( is => 'ro', isa => Str,               required => 1 );
+    has type => (
+        is  => 'ro',
+        isa => Maybe [
+            Enum [
+                qw[bank
+                    currency_sell_executed
+                    currency_buy_executed
+                    upcoming_earnings pending_withdrawal
+                    top_sp500_gainers top_sp500_losers margin_sell_executed news web_welcome
+                    user_top_mover earnings_call_now us_uk_announcement
+                    from_stock_reward_claimed
+                    ]
+            ]
+        ],
+        predicate => 1
+    );
+    has dismiss_url => ( is => 'ro', isa => Maybe [URL], coerce => 1, predicate => 1 );
+
+    sub _test_action {
+        t::Utility::stash('CARD') // skip_all();
+        isa_ok( t::Utility::stash('CARD')->action, 'URI' );
+    }
 
 =head2 C<dismiss( )>
 
@@ -157,13 +162,13 @@ Marks the notification as read and hides it from the stack.
 
 =cut
 
-sub dismiss ($s) {
-    $s->robinhood->_req( POST => $s->url . 'dismiss/' )->success;
-}
+    sub dismiss ($s) {
+        $s->robinhood->_req( POST => $s->url . 'dismiss/' )->success;
+    }
 
-sub _test_dismiss {    # I'd rather not mark a notification as read...
-    skip_all();
-}
+    sub _test_dismiss {    # I'd rather not mark a notification as read...
+        skip_all();
+    }
 
 =head2 C<id( )>
 
@@ -171,13 +176,15 @@ Returns a UUID.
 
 =cut
 
-has id => ( is => 'ro', isa => UUID, lazy => 1, coerce => 1, init_arg => 'url' );
+    has id => ( is => 'ro', isa => UUID, lazy => 1, coerce => 1, init_arg => 'url' );
 
-sub _test_id {
-    t::Utility::stash('CARD') // skip_all();
-    like( t::Utility::stash('CARD')->id,
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i );
-}
+    sub _test_id {
+        t::Utility::stash('CARD') // skip_all();
+        like(
+            t::Utility::stash('CARD')->id,
+            qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+        );
+    }
 
 =head1 LEGAL
 
@@ -204,4 +211,5 @@ Sanko Robinson E<lt>sanko@cpan.orgE<gt>
 
 =cut
 
-1;
+    1;
+}

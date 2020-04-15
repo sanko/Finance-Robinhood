@@ -22,8 +22,8 @@ Finance::Robinhood::Inbox - Contains a List of Conversation Threads
 sub _test__init {
     my $rh    = t::Utility::rh_instance(1);
     my $inbox = $rh->inbox;
-    isa_ok($inbox, __PACKAGE__);
-    t::Utility::stash('INBOX', $inbox);    #  Store it for later
+    isa_ok( $inbox, __PACKAGE__ );
+    t::Utility::stash( 'INBOX', $inbox );    #  Store it for later
 }
 use strictures 2;
 use namespace::clean;
@@ -35,35 +35,39 @@ use Finance::Robinhood::Types qw[URL UUID Timestamp];
 use Finance::Robinhood::Utilities::Iterator;
 use Finance::Robinhood::Inbox::Thread;
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head1 METHODS
 
 
 =cut
 
-has threads => (is  => 'ro',
-                isa => InstanceOf ['Finance::Robinhood::Utilities::Iterator'],
-                builder  => 1,
-                required => 1,
-                init_arg => undef
+has threads => (
+    is       => 'ro',
+    isa      => InstanceOf ['Finance::Robinhood::Utilities::Iterator'],
+    builder  => 1,
+    required => 1,
+    init_arg => undef
 );
 
 sub _build_threads ($s) {
     Finance::Robinhood::Utilities::Iterator->new(
-                            robinhood => $s->robinhood,
-                            url => 'https://api.robinhood.com/inbox/threads/',
-                            as  => 'Finance::Robinhood::Inbox::Thread'
+        robinhood => $s->robinhood,
+        url       => 'https://api.robinhood.com/inbox/threads/',
+        as        => 'Finance::Robinhood::Inbox::Thread'
     );
 }
 
 sub _test_threads {
     t::Utility::stash('INBOX') // skip_all();
-    isa_ok(t::Utility::stash('INBOX')->threads,
-           'Finance::Robinhood::Utilities::Iterator');
-    isa_ok(t::Utility::stash('INBOX')->threads->next,
-           'Finance::Robinhood::Inbox::Thread');
+    isa_ok(
+        t::Utility::stash('INBOX')->threads,
+        'Finance::Robinhood::Utilities::Iterator'
+    );
+    isa_ok(
+        t::Utility::stash('INBOX')->threads->next,
+        'Finance::Robinhood::Inbox::Thread'
+    );
 }
 #
 #    @retrofit2.http.GET("inbox/help/topics/{topicId}/channels/")

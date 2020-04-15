@@ -141,6 +141,7 @@ so add a 'smart' delay here and then call C<reload( )> to update the object
 correctly.
 
 =cut
+
 has '_cancel' =>
     ( is => 'ro', required => 1, isa => Maybe [URL], coerce => 1, init_arg => 'cancel' );
 has can_cancel => ( is => 'ro', isa => Bool, builder => 1, lazy => 1, init_arg => undef );
@@ -182,6 +183,7 @@ SKIP: {
 UUID used to identify this specific order.
 
 =cut
+
 has id => ( is => 'ro', required => 1, isa => UUID );
 
 =head2 C<ref_id( )>
@@ -192,6 +194,22 @@ Client generated UUID is returned.
 
 # Only generated server side since 2018 (I have a single malformed ref_id so this is less... strict)
 has ref_id => ( is => 'ro', required => 1, isa => Maybe [ UUID | UUIDBroken ] );
+
+=head2 C<dollar_based_amount( )>
+
+If the order is based on fractional shares, this will be the dollar amount.
+
+=cut
+
+has dollar_based_amount => ( is => 'ro', required => 1, isa => Maybe [Num] );
+
+=head2 C<drip_dividend_id( )>
+
+If DRIP is enabled.
+
+=cut
+
+has drip_dividend_id => ( is => 'ro', required => 1, isa => Maybe [UUID] );
 
 =head2 C<extended_hours( )>
 
@@ -289,6 +307,7 @@ has side =>
 Returns the response category if applicable.
 
 =cut
+
 has response_category => (
     is       => 'ro',
     required => 1,
@@ -325,6 +344,7 @@ One of the following:
 =back
 
 =cut
+
 has state => (    # Currency uses canceled rather than cancelled
     is       => 'ro',
     required => 1,
@@ -342,6 +362,7 @@ Returns the Time-in-Force value. C<gfd> (good for day) or C<gtc> (good 'til
 cancelled).
 
 =cut
+
 has time_in_force => (
     is       => 'ro',
     required => 1,
@@ -354,6 +375,7 @@ has time_in_force => (
 Returns the trigger. C<stop> or C<immediate>.
 
 =cut
+
 has trigger => (
     is       => 'ro',
     required => 1,
@@ -366,6 +388,7 @@ has trigger => (
 Returns the order type. C<limit> or C<market>.
 
 =cut
+
 has type => (
     is       => 'ro',
     required => 1,
@@ -414,7 +437,55 @@ sub _test_updated_at {
 If the order was rejected, this will be filled with the reason.
 
 =cut
+
 has reject_reason => ( is => 'ro', required => 1, isa => Maybe [Str] );
+
+=head2 C<investment_schedule_id( )>
+
+
+=cut
+
+has investment_schedule_id => ( is => 'ro', required => 1, isa => Maybe [UUID] );
+
+=head2 C<total_notional( )>
+
+This returns a hash reference with the following keys:
+
+=over
+
+=item C<amount>
+
+=item C<currency_code>
+
+=item C<currency_id>
+
+=back
+
+
+=cut
+
+=head2 C<executed_notional( )>
+
+If the order executed, this returns a hash reference with the following keys:
+
+=over
+
+=item C<amount>
+
+=item C<currency_code>
+
+=item C<currency_id>
+
+=back
+
+
+=cut
+
+has [qw[executed_notional total_notional]] => (
+    is       => 'ro',
+    required => 1,
+    isa      => Maybe [ Dict [ amount => Num, currency_code => Str, currency_id => UUID ] ]
+);
 
 =head2 C<executions( )>
 
@@ -436,6 +507,7 @@ following keys:
 =back
 
 =cut
+
 has executions => (
     is  => 'ro',
     isa => ArrayRef [

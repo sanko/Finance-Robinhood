@@ -23,8 +23,7 @@ of Equity Instruments
 
 use Moo;
 use MooX::Enumeration;
-use Types::Standard
-    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
 use URI;
 use Time::Moment;
 use Data::Dump;
@@ -35,18 +34,17 @@ use Finance::Robinhood::Equity::PriceMovement;
 sub _test__init {
     my $rh  = t::Utility::rh_instance(1);
     my $tag = $rh->tags('food')->current;
-    isa_ok($tag, __PACKAGE__);
-    t::Utility::stash('TAG', $tag);    #  Store it for later
+    isa_ok( $tag, __PACKAGE__ );
+    t::Utility::stash( 'TAG', $tag );    #  Store it for later
 }
-use overload '""' => sub ($s, @) { $s->{slug} }, fallback => 1;
+use overload '""' => sub ( $s, @ ) { $s->{slug} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('TAG') // skip_all();
-    like(+t::Utility::stash('TAG'), 'food',);
+    like( +t::Utility::stash('TAG'), 'food', );
 }
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head2 C<canonical_examples( )>
 
@@ -71,9 +69,8 @@ Returns the internal string used to locate this tag.
 
 =cut
 
-has [qw[canonical_examples description name slug]] =>
-    (is => 'ro', isa => Str, required => 1);
-has membership_count => (is => 'ro', isa => Num, required => 1);
+has [qw[canonical_examples description name slug]] => ( is => 'ro', isa => Str, required => 1 );
+has membership_count                               => ( is => 'ro', isa => Num, required => 1 );
 
 =head2 C<instruments( )>
 
@@ -85,34 +82,34 @@ Returns a list of Finance::Robinhood::Equity objects.
 
 has _instruments => (
     is     => 'ro',
-    isa    => ArrayRef [InstanceOf ['URI']],
+    isa    => ArrayRef [ InstanceOf ['URI'] ],
     coerce => sub ($urls) {
-        [map { URI->new($_) } @{$urls}]
+        [ map { URI->new($_) } @{$urls} ]
     },
     required => 1,
     init_arg => 'instruments'
 );
 has instruments => (
-                  is  => 'ro',
-                  isa => ArrayRef [InstanceOf ['Finance::Robinhood::Equity']],
-                  builder  => 1,
-                  lazy     => 1,
-                  init_arg => undef
+    is       => 'ro',
+    isa      => ArrayRef [ InstanceOf ['Finance::Robinhood::Equity'] ],
+    builder  => 1,
+    lazy     => 1,
+    init_arg => undef
 );
 
 sub _build_instruments ($s) {
-    [$s->robinhood->equities_by_id(
-         map {
-             m/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/$/i
-         } @{$s->_instruments}
-     )
+    [
+        $s->robinhood->equities_by_id(
+            map {m/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/$/i}
+                @{ $s->_instruments }
+        )
     ];
 }
 
 sub _test_instruments {
     t::Utility::stash('TAG') // skip_all();
     my @instruments = t::Utility::stash('TAG')->instruments();
-    isa_ok($instruments[0], 'Finance::Robinhood::Equity');
+    isa_ok( $instruments[0], 'Finance::Robinhood::Equity' );
 }
 
 =head1 LEGAL

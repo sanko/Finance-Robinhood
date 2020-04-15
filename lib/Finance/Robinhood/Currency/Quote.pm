@@ -32,12 +32,11 @@ use Finance::Robinhood::Currency::Pair;
 sub _test__init {
     my $rh    = t::Utility::rh_instance(1);
     my $quote = $rh->currency_pairs->current->quote();
-    isa_ok($quote, __PACKAGE__);
-    t::Utility::stash('QUOTE', $quote);    #  Store it for later
+    isa_ok( $quote, __PACKAGE__ );
+    t::Utility::stash( 'QUOTE', $quote );    #  Store it for later
 }
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head1 METHODS
 
@@ -77,16 +76,15 @@ Volume traded during period.
 
 =cut
 
-has [qw[ask_price bid_price high_price low_price mark_price open_price volume]
-] => (is => 'ro', isa => Num, required => 1);
+has [qw[ask_price bid_price high_price low_price mark_price open_price volume]] =>
+    ( is => 'ro', isa => Num, required => 1 );
 has id => (
-    is  => 'ro',
-    isa => StrMatch [
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
-    ],
+    is => 'ro',
+    isa =>
+        StrMatch [qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i],
     required => 1
 );
-has symbol => (is => 'ro', isa => Str, required => 1);
+has symbol => ( is => 'ro', isa => Str, required => 1 );
 
 =head2 C<pair( )>
 
@@ -97,13 +95,15 @@ Loops back to a Finance::Robinhood::Currency::Pair object.
 =cut
 
 sub pair ($s) {
-    return $s->robinhood->currency_pair_by_id($s->id);
+    return $s->robinhood->currency_pair_by_id( $s->id );
 }
 
 sub _test_pair {
     t::Utility::stash('QUOTE') // skip_all();
-    isa_ok(t::Utility::stash('QUOTE')->pair(),
-           'Finance::Robinhood::Currency::Pair');
+    isa_ok(
+        t::Utility::stash('QUOTE')->pair(),
+        'Finance::Robinhood::Currency::Pair'
+    );
 }
 
 =head1 LEGAL

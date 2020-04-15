@@ -97,15 +97,19 @@ sub _test_url {
 sub _test_current {
     t::Utility::stash('WATCHLIST') // skip_all();
     t::Utility::stash('WATCHLIST')->reset;
-    isa_ok( t::Utility::stash('WATCHLIST')->current,
-        'Finance::Robinhood::Equity::Watchlist::Element' );
+    isa_ok(
+        t::Utility::stash('WATCHLIST')->current,
+        'Finance::Robinhood::Equity::Watchlist::Element'
+    );
 }
 
 sub _test_next {
     t::Utility::stash('WATCHLIST') // skip_all();
     t::Utility::stash('WATCHLIST')->reset;
-    isa_ok( t::Utility::stash('WATCHLIST')->next,
-        'Finance::Robinhood::Equity::Watchlist::Element' );
+    isa_ok(
+        t::Utility::stash('WATCHLIST')->next,
+        'Finance::Robinhood::Equity::Watchlist::Element'
+    );
 }
 
 =head2 C<populate( ... )>
@@ -128,8 +132,8 @@ sub populate ( $s, @symbols ) {
         );
         return Finance::Robinhood::Error->new( $res->json ) if !$res->{success};
     }
-    return $res->{success} ||
-        Finance::Robinhood::Error->new(
+    return $res->{success}
+        || Finance::Robinhood::Error->new(
         $res->status >= 300 ? ( details => $res->{reason} ) : $res->json );
 }
 
@@ -162,8 +166,10 @@ sub _test_add_instrument {
     t::Utility::stash('WATCHLIST')->reset;
     my $result = t::Utility::stash('WATCHLIST')
         ->add_instrument( t::Utility::stash('WATCHLIST')->_rh->equity('MSFT') );
-    isa_ok( $result,
-        $result ? 'Finance::Robinhood::Equity::Watchlist::Element' : 'Finance::Robinhood::Error' );
+    isa_ok(
+        $result,
+        $result ? 'Finance::Robinhood::Equity::Watchlist::Element' : 'Finance::Robinhood::Error'
+    );
 }
 
 =head2 C<equities( )>

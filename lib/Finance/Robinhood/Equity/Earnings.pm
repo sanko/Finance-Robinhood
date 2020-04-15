@@ -25,34 +25,33 @@ use Data::Dump;
 use HTTP::Tiny;
 use JSON::Tiny;
 use Time::Moment;
-use Types::Standard
-    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
 use URI;
 use experimental 'signatures';
 #
 use Finance::Robinhood::Types qw[URL UUID UUIDBroken Timestamp];
 #
 sub _test__init {
-    my $rh = t::Utility::rh_instance(1);
-    my $earnings
-        = $rh->equity_earnings(instrument => $rh->equity('MSFT'))->current;
-    isa_ok($earnings, __PACKAGE__);
-    t::Utility::stash('EARNINGS', $earnings);    #  Store it for later
+    my $rh       = t::Utility::rh_instance(1);
+    my $earnings = $rh->equity_earnings( instrument => $rh->equity('MSFT') )->current;
+    isa_ok( $earnings, __PACKAGE__ );
+    t::Utility::stash( 'EARNINGS', $earnings );    #  Store it for later
 }
-use overload '""' => sub ($s, @) {
+use overload '""' => sub ( $s, @ ) {
     join '', $s->symbol, $s->year, $s->quarter;
     },
     fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('EARNINGS') // skip_all();
-    like(+t::Utility::stash('EARNINGS'), qr'^\w+\d{4}\d$'i);
+    like( +t::Utility::stash('EARNINGS'), qr'^\w+\d{4}\d$'i );
 }
 #
-has robinhood => (is        => 'ro',
-                  predicate => 1,
-                  isa       => InstanceOf ['Finance::Robinhood'],
-                  required  => 1
+has robinhood => (
+    is        => 'ro',
+    predicate => 1,
+    isa       => InstanceOf ['Finance::Robinhood'],
+    required  => 1
 );
 
 =head2 C<call( )>
@@ -82,21 +81,17 @@ If defined, this returns a URI object to listen to a replay of the call.
         Finance::Robinhood::Equity::Earnings::Call;
     use Moo;
     use MooX::Enumeration;
-    use Types::Standard
-        qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+    use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
     use experimental 'signatures';
     #
     use Finance::Robinhood::Types qw[URL UUID Timestamp];
-    has broadcast_url =>
-        (is => 'ro', isa => Maybe [URL], coerce => 1, required => 1);
-    has datetime =>
-        (is => 'ro', isa => Timestamp, coerce => 1, required => 1);
-    has replay_url =>
-        (is => 'ro', isa => Maybe [URL], coerce => 1, required => 1);
+    has broadcast_url => ( is => 'ro', isa => Maybe [URL], coerce => 1, required => 1 );
+    has datetime      => ( is => 'ro', isa => Timestamp, coerce => 1, required => 1 );
+    has replay_url    => ( is => 'ro', isa => Maybe [URL], coerce => 1, required => 1 );
 }
 has call => (
-    is  => 'ro',
-    isa => Maybe [InstanceOf ['Finance::Robinhood::Equity::Earnings::Call']],
+    is     => 'ro',
+    isa    => Maybe [ InstanceOf ['Finance::Robinhood::Equity::Earnings::Call'] ],
     coerce => sub ($data) {
         defined $data
             ? Finance::Robinhood::Equity::Earnings::Call->new(%$data)
@@ -127,17 +122,15 @@ If defined, the expected earnings per share.
         Finance::Robinhood::Equity::Earnings::EPS;
     use Moo;
     use MooX::Enumeration;
-    use Types::Standard
-        qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+    use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
     use experimental 'signatures';
     #
     use Finance::Robinhood::Types qw[URL UUID Timestamp];
-    has [qw[actual estimate]] =>
-        (is => 'ro', isa => Maybe [Num], predicate => 1, required => 1);
+    has [qw[actual estimate]] => ( is => 'ro', isa => Maybe [Num], predicate => 1, required => 1 );
 }
 has eps => (
-    is  => 'ro',
-    isa => Maybe [InstanceOf ['Finance::Robinhood::Equity::Earnings::EPS']],
+    is     => 'ro',
+    isa    => Maybe [ InstanceOf ['Finance::Robinhood::Equity::Earnings::EPS'] ],
     coerce => sub ($data) {
         defined $data
             ? Finance::Robinhood::Equity::Earnings::EPS->new(%$data)
@@ -151,20 +144,22 @@ Returns the related Finance::Robinhood::Equity object.
 
 =cut
 
-has _equity => (is       => 'ro',
-                isa      => UUID,
-                coerce   => 1,
-                required => 1,
-                init_arg => 'instrument'
+has _equity => (
+    is       => 'ro',
+    isa      => UUID,
+    coerce   => 1,
+    required => 1,
+    init_arg => 'instrument'
 );
-has equity => (is      => 'ro',
-               isa     => InstanceOf ['Finance::Robinhood::Equity'],
-               lazy    => 1,
-               builder => 1
+has equity => (
+    is      => 'ro',
+    isa     => InstanceOf ['Finance::Robinhood::Equity'],
+    lazy    => 1,
+    builder => 1
 );
 
 sub _build_equity($s) {
-    my ($blah) = $s->robinhood->equities_by_id($s->_equity);
+    my ($blah) = $s->robinhood->equities_by_id( $s->_equity );
     $blah;
 }
 
@@ -173,7 +168,8 @@ sub _build_equity($s) {
 Returns C<1>, C<2>, C<3>, or C<4>.
 
 =cut
-has quarter => (is => 'ro', isa => Enum [qw[1 2 3 4]], required => 1);
+
+has quarter => ( is => 'ro', isa => Enum [qw[1 2 3 4]], required => 1 );
 
 =head2 C<report( )>
 
@@ -202,23 +198,21 @@ Returns a boolean value.
         Finance::Robinhood::Equity::Earnings::Report;
     use Moo;
     use MooX::Enumeration;
-    use Types::Standard
-        qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+    use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
     use experimental 'signatures';
     #
     use Finance::Robinhood::Types qw[URL UUID Timestamp];
-    has date => (is       => 'ro',
-                 isa      => StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]],
-                 required => 1
+    has date => (
+        is       => 'ro',
+        isa      => StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]],
+        required => 1
     );
-    has timing =>
-        (is => 'ro', isa => Maybe [Enum [qw[am pm]]], required => 1);
-    has verified => (is => 'ro', isa => Bool, coerce => 1, required => 1);
+    has timing   => ( is => 'ro', isa => Maybe [ Enum [qw[am pm]] ], required => 1 );
+    has verified => ( is => 'ro', isa => Bool, coerce => 1, required => 1 );
 }
 has report => (
-    is => 'ro',
-    isa =>
-        Maybe [InstanceOf ['Finance::Robinhood::Equity::Earnings::Report']],
+    is     => 'ro',
+    isa    => Maybe [ InstanceOf ['Finance::Robinhood::Equity::Earnings::Report'] ],
     coerce => sub ($data) {
         defined $data
             ? Finance::Robinhood::Equity::Earnings::Report->new(%$data)
@@ -233,7 +227,7 @@ Returns the ticker symbol of the related equity instrument.
 
 =cut
 
-has symbol => (is => 'ro', isa => Str, required => 1);
+has symbol => ( is => 'ro', isa => Str, required => 1 );
 
 =head2 C<year( )>
 
@@ -241,7 +235,7 @@ Returns the year.
 
 =cut
 
-has year => (is => 'ro', isa => Num, required => 1);
+has year => ( is => 'ro', isa => Num, required => 1 );
 
 =head1 LEGAL
 

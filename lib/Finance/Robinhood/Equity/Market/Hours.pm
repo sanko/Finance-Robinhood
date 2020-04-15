@@ -31,28 +31,25 @@ use Time::Moment;
 
 sub _test__init {
     my $rh   = t::Utility::rh_instance(0);
-    my $open = $rh->equity_market_by_mic('XNAS')
-        ->hours(Time::Moment->from_epoch(1552613507))
+    my $open = $rh->equity_market_by_mic('XNAS')->hours( Time::Moment->from_epoch(1552613507) )
         ;    # NASDAQ - March 15th, 2019
-    isa_ok($open, __PACKAGE__);
-    t::Utility::stash('HOURS_OPEN', $open);    #  Store it for later
-    my $closed = $rh->equity_market_by_mic('XNAS')
-        ->hours(Time::Moment->from_epoch(1552699907))
-        ;                                      # NASDAQ - March 16th, 2019
-    isa_ok($closed, __PACKAGE__);
-    t::Utility::stash('HOURS_CLOSED', $closed);    #  Store it for later
+    isa_ok( $open, __PACKAGE__ );
+    t::Utility::stash( 'HOURS_OPEN', $open );    #  Store it for later
+    my $closed = $rh->equity_market_by_mic('XNAS')->hours( Time::Moment->from_epoch(1552699907) )
+        ;                                        # NASDAQ - March 16th, 2019
+    isa_ok( $closed, __PACKAGE__ );
+    t::Utility::stash( 'HOURS_CLOSED', $closed );    #  Store it for later
 }
-use overload '""' => sub ($s, @) { $s->{date} }, fallback => 1;
+use overload '""' => sub ( $s, @ ) { $s->{date} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('HOURS_OPEN') // skip_all();
-    is(+t::Utility::stash('HOURS_OPEN'), '2019-03-15');
+    is( +t::Utility::stash('HOURS_OPEN'), '2019-03-15' );
     t::Utility::stash('HOURS_CLOSED') // skip_all();
-    is(+t::Utility::stash('HOURS_CLOSED'), '2019-03-16');
+    is( +t::Utility::stash('HOURS_CLOSED'), '2019-03-16' );
 }
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'],);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'], );
 
 =head1 METHODS
 
@@ -62,10 +59,11 @@ Returns a true value if opens for trading on this date.
 
 =cut
 
-has is_open => (is       => 'ro',
-                isa      => Bool,
-                coerce   => sub($bool) { !!$bool },
-                required => 1
+has is_open => (
+    is       => 'ro',
+    isa      => Bool,
+    coerce   => sub($bool) { !!$bool },
+    required => 1
 );
 
 =head2 C<opens_at( )>
@@ -100,43 +98,50 @@ a Time::Moment object.
 =cut
 
 has [qw[opens_at closes_at extended_opens_at extended_closes_at]] => (
-        is  => 'ro',
-        isa => Maybe [InstanceOf ['Time::Moment']],
-        coerce =>
-            sub ($time) { $time // return; Time::Moment->from_string($time) },
-        required => 1
+    is       => 'ro',
+    isa      => Maybe [ InstanceOf ['Time::Moment'] ],
+    coerce   => sub ($time) { $time // return; Time::Moment->from_string($time) },
+    required => 1
 );
 
 sub _test_opens_at {
     t::Utility::stash('HOURS_OPEN') // skip_all();
-    is(t::Utility::stash('HOURS_OPEN')->opens_at->to_string,
-        '2019-03-15T13:30:00Z');
+    is(
+        t::Utility::stash('HOURS_OPEN')->opens_at->to_string,
+        '2019-03-15T13:30:00Z'
+    );
     t::Utility::stash('HOURS_CLOSED') // skip_all();
-    is(t::Utility::stash('HOURS_CLOSED')->opens_at, ());
+    is( t::Utility::stash('HOURS_CLOSED')->opens_at, () );
 }
 
 sub _test_closes_at {
     t::Utility::stash('HOURS_OPEN') // skip_all();
-    is(t::Utility::stash('HOURS_OPEN')->closes_at->to_string,
-        '2019-03-15T20:00:00Z');
+    is(
+        t::Utility::stash('HOURS_OPEN')->closes_at->to_string,
+        '2019-03-15T20:00:00Z'
+    );
     t::Utility::stash('HOURS_CLOSED') // skip_all();
-    is(t::Utility::stash('HOURS_CLOSED')->closes_at, ());
+    is( t::Utility::stash('HOURS_CLOSED')->closes_at, () );
 }
 
 sub _test_extended_opens_at {
     t::Utility::stash('HOURS_OPEN') // skip_all();
-    is(t::Utility::stash('HOURS_OPEN')->extended_opens_at->to_string,
-        '2019-03-15T13:00:00Z');
+    is(
+        t::Utility::stash('HOURS_OPEN')->extended_opens_at->to_string,
+        '2019-03-15T13:00:00Z'
+    );
     t::Utility::stash('HOURS_CLOSED') // skip_all();
-    is(t::Utility::stash('HOURS_CLOSED')->extended_opens_at, ());
+    is( t::Utility::stash('HOURS_CLOSED')->extended_opens_at, () );
 }
 
 sub _test_extended_closes_at {
     t::Utility::stash('HOURS_OPEN') // skip_all();
-    is(t::Utility::stash('HOURS_OPEN')->extended_closes_at->to_string,
-        '2019-03-15T22:00:00Z');
+    is(
+        t::Utility::stash('HOURS_OPEN')->extended_closes_at->to_string,
+        '2019-03-15T22:00:00Z'
+    );
     t::Utility::stash('HOURS_CLOSED') // skip_all();
-    is(t::Utility::stash('HOURS_CLOSED')->extended_closes_at, ());
+    is( t::Utility::stash('HOURS_CLOSED')->extended_closes_at, () );
 }
 
 =head2 C<date( )>
@@ -151,18 +156,22 @@ has date => (
     is     => 'ro',
     isa    => InstanceOf ['Time::Moment'],
     coerce => sub ($date) {
-        Time::Moment->from_string($date . 'T00:00:00Z');
+        Time::Moment->from_string( $date . 'T00:00:00Z' );
     },
     required => 1
 );
 
 sub _test_date {
     t::Utility::stash('HOURS_OPEN') // skip_all();
-    is(t::Utility::stash('HOURS_OPEN')->date->to_string,
-        '2019-03-15T00:00:00Z');
+    is(
+        t::Utility::stash('HOURS_OPEN')->date->to_string,
+        '2019-03-15T00:00:00Z'
+    );
     t::Utility::stash('HOURS_CLOSED') // skip_all();
-    is(t::Utility::stash('HOURS_CLOSED')->date->to_string,
-        '2019-03-16T00:00:00Z');
+    is(
+        t::Utility::stash('HOURS_CLOSED')->date->to_string,
+        '2019-03-16T00:00:00Z'
+    );
 }
 
 =head2 C<next_open_hours( )>
@@ -177,47 +186,56 @@ previous day the market was open.
 
 =cut
 
-has '_'
-    .
-    $_ => (is       => 'ro',
-           isa      => Maybe [InstanceOf ['URI']],
-           coerce   => sub($url) { $url ? URI->new($url) : () },
-           init_arg => $_
-    ) for qw[next_open_hours previous_open_hours];
+has '_' . $_ => (
+    is       => 'ro',
+    isa      => Maybe [ InstanceOf ['URI'] ],
+    coerce   => sub($url) { $url ? URI->new($url) : () },
+    init_arg => $_
+) for qw[next_open_hours previous_open_hours];
 has [qw[next_open_hours previous_open_hours]] => (
-              is  => 'ro',
-              isa => InstanceOf ['Finance::Robinhood::Equity::Market::Hours'],
-              builder  => 1,
-              lazy     => 1,
-              init_arg => undef
+    is       => 'ro',
+    isa      => InstanceOf ['Finance::Robinhood::Equity::Market::Hours'],
+    builder  => 1,
+    lazy     => 1,
+    init_arg => undef
 );
 
 sub _build_next_open_hours($s) {
-    $s->robinhood->_req(GET => $s->_next_open_hours,
-                        as  => 'Finance::Robinhood::Equity::Market::Hours');
+    $s->robinhood->_req(
+        GET => $s->_next_open_hours,
+        as  => 'Finance::Robinhood::Equity::Market::Hours'
+    );
 }
 
 sub _build_previous_open_hours($s) {
-    $s->robinhood->_req(GET => $s->_previous_open_hours,
-                        as  => 'Finance::Robinhood::Equity::Market::Hours');
+    $s->robinhood->_req(
+        GET => $s->_previous_open_hours,
+        as  => 'Finance::Robinhood::Equity::Market::Hours'
+    );
 }
 
 sub _test_next_open_hours {
     t::Utility::stash('HOURS_OPEN') // skip_all();
-    is(t::Utility::stash('HOURS_OPEN')->next_open_hours->date->to_string,
-        '2019-03-18T00:00:00Z');
+    is(
+        t::Utility::stash('HOURS_OPEN')->next_open_hours->date->to_string,
+        '2019-03-18T00:00:00Z'
+    );
     t::Utility::stash('HOURS_CLOSED') // skip_all();
-    is(t::Utility::stash('HOURS_CLOSED')->next_open_hours->date->to_string,
-        '2019-03-18T00:00:00Z');
+    is(
+        t::Utility::stash('HOURS_CLOSED')->next_open_hours->date->to_string,
+        '2019-03-18T00:00:00Z'
+    );
 }
 
 sub _test_previous_open_hours {
     t::Utility::stash('HOURS_OPEN') // skip_all();
-    is(t::Utility::stash('HOURS_OPEN')->previous_open_hours->date->to_string,
-        '2019-03-14T00:00:00Z');
+    is(
+        t::Utility::stash('HOURS_OPEN')->previous_open_hours->date->to_string,
+        '2019-03-14T00:00:00Z'
+    );
     t::Utility::stash('HOURS_CLOSED') // skip_all();
-    is( t::Utility::stash('HOURS_CLOSED')
-            ->previous_open_hours->date->to_string,
+    is(
+        t::Utility::stash('HOURS_CLOSED')->previous_open_hours->date->to_string,
         '2019-03-15T00:00:00Z'
     );
 }

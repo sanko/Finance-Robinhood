@@ -22,6 +22,7 @@ Finance::Robinhood::Equity::Fundamentals - Equity Instrument's Fundamental Data
     }
 
 =cut
+
 use Moo;
 use MooX::Enumeration;
 use Types::Standard qw[Bool Enum InstanceOf Maybe Num Str StrMatch];
@@ -34,12 +35,11 @@ use Finance::Robinhood::Equity;
 sub _test__init {
     my $rh   = t::Utility::rh_instance(1);
     my $tsla = $rh->equity('TSLA')->fundamentals();
-    isa_ok($tsla, __PACKAGE__);
-    t::Utility::stash('TSLA', $tsla);    #  Store it for later
+    isa_ok( $tsla, __PACKAGE__ );
+    t::Utility::stash( 'TSLA', $tsla );    #  Store it for later
 }
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'],);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'], );
 
 =head1 METHODS
 
@@ -136,12 +136,12 @@ has [
         open
         pb_ratio pe_ratio
         shares_outstanding volume year_founded]
-] => (is => 'ro', isa => Maybe [Num], required => 1);
+] => ( is => 'ro', isa => Maybe [Num], required => 1 );
 has [
     qw[ceo description
         headquarters_city headquarters_state
         industry sector]
-] => (is => 'ro', isa => Str, required => 1);
+] => ( is => 'ro', isa => Str, required => 1 );
 
 =head2 C<instrument( )>
 
@@ -149,28 +149,34 @@ Loop back to the equity instrument.
 
 =cut
 
-has _instrument => (is       => 'ro',
-                    isa      => InstanceOf ['URI'],
-                    coerce   => sub ($url) { URI->new($url) },
-                    required => 1,
-                    init_arg => 'instrument'
+has _instrument => (
+    is       => 'ro',
+    isa      => InstanceOf ['URI'],
+    coerce   => sub ($url) { URI->new($url) },
+    required => 1,
+    init_arg => 'instrument'
 );
-has instrument => (is       => 'ro',
-                   isa      => InstanceOf ['Finance::Robinhood::Equity'],
-                   builder  => 1,
-                   lazy     => 1,
-                   init_arg => undef
+has instrument => (
+    is       => 'ro',
+    isa      => InstanceOf ['Finance::Robinhood::Equity'],
+    builder  => 1,
+    lazy     => 1,
+    init_arg => undef
 );
 
 sub _build_instrument($s) {
-    $s->robinhood->_req(GET => $s->_instrument,
-                        as  => 'Finance::Robinhood::Equity');
+    $s->robinhood->_req(
+        GET => $s->_instrument,
+        as  => 'Finance::Robinhood::Equity'
+    );
 }
 
 sub _test_instrument {
     t::Utility::stash('TSLA') // skip_all();
-    isa_ok(t::Utility::stash('TSLA')->instrument,
-           'Finance::Robinhood::Equity');
+    isa_ok(
+        t::Utility::stash('TSLA')->instrument,
+        'Finance::Robinhood::Equity'
+    );
 }
 
 =head1 LEGAL

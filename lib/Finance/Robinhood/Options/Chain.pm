@@ -22,8 +22,7 @@ Finance::Robinhood::Options::Chain - Represents a Single Options Chain
 
 use Moo;
 use MooX::Enumeration;
-use Types::Standard
-    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
 use URI;
 use Time::Moment;
 use Data::Dump;
@@ -35,29 +34,29 @@ sub _test__init {
     my $rh     = t::Utility::rh_instance(0);
     my $chains = $rh->options_chains;
     my $chain;
-    while ($chains->has_next) {
+    while ( $chains->has_next ) {
         my @dates = $chains->next->expiration_dates;
         if (@dates) {
             $chain = $chains->current;
             last;
         }
     }
-    isa_ok($chain, __PACKAGE__);
-    t::Utility::stash('CHAIN', $chain);    #  Store it for later
+    isa_ok( $chain, __PACKAGE__ );
+    t::Utility::stash( 'CHAIN', $chain );    #  Store it for later
 }
-use overload '""' => sub ($s, @) {
+use overload '""' => sub ( $s, @ ) {
     'https://api.robinhood.com/options/chains/' . $s->{id} . '/';
     },
     fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('CHAIN') // skip_all();
-    like(+t::Utility::stash('CHAIN'),
-         qr'^https://api.robinhood.com/options/chains/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/$'i
+    like(
+        +t::Utility::stash('CHAIN'),
+        qr'^https://api.robinhood.com/options/chains/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/$'i
     );
 }
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head2 C<can_open_position( )>
 
@@ -103,45 +102,40 @@ Chain's ticker symbol.
 
 =cut
 
-has can_open_position => (is       => 'ro',
-                          isa      => Bool,
-                          coerce   => sub ($bool) { !!$bool },
-                          required => 1
+has can_open_position => (
+    is       => 'ro',
+    isa      => Bool,
+    coerce   => sub ($bool) { !!$bool },
+    required => 1
 );
-has cash_component =>
-    (is => 'ro', isa => Maybe [Num], predicate => 1, required => 1);
+has cash_component   => ( is => 'ro', isa => Maybe [Num], predicate => 1, required => 1 );
 has expiration_dates => (
-                        is  => 'ro',
-                        isa => ArrayRef [StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]]],
-                        required => 1
+    is       => 'ro',
+    isa      => ArrayRef [ StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]] ],
+    required => 1
 );
 has id => (
     is  => 'ro',
-    isa => StrMatch [
-        qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
-    ],
+    isa => StrMatch [qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i],
     required => 1
 );
 has min_ticks => (
-      is  => 'ro',
-      isa => Dict [above_tick => Num, below_tick => Num, cutoff_price => Num],
-      required => 1
+    is       => 'ro',
+    isa      => Dict [ above_tick => Num, below_tick => Num, cutoff_price => Num ],
+    required => 1
 );
-has symbol                 => (is => 'ro', isa => Str, required => 1);
-has trade_value_multiplier => (is => 'ro', isa => Num, required => 1);
+has symbol                 => ( is => 'ro', isa => Str, required => 1 );
+has trade_value_multiplier => ( is => 'ro', isa => Num, required => 1 );
 has _underlying_instruments => (
-    is => 'ro',
-    isa =>
-        ArrayRef [
+    is  => 'ro',
+    isa => ArrayRef [
         Dict [
-            id =>
-                StrMatch [
-                qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
-                ],
+            id => StrMatch [
+                qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i],
             instrument => Str,
             quantity   => Num
         ]
-        ],
+    ],
     required => 1,
     init_arg => 'underlying_instruments'
 );
@@ -164,39 +158,39 @@ contain the following keys:
 =cut
 
 has underlying_equities => (
-    is => 'ro',
-    isa =>
-        ArrayRef [
+    is  => 'ro',
+    isa => ArrayRef [
         Dict [
-            id =>
-                StrMatch [
-                qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
-                ],
+            id => StrMatch [
+                qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i],
             equity   => InstanceOf ['Finance::Robinhood::Equity'],
             quantity => Num
         ]
-        ],
+    ],
     lazy     => 1,
     builder  => 1,
     init_arg => undef
 );
 
 sub _build_underlying_equities($s) {
-    [map {
-         {id     => $_->{id},
-          equity => $s->robinhood->_req(GET => $_->{instrument},
-                                        as  => 'Finance::Robinhood::Equity'
-          ),
-          quantity => $_->{quantity}
-         }
-     } @{$s->_underlying_instruments}
+    [
+        map {
+            {
+                id     => $_->{id},
+                equity => $s->robinhood->_req(
+                    GET => $_->{instrument},
+                    as  => 'Finance::Robinhood::Equity'
+                ),
+                quantity => $_->{quantity}
+            }
+        } @{ $s->_underlying_instruments }
     ];
 }
 
 sub _test_underlying_equities {
     t::Utility::stash('CHAIN') // skip_all();
     my ($underlying) = t::Utility::stash('CHAIN')->underlying_equities;
-    isa_ok($underlying->{equity}, 'Finance::Robinhood::Equity');
+    isa_ok( $underlying->{equity}, 'Finance::Robinhood::Equity' );
 }
 
 =head2 C<underlying_instruments( )>
@@ -230,25 +224,24 @@ It would be a good idea to pass the values from C<expiration_dates( )>.
 
 =cut
 
-sub instruments ($s, %filter) {
+sub instruments ( $s, %filter ) {
     $filter{expiration_dates} = join ',',
         map { ref $_ eq 'Time::Moment' ? $_->strftime('%Y-%m-%d') : $_; }
-        @{$filter{expiration_dates}}
+        @{ $filter{expiration_dates} }
         if $filter{expiration_dates};
     Finance::Robinhood::Utilities::Iterator->new(
-          robinhood => $s->_rh,
-          url =>
-              Mojo::URL->new('https://api.robinhood.com/options/instruments/')
-              ->query(chain_id => $s->id, %filter),
-          as => 'Finance::Robinhood::Options::Instrument'
+        robinhood => $s->_rh,
+        url       => Mojo::URL->new('https://api.robinhood.com/options/instruments/')
+            ->query( chain_id => $s->id, %filter ),
+        as => 'Finance::Robinhood::Options::Instrument'
     );
 }
 
 sub _test_instruments {
     t::Utility::stash('CHAIN') // skip_all();
     my $instrument = t::Utility::stash('CHAIN')->instruments;
-    isa_ok($instrument,          'Finance::Robinhood::Utilities::Iterator');
-    isa_ok($instrument->current, 'Finance::Robinhood::Options::Instrument');
+    isa_ok( $instrument,          'Finance::Robinhood::Utilities::Iterator' );
+    isa_ok( $instrument->current, 'Finance::Robinhood::Options::Instrument' );
 }
 
 =head1 LEGAL

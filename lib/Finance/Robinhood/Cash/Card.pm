@@ -42,8 +42,10 @@ use overload '""' => sub ( $s, @ ) { $s->id }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('CARD') // skip_all();
-    like( +t::Utility::stash('CARD'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i );
+    like(
+        +t::Utility::stash('CARD'),
+        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    );
 }
 #
 has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
@@ -215,8 +217,8 @@ You must pass a Finance:Robinhood::Cash::Merchant object.
 sub pending_transactions ( $s, $aggregate_merchant_id ) {    # TODO: Properly document merchant UUID
     Finance::Robinhood::Utilities::Iterator->new(
         robinhood => $s->robinhood,
-        url => 'https://minerva.robinhood.com/cards/pending_transactions/?aggregate_merchant_id=' .
-            $aggregate_merchant_id,
+        url => 'https://minerva.robinhood.com/cards/pending_transactions/?aggregate_merchant_id='
+            . $aggregate_merchant_id,
 
         #as => 'Finance::Robinhood::Cash::PendingTransaction'
     );

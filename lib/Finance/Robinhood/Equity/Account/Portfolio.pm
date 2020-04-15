@@ -23,8 +23,8 @@ sub _test__init {
     my $rh        = t::Utility::rh_instance(1);
     my $acct      = $rh->equity_accounts->current;
     my $portfolio = $acct->portfolio;
-    isa_ok($portfolio, __PACKAGE__);
-    t::Utility::stash('PORTFOLIO', $portfolio);    #  Store it for later
+    isa_ok( $portfolio, __PACKAGE__ );
+    t::Utility::stash( 'PORTFOLIO', $portfolio );    #  Store it for later
 }
 #
 use Moo;
@@ -34,20 +34,21 @@ use URI;
 use Time::Moment;
 use Data::Dump;
 use experimental 'signatures';
-use overload '""' => sub ($s, @) { $s->url }, fallback => 1;
+use overload '""' => sub ( $s, @ ) { $s->url }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('PORTFOLIO') // skip_all();
-    like(+t::Utility::stash('PORTFOLIO'),
-         qr'https://api.robinhood.com/portfolios/.+/');
+    like(
+        +t::Utility::stash('PORTFOLIO'),
+        qr'https://api.robinhood.com/portfolios/.+/'
+    );
 }
 
 =head1 METHODS
 
 =cut
 
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head2 C<adjusted_equity_previous_close( )>
 
@@ -88,10 +89,11 @@ has robinhood =>
 
 =cut
 
-has url => (is       => 'ro',
-            isa      => InstanceOf ['URI'],
-            coerce   => sub ($url) { URI->new($url) },
-            required => 1
+has url => (
+    is       => 'ro',
+    isa      => InstanceOf ['URI'],
+    coerce   => sub ($url) { URI->new($url) },
+    required => 1
 );
 has [
     qw[adjusted_equity_previous_close adjusted_portfolio_equity_previous_close equity
@@ -102,28 +104,27 @@ has [
         portfolio_equity_previous_close
         unwithdrawable_deposits unwithdrawable_grants
         withdrawable_amount]
-] => (is => 'ro', isa => Num, required => 1);
-has [
-    qw[extended_hours_equity extended_hours_market_value extended_hours_portfolio_equity]
-] => (is => 'ro', isa => Maybe [Num], required => 1);
+] => ( is => 'ro', isa => Num, required => 1 );
+has [qw[extended_hours_equity extended_hours_market_value extended_hours_portfolio_equity]] =>
+    ( is => 'ro', isa => Maybe [Num], required => 1 );
 
 =head2 C<start_date( )>
 
 Returns a Time::Moment object.
 
 =cut
+
 has start_date => (
     is     => 'ro',
     isa    => InstanceOf ['Time::Moment'],
     coerce => sub ($date) {
-        Time::Moment->from_string($date . 'T00:00:00.00000Z');
+        Time::Moment->from_string( $date . 'T00:00:00.00000Z' );
     }
 );
 
 sub _test_start_date {
-    t::Utility::stash('PORTFOLIO')
-        // skip_all('No portfolio object in stash');
-    isa_ok(t::Utility::stash('PORTFOLIO')->start_date, 'Time::Moment');
+    t::Utility::stash('PORTFOLIO') // skip_all('No portfolio object in stash');
+    isa_ok( t::Utility::stash('PORTFOLIO')->start_date, 'Time::Moment' );
 }
 
 =head2 C<account( )>
@@ -131,28 +132,35 @@ sub _test_start_date {
 Returns the related Finance::Robinhood::Equity::Account object.
 
 =cut
-has '_account' => (is       => 'ro',
-                   required => 1,
-                   isa      => InstanceOf ['URI'],
-                   coerce   => sub ($url) { URI->new($url) },
-                   init_arg => 'account'
+
+has '_account' => (
+    is       => 'ro',
+    required => 1,
+    isa      => InstanceOf ['URI'],
+    coerce   => sub ($url) { URI->new($url) },
+    init_arg => 'account'
 );
-has account => (is      => 'ro',
-                isa     => InstanceOf ['Finance::Robinhood::Equity::Account'],
-                builder => 1,
-                lazy    => 1,
-                init_arg => undef
+has account => (
+    is       => 'ro',
+    isa      => InstanceOf ['Finance::Robinhood::Equity::Account'],
+    builder  => 1,
+    lazy     => 1,
+    init_arg => undef
 );
 
 sub _build_account ($s) {
-    $s->robinhood->_req(GET => $s->_account,
-                        as  => 'Finance::Robinhood::Equity::Account');
+    $s->robinhood->_req(
+        GET => $s->_account,
+        as  => 'Finance::Robinhood::Equity::Account'
+    );
 }
 
 sub _test_account {
     t::Utility::stash('POSITION') // skip_all('No position object in stash');
-    isa_ok(t::Utility::stash('POSITION')->account,
-           'Finance::Robinhood::Equity::Account');
+    isa_ok(
+        t::Utility::stash('POSITION')->account,
+        'Finance::Robinhood::Equity::Account'
+    );
 }
 
 =head1 LEGAL

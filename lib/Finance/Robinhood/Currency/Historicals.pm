@@ -26,18 +26,16 @@ use HTTP::Tiny;
 use JSON::Tiny;
 use Moo;
 use MooX::ChainedAttributes;
-use Types::Standard
-    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
 use experimental 'signatures';
 use Finance::Robinhood::Types qw[Timestamp];
 
 sub _test__init {
-    my $rh = t::Utility::rh_instance(1);
-    my $historicals = $rh->currency_pair_by_id(
-                             '3d961844-d360-45fc-989b-f6fca761d511') # BTC-USD
-        ->historicals(interval => '5minute');
-    isa_ok($historicals, __PACKAGE__);
-    t::Utility::stash('HISTORICALS', $historicals);    #  Store it for later
+    my $rh          = t::Utility::rh_instance(1);
+    my $historicals = $rh->currency_pair_by_id('3d961844-d360-45fc-989b-f6fca761d511')    # BTC-USD
+        ->historicals( interval => '5minute' );
+    isa_ok( $historicals, __PACKAGE__ );
+    t::Utility::stash( 'HISTORICALS', $historicals );    #  Store it for later
 }
 ##
 
@@ -45,8 +43,7 @@ sub _test__init {
 
 =cut
 
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head2 C<bounds( )>
 
@@ -101,50 +98,52 @@ Returns a Time::Moment object.
 
 =cut
 
-has bounds => (is       => 'ro',
-               isa      => Enum [qw[24_7 regular trading extended]],
-               required => 1
+has bounds => (
+    is       => 'ro',
+    isa      => Enum [qw[24_7 regular trading extended]],
+    required => 1
 );
 has interval => (
-           is  => 'ro',
-           isa => Enum [qw[15second week hour day 10minute 5minute 30minute]],
-           required => 1
+    is       => 'ro',
+    isa      => Enum [qw[15second week hour day 10minute 5minute 30minute]],
+    required => 1
 );
-has open_price           => (is => 'ro', isa => Maybe [Num], required => 1);
-has previous_close_price => (is => 'ro', isa => Maybe [Num], required => 1);
-has span => (is       => 'ro',
-             isa      => Enum [qw[hour day week month year 5year all]],
-             required => 1
+has open_price           => ( is => 'ro', isa => Maybe [Num], required => 1 );
+has previous_close_price => ( is => 'ro', isa => Maybe [Num], required => 1 );
+has span                 => (
+    is       => 'ro',
+    isa      => Enum [qw[hour day week month year 5year all]],
+    required => 1
 );
-has symbol => (is => 'ro', isa => Str, required => 1);
-has data_points => (is  => 'ro',
-                    isa => ArrayRef [Dict [begins_at    => Timestamp,
-                                           close_price  => Num,
-                                           high_price   => Num,
-                                           interpolated => Bool,
-                                           low_price    => Num,
-                                           open_price   => Num,
-                                           session      => Enum [qw[reg]],
-                                           volume       => Maybe [Num]
-                                     ]
-                    ],
-                    coerce   => 1,
-                    required => 1
+has symbol      => ( is => 'ro', isa => Str, required => 1 );
+has data_points => (
+    is  => 'ro',
+    isa => ArrayRef [
+        Dict [
+            begins_at    => Timestamp,
+            close_price  => Num,
+            high_price   => Num,
+            interpolated => Bool,
+            low_price    => Num,
+            open_price   => Num,
+            session      => Enum [qw[reg]],
+            volume       => Maybe [Num]
+        ]
+    ],
+    coerce   => 1,
+    required => 1
 );
 
 sub _test_data_points {
-    t::Utility::stash('HISTORICALS')
-        // skip_all('No historicals object in stash');
+    t::Utility::stash('HISTORICALS') // skip_all('No historicals object in stash');
     my ($datapoint) = t::Utility::stash('HISTORICALS')->data_points;
-    ref_ok($datapoint, 'HASH');
+    ref_ok( $datapoint, 'HASH' );
 }
-has open_time =>
-    (is => 'ro', isa => Maybe [Timestamp], coerce => 1, required => 1);
+has open_time => ( is => 'ro', isa => Maybe [Timestamp], coerce => 1, required => 1 );
 
 sub _test_open_time {
-    t::Utility::stash('HISTORICALS')
-        // skip_all('No historicals object in stash');
-    isa_ok(t::Utility::stash('HISTORICALS')->open_time, 'Time::Moment');
+    t::Utility::stash('HISTORICALS') // skip_all('No historicals object in stash');
+    isa_ok( t::Utility::stash('HISTORICALS')->open_time, 'Time::Moment' );
 }
 
 =head2 C<previous_close_time( )>
@@ -153,14 +152,14 @@ Returns a Time::Moment object.
 
 =cut
 
-has previous_close_time =>
-    (is => 'ro', isa => Maybe [Timestamp], coerce => 1, required => 1);
+has previous_close_time => ( is => 'ro', isa => Maybe [Timestamp], coerce => 1, required => 1 );
 
 sub _test_previous_close_time {
-    t::Utility::stash('HISTORICALS')
-        // skip_all('No historicals object in stash');
-    isa_ok(t::Utility::stash('HISTORICALS')->previous_close_time,
-           'Time::Moment');
+    t::Utility::stash('HISTORICALS') // skip_all('No historicals object in stash');
+    isa_ok(
+        t::Utility::stash('HISTORICALS')->previous_close_time,
+        'Time::Moment'
+    );
 }
 
 =head2 C<pair( )>
@@ -170,14 +169,15 @@ Returns the related Finance::Robinhood::Currency::Pair object.
 =cut
 
 sub pair ($s) {
-    $s->robinhood->currency_pair_by_id($s->id);
+    $s->robinhood->currency_pair_by_id( $s->id );
 }
 
 sub _test_instrument {
-    t::Utility::stash('HISTORICALS')
-        // skip_all('No historicals object in stash');
-    isa_ok(t::Utility::stash('HISTORICALS')->pair,
-           'Finance::Robinhood::Currency::Pair');
+    t::Utility::stash('HISTORICALS') // skip_all('No historicals object in stash');
+    isa_ok(
+        t::Utility::stash('HISTORICALS')->pair,
+        'Finance::Robinhood::Currency::Pair'
+    );
 }
 
 =head1 LEGAL

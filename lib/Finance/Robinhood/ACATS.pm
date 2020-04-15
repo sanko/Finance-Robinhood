@@ -23,8 +23,7 @@ Finance::Robinhood::ACATS - Represents an ACATS Transfer
 
 use Moo;
 use MooX::Enumeration;
-use Types::Standard
-    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
 use URI;
 use Time::Moment;
 use Data::Dump;
@@ -35,10 +34,10 @@ sub _test__init {
     my $rh       = t::Utility::rh_instance(1);
     my $transfer = $rh->acats_transfers->current;
     skip_all('No ACATS transfers found') if !defined $transfer;
-    isa_ok($transfer, __PACKAGE__);
-    t::Utility::stash('TRANSFER', $transfer);    #  Store it for later
+    isa_ok( $transfer, __PACKAGE__ );
+    t::Utility::stash( 'TRANSFER', $transfer );    #  Store it for later
 }
-use overload '""' => sub ($s, @) { $s->_url }, fallback => 1;
+use overload '""' => sub ( $s, @ ) { $s->_url }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('TRANSFER') // skip_all();
@@ -49,11 +48,8 @@ sub _test_stringify {
     #);
 }
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
-has '_' .
-    $_ => (is => 'ro', required => 1, isa => URL, coerce => 1, init_arg => $_)
-    for qw[url];
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
+has '_' . $_ => ( is => 'ro', required => 1, isa => URL, coerce => 1, init_arg => $_ ) for qw[url];
 
 =head1 METHODS
 
@@ -96,14 +92,14 @@ has '_' .
 
 
 =cut
-has [qw[cash_value fees_reimbursed]] =>
-    (is => 'ro', isa => Num, requried => 1);
+
+has [qw[cash_value fees_reimbursed]] => ( is => 'ro', isa => Num, requried => 1 );
 has [
     qw[contra_account_number contra_brokerage_name
         failure_reason replaced_by transfer_type state
         ]
-] => (is => 'ro', isa => Str, required => 1);
-has id => (is => 'ro', isa => UUID, required => 1);
+] => ( is => 'ro', isa => Str, required => 1 );
+has id => ( is => 'ro', isa => UUID, required => 1 );
 
 =head2 C<can_cancel( )>
 
@@ -114,17 +110,19 @@ Returns a boolean value.
 If the transfer can be cancelled, this method will do it.
 
 =cut
-has _cancel => (is        => 'ro',
-                isa       => URL,
-                coerce    => 1,
-                init_arg  => 'cancel',
-                required  => 1,
-                predicate => 'can_cancel'
+
+has _cancel => (
+    is        => 'ro',
+    isa       => URL,
+    coerce    => 1,
+    init_arg  => 'cancel',
+    required  => 1,
+    predicate => 'can_cancel'
 );
 
 sub cancel($s) {
     return if !$s->can_cancel;
-    $s->robinhood->_req(POST => $s->_cancel);
+    $s->robinhood->_req( POST => $s->_cancel );
 }
 
 =head2 C<updated_at( )>
@@ -133,7 +131,7 @@ Returns a Time::Moment object.
 
 =cut
 
-has updated_at => (is => 'ro', isa => Timestamp, coerce => 1, required => 1);
+has updated_at => ( is => 'ro', isa => Timestamp, coerce => 1, required => 1 );
 
 =head2 C<expected_landing_date( )>
 
@@ -142,7 +140,7 @@ Returns a date as YYYY-MM-DD.
 =cut
 
 has expected_landing_date =>
-    (is => 'ro', isa => StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]], required => 1);
+    ( is => 'ro', isa => StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]], required => 1 );
 
 =head2 C<positions( )>
 
@@ -164,10 +162,9 @@ each contain:
 =cut
 
 has positions => (
-      is => 'ro',
-      isa =>
-          ArrayRef [Dict [instrument => UUID, price => Num, quantity => Num]],
-      required => 1
+    is       => 'ro',
+    isa      => ArrayRef [ Dict [ instrument => UUID, price => Num, quantity => Num ] ],
+    required => 1
 );
 
 =head1 LEGAL

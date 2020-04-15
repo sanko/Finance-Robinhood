@@ -24,8 +24,7 @@ Finance::Robinhood::Options::Event - Represents a Single Options Event
 
 use Moo;
 use MooX::Enumeration;
-use Types::Standard
-    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
 use URI;
 use Time::Moment;
 use Data::Dump;
@@ -34,22 +33,22 @@ use experimental 'signatures';
 sub _test__init {
     my $rh    = t::Utility::rh_instance(1);
     my $event = $rh->options_events->next;
-    isa_ok($event, __PACKAGE__);
-    t::Utility::stash('EVENT', $event);    #  Store it for later
+    isa_ok( $event, __PACKAGE__ );
+    t::Utility::stash( 'EVENT', $event );    #  Store it for later
 }
-use overload '""' => sub ($s, @) {
+use overload '""' => sub ( $s, @ ) {
     'https://api.robinhood.com/options/events/' . $s->{id} . '/';
     },
     fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('EVENT') // skip_all();
-    like(+t::Utility::stash('EVENT'),
-         qr'^https://api.robinhood.com/options/events/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/$'i
+    like(
+        +t::Utility::stash('EVENT'),
+        qr'^https://api.robinhood.com/options/events/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/$'i
     );
 }
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head2 C<chain_id( )>
 
@@ -89,32 +88,29 @@ Returns the date as C<YYYY-MM-DD>.
 =cut
 
 has [qw[id chain_id]] => (
-    is => 'ro',
-    isa =>
-        StrMatch [
-        qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
-        ],
+    is  => 'ro',
+    isa => StrMatch [qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i],
     required => 1
 );
-has direction => (is       => 'ro',
-                  isa      => Enum [qw[debit credit]],
-                  handles  => [qw[is_debit is_credit]],
-                  requried => 1
+has direction => (
+    is       => 'ro',
+    isa      => Enum [qw[debit credit]],
+    handles  => [qw[is_debit is_credit]],
+    requried => 1
 );
-has event_date =>
-    (is => 'ro', isa => StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]], required => 1);
-has [qw[quantity total_cash_amount underlying_price]] =>
-    (is => 'ro', isa => Num, required => 1);
+has event_date => ( is => 'ro', isa => StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]], required => 1 );
+has [qw[quantity total_cash_amount underlying_price]] => ( is => 'ro', isa => Num, required => 1 );
 has type => (
-           is      => 'ro',
-           isa     => Enum [qw[assignment expiration exercise voided]],
-           handles => [qw[is_assignment is_expiration is_exercise is_voided]],
-           required => 1
+    is       => 'ro',
+    isa      => Enum [qw[assignment expiration exercise voided]],
+    handles  => [qw[is_assignment is_expiration is_exercise is_voided]],
+    required => 1
 );
-has state => (is       => 'ro',
-              isa      => Enum [qw[confirmed]],
-              handles  => [qw[is_confirmed]],
-              required => 1
+has state => (
+    is       => 'ro',
+    isa      => Enum [qw[confirmed]],
+    handles  => [qw[is_confirmed]],
+    required => 1
 );
 
 =head2 C<cash_component( )>
@@ -133,15 +129,14 @@ returned with the following keys:
 =back
 
 =cut
+
 has cash_component => (
     is  => 'ro',
     isa => Maybe [
         Dict [
-            id =>
-                StrMatch [
-                qr[^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]
-                ],
-            direction   => Enum [qw[buy sell]], # I don't know what goes here!
+            id => StrMatch [
+                qr[^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]],
+            direction   => Enum [qw[buy sell]],    # I don't know what goes here!
             cash_amount => Num
         ]
     ],
@@ -179,14 +174,13 @@ Each element will be a hash with the following keys:
 =back
 
 =cut
+
 has equity_components => (
     is  => 'ro',
     isa => ArrayRef [
         Dict [
-            id =>
-                StrMatch [
-                qr[^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]
-                ],
+            id => StrMatch [
+                qr[^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]],
             instrument => Str,                   #InstanceOf['URI'],
             price      => Num,
             quantity   => Num,
@@ -195,8 +189,7 @@ has equity_components => (
         ]
     ],
     coerce => sub ($list) {
-        [map { %{$_}, instrument => URI->new(delete $_->{instrument}) }
-         @$list]
+        [ map { %{$_}, instrument => URI->new( delete $_->{instrument} ) } @$list ]
     },
     required => 1
 );
@@ -217,20 +210,23 @@ Returns the related Finance::Robinhood::Options::Chain object.
 
 =cut
 
-has chain => (is      => 'ro',
-              isa     => InstanceOf ['Finance::Robinhood::Option'],
-              lazy    => 1,
-              builder => 1
+has chain => (
+    is      => 'ro',
+    isa     => InstanceOf ['Finance::Robinhood::Option'],
+    lazy    => 1,
+    builder => 1
 );
 
 sub _build_chain ($s) {
-    $s->robinhood->options_chain_by_id($s->chain_id);
+    $s->robinhood->options_chain_by_id( $s->chain_id );
 }
 
 sub _test_chain {
     t::Utility::stash('POSITION') // skip_all('No position object in stash');
-    isa_ok(t::Utility::stash('POSITION')->chain,
-           'Finance::Robinhood::Options');
+    isa_ok(
+        t::Utility::stash('POSITION')->chain,
+        'Finance::Robinhood::Options'
+    );
 }
 
 =head2 C<contract( )>
@@ -240,14 +236,18 @@ Returns the related Finance::Robinhood::Options::Contract object.
 =cut
 
 sub contract ($s) {
-    $s->robinhood->_req(GET => $s->option,
-                        as  => 'Finance::Robinhood::Options::Contract');
+    $s->robinhood->_req(
+        GET => $s->option,
+        as  => 'Finance::Robinhood::Options::Contract'
+    );
 }
 
 sub _test_contract {
     t::Utility::stash('EVENT') // skip_all('No event object in stash');
-    isa_ok(t::Utility::stash('EVENT')->contract,
-           'Finance::Robinhood::Options::Contract');
+    isa_ok(
+        t::Utility::stash('EVENT')->contract,
+        'Finance::Robinhood::Options::Contract'
+    );
 }
 
 =head2 C<position( )>
@@ -256,28 +256,34 @@ Returns the related Finance::Robinhood::Options::Position object.
 
 =cut
 
-has _position => (is       => 'ro',
-                  isa      => InstanceOf ['URI'],
-                  coerce   => sub ($url) { URI->new($url) },
-                  init_arg => 'position',
-                  requried => 1
+has _position => (
+    is       => 'ro',
+    isa      => InstanceOf ['URI'],
+    coerce   => sub ($url) { URI->new($url) },
+    init_arg => 'position',
+    requried => 1
 );
-has position => (is  => 'ro',
-                 isa => InstanceOf ['Finance::Robinhood::Options::Position'],
-                 builder  => 1,
-                 lazy     => 1,
-                 init_arg => undef
+has position => (
+    is       => 'ro',
+    isa      => InstanceOf ['Finance::Robinhood::Options::Position'],
+    builder  => 1,
+    lazy     => 1,
+    init_arg => undef
 );
 
 sub _build_position ($s) {
-    $s->robinhood->_req(GET => $s->_position,
-                        as  => 'Finance::Robinhood::Options::Position');
+    $s->robinhood->_req(
+        GET => $s->_position,
+        as  => 'Finance::Robinhood::Options::Position'
+    );
 }
 
 sub _test_position {
     t::Utility::stash('EVENT') // skip_all('No event object in stash');
-    isa_ok(t::Utility::stash('EVENT')->position,
-           'Finance::Robinhood::Options::Position');
+    isa_ok(
+        t::Utility::stash('EVENT')->position,
+        'Finance::Robinhood::Options::Position'
+    );
 }
 
 =head2 C<account( )>
@@ -286,28 +292,34 @@ Returns the related Finance::Robinhood::Equity::Account object.
 
 =cut
 
-has _account => (is       => 'ro',
-                 isa      => InstanceOf ['URI'],
-                 coerce   => sub ($url) { URI->new($url) },
-                 init_arg => 'account',
-                 requried => 1
+has _account => (
+    is       => 'ro',
+    isa      => InstanceOf ['URI'],
+    coerce   => sub ($url) { URI->new($url) },
+    init_arg => 'account',
+    requried => 1
 );
-has account => (is      => 'ro',
-                isa     => InstanceOf ['Finance::Robinhood::Equity::Account'],
-                builder => 1,
-                lazy    => 1,
-                init_arg => undef
+has account => (
+    is       => 'ro',
+    isa      => InstanceOf ['Finance::Robinhood::Equity::Account'],
+    builder  => 1,
+    lazy     => 1,
+    init_arg => undef
 );
 
 sub _build_account ($s) {
-    $s->robinhood->_req(GET => $s->_account,
-                        as  => 'Finance::Robinhood::Equity::Account');
+    $s->robinhood->_req(
+        GET => $s->_account,
+        as  => 'Finance::Robinhood::Equity::Account'
+    );
 }
 
 sub _test_account {
     t::Utility::stash('EVENT') // skip_all('No event object in stash');
-    isa_ok(t::Utility::stash('EVENT')->account,
-           'Finance::Robinhood::Equity::Account');
+    isa_ok(
+        t::Utility::stash('EVENT')->account,
+        'Finance::Robinhood::Equity::Account'
+    );
 }
 
 =head2 C<created_at( )>
@@ -331,12 +343,12 @@ has [qw[created_at updated_at]] => (
 
 sub _test_created_at {
     t::Utility::stash('POSITION') // skip_all('No position object in stash');
-    isa_ok(t::Utility::stash('POSITION')->created_at, 'Time::Moment');
+    isa_ok( t::Utility::stash('POSITION')->created_at, 'Time::Moment' );
 }
 
 sub _test_updated_at {
     t::Utility::stash('POSITION') // skip_all('No position object in stash');
-    isa_ok(t::Utility::stash('POSITION')->updated_at, 'Time::Moment');
+    isa_ok( t::Utility::stash('POSITION')->updated_at, 'Time::Moment' );
 }
 
 =head1 LEGAL

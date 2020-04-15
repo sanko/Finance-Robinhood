@@ -135,6 +135,7 @@ C<rlt>, C<nyrs>, or C<pre_filing>.
 
 
 =cut
+
 has [qw[bloomberg_unique country name symbol]] => ( is => 'ro', isa => Str, required => 1 );
 has [qw[simple_name]]                          => ( is => 'ro', isa => Maybe [Str], required => 1 );
 has [qw[day_trade_ratio maintenance_ratio margin_initial_ratio]] =>
@@ -257,8 +258,8 @@ sub prices ( $s, %filters ) {     $filters{delayed} = delete $filters{live} ?
 \%filters     )->as('Finance::Robinhood::Equity::Prices'); }
 
 sub _test_prices {     t::Utility::stash('MSFT_AUTH') // skip_all();    
-isa_ok( t::Utility::stash('MSFT_AUTH')->prices(),
-'Finance::Robinhood::Equity::Prices' ); }
+isa_ok(         t::Utility::stash('MSFT_AUTH')->prices(),        
+'Finance::Robinhood::Equity::Prices'     ); }
 
 =head2 C<splits( )>
 
@@ -306,8 +307,9 @@ sub _build_splits ( $s ) {
 sub _test_splits {
     my $rh     = t::Utility::rh_instance(1) // skip_all();
     my @splits = $rh->equity('GUSH')->splits->all;
-    @splits ? ref_ok( $splits[0], 'HASH' ) :
-        skip_all('Robinhood is not returning stock split data');
+    @splits
+        ? ref_ok( $splits[0], 'HASH' )
+        : skip_all('Robinhood is not returning stock split data');
 }
 
 sub buy ( $s, $quantity, $account = $s->robinhood->equity_account ) {

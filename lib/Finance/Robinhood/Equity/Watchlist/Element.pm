@@ -24,8 +24,8 @@ Element
 sub _test__init {
     my $rh      = t::Utility::rh_instance(1);
     my $element = $rh->equity_watchlist_by_name('Default')->current;
-    isa_ok($element, __PACKAGE__);
-    t::Utility::stash('ELEMENT', $element);    #  Store it for later
+    isa_ok( $element, __PACKAGE__ );
+    t::Utility::stash( 'ELEMENT', $element );    #  Store it for later
 }
 use Moo;
 use MooX::Enumeration;
@@ -35,14 +35,16 @@ use Time::Moment;
 use Data::Dump;
 use experimental 'signatures';
 use Time::Moment;
-use overload '""' => sub ($s, @) { $s->_url }, fallback => 1;
+use overload '""' => sub ( $s, @ ) { $s->_url }, fallback => 1;
 #
 use Finance::Robinhood::Equity;
 
 sub _test_stringify {
     t::Utility::stash('ELEMENT') // skip_all();
-    like(+t::Utility::stash('ELEMENT'),
-         qr'^https://api.robinhood.com/watchlists/Default/.+$');
+    like(
+        +t::Utility::stash('ELEMENT'),
+        qr'^https://api.robinhood.com/watchlists/Default/.+$'
+    );
 }
 #
 
@@ -51,16 +53,14 @@ sub _test_stringify {
 
 =cut
 
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
-has '_'
-    .
-    $_ => (is       => 'ro',
-           isa      => InstanceOf ['URI'],
-           coerce   => sub ($url) { URI->new($url) },
-           init_arg => $_,
-           required => 1
-    ) for qw[url instrument watchlist];
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
+has '_' . $_  => (
+    is       => 'ro',
+    isa      => InstanceOf ['URI'],
+    coerce   => sub ($url) { URI->new($url) },
+    init_arg => $_,
+    required => 1
+) for qw[url instrument watchlist];
 
 =head2 C<created_at( )>
 
@@ -71,15 +71,16 @@ the watchlist.
 
 =cut
 
-has created_at => (is     => 'ro',
-                   isa    => InstanceOf ['Time::Moment'],
-                   coerce => sub ($date) { Time::Moment->from_string($date) },
-                   required => 1
+has created_at => (
+    is       => 'ro',
+    isa      => InstanceOf ['Time::Moment'],
+    coerce   => sub ($date) { Time::Moment->from_string($date) },
+    required => 1
 );
 
 sub _test_created_at {
     t::Utility::stash('ELEMENT') // skip_all();
-    isa_ok(t::Utility::stash('ELEMENT')->created_at(), 'Time::Moment');
+    isa_ok( t::Utility::stash('ELEMENT')->created_at(), 'Time::Moment' );
 }
 
 =head2 C<delete( )>
@@ -91,16 +92,15 @@ Removes a instrument from the parent watchlist.
 =cut
 
 sub delete ($s) {
-    my $res = $s->robinhood->_req(DELETE => $s->url);
-    return $res->{success} || Finance::Robinhood::Error->new(%{$res->json});
+    my $res = $s->robinhood->_req( DELETE => $s->url );
+    return $res->{success} || Finance::Robinhood::Error->new( %{ $res->json } );
 }
 
 sub _test_delete {
     t::Utility::stash('ELEMENT') // skip_all();
-    todo("Add something and remove it and check watchlist" =>
-         sub { pass('ugh') });
+    todo( "Add something and remove it and check watchlist" => sub { pass('ugh') } );
 
-# isa_ok( t::Utility::stash('ELEMENT')->instrument, 'Finance::Robinhood::Equity::Instrument' );
+    # isa_ok( t::Utility::stash('ELEMENT')->instrument, 'Finance::Robinhood::Equity::Instrument' );
 }
 
 =head2 C<instrument( )>
@@ -112,14 +112,18 @@ Returns a Finance::Robinhood::Equity object.
 =cut
 
 sub instrument ($s) {
-    $s->robinhood->_req(GET => $s->_instrument,
-                        as  => 'Finance::Robinhood::Equity');
+    $s->robinhood->_req(
+        GET => $s->_instrument,
+        as  => 'Finance::Robinhood::Equity'
+    );
 }
 
 sub _test_instrument {
     t::Utility::stash('ELEMENT') // skip_all();
-    isa_ok(t::Utility::stash('ELEMENT')->instrument,
-           'Finance::Robinhood::Equity');
+    isa_ok(
+        t::Utility::stash('ELEMENT')->instrument,
+        'Finance::Robinhood::Equity'
+    );
 }
 
 =head2 C<id( )>
@@ -131,11 +135,9 @@ Returns the UUID of the equity instrument.
 =cut
 
 has id => (
-    is  => 'ro',
-    isa => StrMatch [
-        qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
-    ],
-    lazy    => 1,
+    is   => 'ro',
+    isa  => StrMatch [qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i],
+    lazy => 1,
     builder => 1
 );
 
@@ -148,8 +150,10 @@ sub _build_id ($s) {
 
 sub _test_id {
     t::Utility::stash('ELEMENT') // skip_all();
-    like(t::Utility::stash('ELEMENT')->id,
-         qr[^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}\-[0-9a-f]{12}$]i);
+    like(
+        t::Utility::stash('ELEMENT')->id,
+        qr[^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}\-[0-9a-f]{12}$]i
+    );
 }
 
 =head2 C<watchlist( )>
@@ -161,15 +165,17 @@ Returns a Finance::Robinhood::Equity::Watchlist object.
 =cut
 
 sub watchlist ($s) {
-    $s->robinhood->_req(GET => $s->_watchlist,
-                        as  => 'Finance::Robinhood::Equity::Watchlist');
+    $s->robinhood->_req(
+        GET => $s->_watchlist,
+        as  => 'Finance::Robinhood::Equity::Watchlist'
+    );
 }
 
 sub _test_watchlist {
     t::Utility::stash('ELEMENT') // skip_all();
     my $watchlist = t::Utility::stash('ELEMENT')->watchlist;
-    isa_ok($watchlist, 'Finance::Robinhood::Equity::Watchlist');
-    is($watchlist->name, 'Default');
+    isa_ok( $watchlist, 'Finance::Robinhood::Equity::Watchlist' );
+    is( $watchlist->name, 'Default' );
 }
 
 =head1 LEGAL

@@ -23,8 +23,7 @@ Finance::Robinhood::Options::Contract - Represents a Single Options Contract
 
 use Moo;
 use MooX::Enumeration;
-use Types::Standard
-    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
 use URI;
 use Time::Moment;
 use Data::Dump;
@@ -34,24 +33,25 @@ use experimental 'signatures';
 use Finance::Robinhood::Options::Quote;
 #
 sub _test__init {
-    my $rh = t::Utility::rh_instance(1);
+    my $rh         = t::Utility::rh_instance(1);
     my $instrument = $rh->options(
-                           chain_id => $rh->equity('MSFT')->tradable_chain_id,
-                           tradability => 'tradable'
+        chain_id    => $rh->equity('MSFT')->tradable_chain_id,
+        tradability => 'tradable'
     )->current;
-    isa_ok($instrument, __PACKAGE__);
-    t::Utility::stash('INSTRUMENT', $instrument);    #  Store it for later
+    isa_ok( $instrument, __PACKAGE__ );
+    t::Utility::stash( 'INSTRUMENT', $instrument );    #  Store it for later
 }
-use overload '""' => sub ($s, @) { $s->{url} }, fallback => 1;
+use overload '""' => sub ( $s, @ ) { $s->{url} }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('INSTRUMENT') // skip_all();
-    is(+t::Utility::stash('INSTRUMENT'),
-        'https://api.robinhood.com/options/instruments/' .
-            t::Utility::stash('INSTRUMENT')->id . '/');
+    is(
+        +t::Utility::stash('INSTRUMENT'),
+        'https://api.robinhood.com/options/instruments/'
+            . t::Utility::stash('INSTRUMENT')->id . '/'
+    );
 }
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head1 METHODS
 
@@ -123,26 +123,22 @@ modified.
 
 has chain_id => (
     is  => 'ro',
-    isa => StrMatch [
-        qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
-    ],
+    isa => StrMatch [qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i],
     required => 1
 );
-has chain_symbol => (is => 'ro', isa => Str, required => 1);
-has id => (
+has chain_symbol => ( is => 'ro', isa => Str, required => 1 );
+has id           => (
     is  => 'ro',
-    isa => StrMatch [
-        qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i
-    ],
+    isa => StrMatch [qr[^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$]i],
     required => 1
 );
 has min_ticks => (
-      is  => 'ro',
-      isa => Dict [above_tick => Num, below_tick => Num, cutoff_price => Num],
-      required => 1
+    is       => 'ro',
+    isa      => Dict [ above_tick => Num, below_tick => Num, cutoff_price => Num ],
+    required => 1
 );
 has [qw[expiration_date issue_date]] =>
-    (is => 'ro', isa => StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]], required => 1);
+    ( is => 'ro', isa => StrMatch [qr[^\d\d\d\d-\d\d-\d\d$]], required => 1 );
 has [qw[created_at updated_at]] => (
     is     => 'ro',
     isa    => InstanceOf ['Time::Moment'],
@@ -152,25 +148,28 @@ has [qw[created_at updated_at]] => (
     required => 1
 );
 has [qw[rhs_tradability tradability]] => (
-          is      => 'ro',
-          isa     => Enum [qw[position_closing_only untradable tradable]],
-          handles => [qw[is_position_closing_only is_untradable is_tradable]],
-          required => 1
+    is       => 'ro',
+    isa      => Enum [qw[position_closing_only untradable tradable]],
+    handles  => [qw[is_position_closing_only is_untradable is_tradable]],
+    required => 1
 );
-has state => (is       => 'ro',
-              isa      => Enum [qw[active expired inactive]],
-              handles  => [qw[is_active is_expired is_inactive]],
-              required => 1
+has state => (
+    is       => 'ro',
+    isa      => Enum [qw[active expired inactive]],
+    handles  => [qw[is_active is_expired is_inactive]],
+    required => 1
 );
-has type => (is       => 'ro',
-             isa      => Enum [qw[call put]],
-             handles  => [qw[is_call is_put]],
-             required => 1
+has type => (
+    is       => 'ro',
+    isa      => Enum [qw[call put]],
+    handles  => [qw[is_call is_put]],
+    required => 1
 );
-has url => (is       => 'ro',
-            isa      => InstanceOf ['URI'],
-            coerce   => sub ($url) { URI->new($url) },
-            required => 1
+has url => (
+    is       => 'ro',
+    isa      => InstanceOf ['URI'],
+    coerce   => sub ($url) { URI->new($url) },
+    required => 1
 );
 
 =head2 C<historicals( ... )>
@@ -239,20 +238,22 @@ You may provide the following arguments:
 
 =cut
 
-sub historicals ($s, %filters) {
+sub historicals ( $s, %filters ) {
     my $url
-        = URI->new(
-                 'https://api.robinhood.com/marketdata/options/historicals/' .
-                     $s->id . '/');
+        = URI->new( 'https://api.robinhood.com/marketdata/options/historicals/' . $s->id . '/' );
     $url->query_form(%filters);
-    $s->robinhood->_req(GET => $url,
-                        as  => 'Finance::Robinhood::Options::Historicals');
+    $s->robinhood->_req(
+        GET => $url,
+        as  => 'Finance::Robinhood::Options::Historicals'
+    );
 }
 
 sub _test_historicals {
     t::Utility::stash('INSTRUMENT') // skip_all();
-    isa_ok(t::Utility::stash('INSTRUMENT')->historicals(interval => 'hour'),
-           'Finance::Robinhood::Options::Historicals');
+    isa_ok(
+        t::Utility::stash('INSTRUMENT')->historicals( interval => 'hour' ),
+        'Finance::Robinhood::Options::Historicals'
+    );
 }
 
 =head2 C<quote( )>
@@ -276,8 +277,10 @@ sub quote ($s) {
 
 sub _test_quote {
     t::Utility::stash('INSTRUMENT') // skip_all();
-    isa_ok(t::Utility::stash('INSTRUMENT')->quote(),
-           'Finance::Robinhood::Options::Quote');
+    isa_ok(
+        t::Utility::stash('INSTRUMENT')->quote(),
+        'Finance::Robinhood::Options::Quote'
+    );
 }
 
 =head1 LEGAL

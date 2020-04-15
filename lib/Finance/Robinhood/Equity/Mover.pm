@@ -23,6 +23,7 @@ Finance::Robinhood::Equity::Mover - Represents a Top Moving Equity Instrument
 =head1 METHODS
 
 =cut
+
 use Moo;
 use MooX::Enumeration;
 use Types::Standard qw[Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
@@ -35,20 +36,21 @@ use Finance::Robinhood::Equity::PriceMovement;
 
 sub _test__init {
     my $rh  = t::Utility::rh_instance(1);
-    my $top = $rh->top_movers(direction => 'up')->current;
-    isa_ok($top, __PACKAGE__);
-    t::Utility::stash('MOVER', $top);    #  Store it for later
+    my $top = $rh->top_movers( direction => 'up' )->current;
+    isa_ok( $top, __PACKAGE__ );
+    t::Utility::stash( 'MOVER', $top );    #  Store it for later
 }
-use overload '""' => sub ($s, @) { $s->instrument_url }, fallback => 1;
+use overload '""' => sub ( $s, @ ) { $s->instrument_url }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('MOVER') // skip_all();
-    like(+t::Utility::stash('MOVER'),
-         qr'https://api.robinhood.com/instruments/.+/',);
+    like(
+        +t::Utility::stash('MOVER'),
+        qr'https://api.robinhood.com/instruments/.+/',
+    );
 }
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'],);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'], );
 
 =head2 C<description( )>
 
@@ -60,7 +62,7 @@ Returns the ticker symbol of the instrument.
 
 =cut
 
-has [qw[description symbol]] => (is => 'ro', isa => Str, requried => 1);
+has [qw[description symbol]] => ( is => 'ro', isa => Str, requried => 1 );
 
 =head2 C<updated_at( )>
 
@@ -71,15 +73,16 @@ object.
 
 =cut
 
-has updated_at => (is     => 'ro',
-                   isa    => InstanceOf ['Time::Moment'],
-                   coerce => sub ($date) { Time::Moment->from_string($date) },
-                   required => 1
+has updated_at => (
+    is       => 'ro',
+    isa      => InstanceOf ['Time::Moment'],
+    coerce   => sub ($date) { Time::Moment->from_string($date) },
+    required => 1
 );
 
 sub _test_updated_at {
     t::Utility::stash('MOVER') // skip_all();
-    isa_ok(t::Utility::stash('MOVER')->updated_at, 'Time::Moment');
+    isa_ok( t::Utility::stash('MOVER')->updated_at, 'Time::Moment' );
 }
 
 =head2 C<instrument( )>
@@ -90,27 +93,33 @@ Builds a Finance::Robinhood::Equity::Instrument object.
 
 =cut
 
-has instrument_url => (is       => 'ro',
-                       isa      => InstanceOf ['URI'],
-                       coerce   => sub ($url) { URI->new($url) },
-                       required => 1
+has instrument_url => (
+    is       => 'ro',
+    isa      => InstanceOf ['URI'],
+    coerce   => sub ($url) { URI->new($url) },
+    required => 1
 );
-has instrument => (is      => 'ro',
-                   isa     => InstanceOf ['Finance::Robinhood::Equity'],
-                   builder => 1,
-                   lazy    => 1
+has instrument => (
+    is      => 'ro',
+    isa     => InstanceOf ['Finance::Robinhood::Equity'],
+    builder => 1,
+    lazy    => 1
 );
 
 sub _build_instrument ($s) {
     ddx $s;
-    $s->robinhood->_req(GET => $s->instrument_url,
-                        as  => 'Finance::Robinhood::Equity');
+    $s->robinhood->_req(
+        GET => $s->instrument_url,
+        as  => 'Finance::Robinhood::Equity'
+    );
 }
 
 sub _test_instrument {
     t::Utility::stash('MOVER') // skip_all();
-    isa_ok(t::Utility::stash('MOVER')->instrument(),
-           'Finance::Robinhood::Equity::Instrument');
+    isa_ok(
+        t::Utility::stash('MOVER')->instrument(),
+        'Finance::Robinhood::Equity::Instrument'
+    );
 }
 
 =head2 C<price_movement( )>
@@ -133,17 +142,21 @@ Returns the actual price.
 
 =cut
 
-has price_movement => (is  => 'ro',
-                       isa => Dict [market_hours_last_movement_pct => Num,
-                                    market_hours_last_price        => Num
-                       ],
-                       required => 1
+has price_movement => (
+    is  => 'ro',
+    isa => Dict [
+        market_hours_last_movement_pct => Num,
+        market_hours_last_price        => Num
+    ],
+    required => 1
 );
 
 sub _test_price_movement {
     t::Utility::stash('MOVER') // skip_all();
-    ref_ok(t::Utility::stash('MOVER')->price_movement,
-           'HASH', 'price_movement is a hash');
+    ref_ok(
+        t::Utility::stash('MOVER')->price_movement,
+        'HASH', 'price_movement is a hash'
+    );
 }
 
 =head1 LEGAL

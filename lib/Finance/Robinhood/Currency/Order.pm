@@ -48,8 +48,10 @@ use overload '""' => sub ( $s, @ ) { $s->id }, fallback => 1;
 
 sub _test_stringify {
     t::Utility::stash('ORDER') // skip_all();
-    like( +t::Utility::stash('ORDER'),
-        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i );
+    like(
+        +t::Utility::stash('ORDER'),
+        qr'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'i
+    );
 }
 has robinhood =>
     ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'], handles => ['_req'] );
@@ -155,6 +157,7 @@ One of the following:
 =back
 
 =cut
+
 has state => (    # Currency uses canceled rather than cancelled
     is       => 'ro',
     required => 1,
@@ -195,7 +198,8 @@ Returns a list of hash references which contain the following keys:
 has executions => (
     is  => 'ro',
     isa => ArrayRef [
-        Dict [ effective_price => Num, id => UUID, quantity => Num, timestamp => Timestamp ] ],
+        Dict [ effective_price => Num, id => UUID, quantity => Num, timestamp => Timestamp ]
+    ],
     coerce => 1
 );
 
@@ -234,6 +238,7 @@ so add a 'smart' delay here and then call C<reload( )> to update the object
 correctly.
 
 =cut
+
 has '_cancel' =>
     ( is => 'ro', required => 1, isa => Maybe [URL], coerce => 1, init_arg => 'cancel_url' );
 has can_cancel => ( is => 'ro', isa => Bool, builder => 1, lazy => 1, init_arg => undef );

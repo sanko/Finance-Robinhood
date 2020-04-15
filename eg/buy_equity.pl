@@ -22,30 +22,28 @@ getopt
     'quantity|q=i' => \my $quantity,
     'at=s'         => \my $limit;
 #
-die extract_usage if $help;    # || !(my $config = shift);
+die extract_usage                                          if $help;     # || !(my $config = shift);
 die "Error: I'm not sure what to buy.\n\n" . extract_usage if !$symbol;
 die "Error: Not sure how many shares of $symbol to buy.\n\n" . extract_usage
     if !$quantity;
-die "Error: Missing or incomplete username/password combo given.\n\n" .
-    extract_usage
-    if !($username && $password);
+die "Error: Missing or incomplete username/password combo given.\n\n" . extract_usage
+    if !( $username && $password );
 #
-my $rh
-    = Finance::Robinhood->new($device ? (device_token => $device) : ())
-    ->login(
+my $rh = Finance::Robinhood->new( $device ? ( device_token => $device ) : () )->login(
     $username,
     $password,
     challenge_callback => sub {
         my ($challenge) = @_;
-        my $response
-            = promptUser(sprintf 'Login challenge issued (check your %s)',
-                         $challenge->type);
+        my $response = promptUser(
+            sprintf 'Login challenge issued (check your %s)',
+            $challenge->type
+        );
         $challenge->respond($response);
     },
     mfa_callback => sub {
         promptUser('MFA code required');
     }
-    );
+);
 $rh || die $rh;
 
 # What are we buying today?
@@ -53,7 +51,7 @@ my $instrument = $rh->equity_instrument_by_symbol($symbol);
 $instrument || die $instrument;
 
 # Figure out what we're willing to pay...
-my $quote = $instrument->prices(delayed => 0, source => 'consolidated');
+my $quote = $instrument->prices( delayed => 0, source => 'consolidated' );
 $limit
     = defined $limit
     ? $limit =~ m[^(?:[.]\d+|\d+(?:[.]\d*)?)$]
@@ -64,19 +62,18 @@ $limit
     : $quote->price;
 
 # Get to work!
-my $order
-    = $instrument->buy($quantity)->limit($limit)->extended_hours->submit;
+my $order = $instrument->buy($quantity)->limit($limit)->extended_hours->submit;
 die $order if !$order;
 printf 'Limit order to buy %d share%s of %s (%s) placed for $%f/share at %s',
-    $order->quantity(), ($order->quantity() > 1 ? 's' : ''),
+    $order->quantity(), ( $order->quantity() > 1 ? 's' : '' ),
     $instrument->symbol(), $instrument->name(), $limit, $order->updated_at()
     if $verbose;
 
 sub promptUser {
-    my ($prompt, $default) = @_;
+    my ( $prompt, $default ) = @_;
     my $retval;
-    if (-t STDIN && -t STDOUT) {
-        print $prompt . (length $default ? " [$default]" : '') . ': ';
+    if ( -t STDIN && -t STDOUT ) {
+        print $prompt . ( length $default ? " [$default]" : '' ) . ': ';
         $retval = readline(STDIN);
         chomp $retval;
     }
@@ -85,7 +82,7 @@ sub promptUser {
         require Prima::Application;
         Prima::Application->import();
         require Prima::MsgBox;
-        $retval = Prima::MsgBox::input_box($prompt, $prompt, $default // '');
+        $retval = Prima::MsgBox::input_box( $prompt, $prompt, $default // '' );
     }
     $retval ? $retval : $default ? $default : $retval;
 }

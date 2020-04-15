@@ -9,7 +9,7 @@ use Time::Moment;
 use Data::Dump;
 use experimental 'signatures';
 #
-has $_ => (is => 'ro', required => 1, isa => Num) for qw[
+has $_ => ( is => 'ro', required => 1, isa => Num ) for qw[
     cash cash_available_for_withdrawal
     cash_held_for_dividends cash_held_for_nummus_restrictions
     cash_held_for_options_collateral cash_held_for_orders
@@ -22,22 +22,24 @@ has $_ => (is => 'ro', required => 1, isa => Num) for qw[
     start_of_day_dtbp start_of_day_overnight_buying_power unallocated_margin_cash uncleared_deposits
     uncleared_nummus_deposits unsettled_debit
     unsettled_funds];
-has day_trades_protection => (is       => 'ro',
-                              required => 1,
-                              isa      => Bool,
-                              coerce   => sub ($bool) { !!$bool }
+has day_trades_protection => (
+    is       => 'ro',
+    required => 1,
+    isa      => Bool,
+    coerce   => sub ($bool) { !!$bool }
 );
 has marked_pattern_day_trader_date => (
     is       => 'ro',
     requried => 1,
-    isa      => Maybe [InstanceOf ['Time::Moment']],
+    isa      => Maybe [ InstanceOf ['Time::Moment'] ],
     coerce   => sub ($date) {
-        $date ? Time::Moment->from_string($date . 'T00:00:00.0000Z') : ();
+        $date ? Time::Moment->from_string( $date . 'T00:00:00.0000Z' ) : ();
     }
 );
-has $_ => (is       => 'ro',
-           requried => 1,
-           isa      => InstanceOf ['Time::Moment'],
-           coerce   => sub ($date) { Time::Moment->from_string($date) }
+has $_ => (
+    is       => 'ro',
+    requried => 1,
+    isa      => InstanceOf ['Time::Moment'],
+    coerce   => sub ($date) { Time::Moment->from_string($date) }
 ) for qw[created_at updated_at];
 1;

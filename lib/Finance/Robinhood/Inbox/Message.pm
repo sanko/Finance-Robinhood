@@ -43,6 +43,7 @@ sub _test_stringify {
 =head1 METHODS
 
 =cut
+
 has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 
 =head2 C<action( )>
@@ -127,6 +128,7 @@ has [qw[message_config_id thread_id]] => ( is => 'ro', isa => Num, required => 1
 
 
 =cut
+
 has [qw[message_type_config_id response_message_id]] =>
     ( is => 'ro', isa => Maybe [Num], required => 1 );
 

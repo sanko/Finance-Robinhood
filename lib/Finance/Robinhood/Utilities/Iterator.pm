@@ -35,31 +35,32 @@ use Types::Standard qw[InstanceOf Maybe Str ArrayRef Any];
 use Finance::Robinhood::Types qw[URL];
 use experimental 'signatures';
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 #
-has _results => (is => 'rwp', default => sub { [] }, isa => ArrayRef [Any]);
-has as => (is        => 'rwp',
-           required  => 0,
-           isa       => Maybe [InstanceOf ['Type::Tiny'] | Str],
-           predicate => 1
+has _results => ( is => 'rwp', default => sub { [] }, isa => ArrayRef [Any] );
+has as       => (
+    is        => 'rwp',
+    required  => 0,
+    isa       => Maybe [ InstanceOf ['Type::Tiny'] | Str ],
+    predicate => 1
 );
-has _next_page => (is       => 'rwp',
-                   isa      => Maybe [URL],
-                   required => 1,
-                   init_arg => 'url',
-                   coerce   => 1
+has _next_page => (
+    is       => 'rwp',
+    isa      => Maybe [URL],
+    required => 1,
+    init_arg => 'url',
+    coerce   => 1
 );
-has _current => (is => 'rwp', isa => Maybe [Any], predicate => 1);
-has _first_page =>
-    (is => 'rwp', isa => Maybe [InstanceOf ['URI']], predicate => 1);
+has _current    => ( is => 'rwp', isa => Maybe [Any], predicate => 1 );
+has _first_page => ( is => 'rwp', isa => Maybe [ InstanceOf ['URI'] ], predicate => 1 );
 
 # midlands returns a count with news and feed which is nice
-has count => (is        => 'rwp',
-              builder   => 1,
-              lazy      => 1,
-              clearer   => '_clear_count',
-              predicate => 1
+has count => (
+    is        => 'rwp',
+    builder   => 1,
+    lazy      => 1,
+    clearer   => '_clear_count',
+    predicate => 1
 );
 
 sub _build_count($s) {
@@ -80,20 +81,20 @@ from scratch.
 =cut
 
 sub reset($s) {
-    $s->_set__next_page($s->_first_page // $s->_next_page);
-    $s->_set__current(());
-    $s->_set__results([]);
+    $s->_set__next_page( $s->_first_page // $s->_next_page );
+    $s->_set__current( () );
+    $s->_set__results( [] );
     $s->_clear_count;
 }
 
 sub _test_reset {
     my $rh          = t::Utility::rh_instance(0);
     my $instruments = $rh->equities;
-    isa_ok($instruments, __PACKAGE__);
+    isa_ok( $instruments, __PACKAGE__ );
     my $next = $instruments->next;
     $instruments->take(300);
     $instruments->reset;
-    is($instruments->next, $next);
+    is( $instruments->next, $next );
 }
 
 =head2 C<current( )>
@@ -104,7 +105,7 @@ non-destructive but will move the cursor if there is no current element.
 =cut
 
 sub current($s) {
-    $s->_has_current || $s->_set__current($s->peek);
+    $s->_has_current || $s->_set__current( $s->peek );
     $s->_current;
 }
 
@@ -113,12 +114,12 @@ sub _test_current {
     my $instruments = $rh->equities;
 
     # Make sure the first element is auto-loaded
-    isa_ok($instruments,          __PACKAGE__);
-    isa_ok($instruments->current, 'Finance::Robinhood::Equity');
+    isa_ok( $instruments,          __PACKAGE__ );
+    isa_ok( $instruments->current, 'Finance::Robinhood::Equity' );
 
     # Make sure next() loads current() properly
     my $next = $instruments->next;
-    is($instruments->current, $next);
+    is( $instruments->current, $next );
 }
 
 =head2 C<next( )>
@@ -130,8 +131,8 @@ and all pages have been exhausted, this will return an undefined value.
 
 sub next($s) {
     $s->_check_next_page;
-    my ($retval, @values) = @{$s->_results};
-    $s->_set__results(\@values);
+    my ( $retval, @values ) = @{ $s->_results };
+    $s->_set__results( \@values );
     $s->_set__current($retval);
     $retval;
 }
@@ -145,17 +146,17 @@ optional and, by default, the first element is returned.
 
 =cut
 
-sub peek ($s, $pos = 1) {
+sub peek ( $s, $pos = 1 ) {
     $s->_check_next_page($pos);
-    $s->_results->[$pos - 1];
+    $s->_results->[ $pos - 1 ];
 }
 
 sub _test_peek {
     my $rh          = t::Utility::rh_instance(0);
     my $instruments = $rh->equities;
-    isa_ok($instruments, __PACKAGE__);
+    isa_ok( $instruments, __PACKAGE__ );
     my $peek = $instruments->peek;
-    is($instruments->next, $peek);
+    is( $instruments->next, $peek );
 }
 
 =head2 C<has_next( ... )>
@@ -165,9 +166,9 @@ length is optional and checks the results for a a single element by default.
 
 =cut
 
-sub has_next ($s, $pos = 1) {
+sub has_next ( $s, $pos = 1 ) {
     $s->_check_next_page($pos);
-    !!defined $s->_results->[$pos - 1];
+    !!defined $s->_results->[ $pos - 1 ];
 }
 
 =head2 C<take( ... )>
@@ -178,25 +179,25 @@ returns a single element.
 =cut
 
 # Grab a certain number of elements
-sub take ($s, $count = 1) {
+sub take ( $s, $count = 1 ) {
     $s->_check_next_page($count);
     my @retval;
-    for (1 .. $count) { push @retval, $s->next; last if !$s->has_next }
-    $s->_set__current($retval[-1]);
+    for ( 1 .. $count ) { push @retval, $s->next; last if !$s->has_next }
+    $s->_set__current( $retval[-1] );
     @retval;
 }
 
 sub _test_take {
     my $rh          = t::Utility::rh_instance(0);
     my $instruments = $rh->equities;
-    isa_ok($instruments, __PACKAGE__);
+    isa_ok( $instruments, __PACKAGE__ );
     {
         my @take = $instruments->take(3);
-        is(3, scalar @take, '...take(3) returns 3 items');
+        is( 3, scalar @take, '...take(3) returns 3 items' );
     }
     {
         my @take = $instruments->take(300);
-        is(300, scalar @take, '...take(300) returns 300 items');
+        is( 300, scalar @take, '...take(300) returns 300 items' );
     }
 }
 
@@ -208,56 +209,59 @@ Grabs every page and returns every element we see.
 
 sub all($s) {
     my @retval;
-    push @retval, $s->take($s->has_count ? $s->count : 1000)
-        until !$s->has_next;
-    $s->_set__current($retval[-1]);
+    push @retval, $s->take( $s->has_count ? $s->count : 1000 ) until !$s->has_next;
+    $s->_set__current( $retval[-1] );
     wantarray ? @retval : \@retval;
 }
 
 sub _test_all_and_has_next {
     my $rh          = t::Utility::rh_instance(0);    # Do not log in!
     my $instruments = $rh->equities;
-    isa_ok($instruments, __PACKAGE__);
+    isa_ok( $instruments, __PACKAGE__ );
     diag('Grabbing all instruments... please hold...');
     my @take = $instruments->all;
-    cmp_ok(11000, '<=', scalar(@take), sprintf '...all() returns %d items',
-           scalar @take);
-    isnt($instruments->has_next, !!1,
-         '...has_next() works at the end of the list');
+    cmp_ok(
+        11000, '<=', scalar(@take), sprintf '...all() returns %d items',
+        scalar @take
+    );
+    isnt(
+        $instruments->has_next, !!1,
+        '...has_next() works at the end of the list'
+    );
 }
 
 # Check if we need to slurp the next page of elements to fill a position
-sub _check_next_page ($s, $count = 1) {
-    my @push = @{$s->_results};
+sub _check_next_page ( $s, $count = 1 ) {
+    my @push = @{ $s->_results };
     my $pre  = scalar @push;
-    $s->_first_page // $s->_set__first_page($s->_next_page);
-    while (($count > scalar @push) && $s->_next_page) {
-        my $res = $s->robinhood->_req(GET => $s->_next_page);
-        if ($res->success) {
-            $s->_set__next_page($res->json->{next} &&
-                                    $res->json->{next} ne $s->_next_page
-                                ? $res->json->{next}
-                                : ());
+    $s->_first_page // $s->_set__first_page( $s->_next_page );
+    while ( ( $count > scalar @push ) && $s->_next_page ) {
+        my $res = $s->robinhood->_req( GET => $s->_next_page );
+        if ( $res->success ) {
+            $s->_set__next_page(
+                  $res->json->{next} && $res->json->{next} ne $s->_next_page
+                ? $res->json->{next}
+                : ()
+            );
 
             #require($s->class) if $s->has_class;
             push @push,
                 $s->has_as
-                ? @{$res->as($s->as)->{results}}
-                : @{$res->json->{results}};
-            $s->_set_count($res->json->{count})
+                ? @{ $res->as( $s->as )->{results} }
+                : @{ $res->json->{results} };
+            $s->_set_count( $res->json->{count} )
                 if defined $res->json->{count};
         }
         else {    # Trouble! Let's not try another page
             $s->_set__next_page(undef);
         }
     }
-    $s->_set__results(\@push) if scalar @push > $pre;
+    $s->_set__results( \@push ) if scalar @push > $pre;
 }
 
 sub _test_check_next_page {
-    my $rh = t::Utility::rh_instance(0);    # Do not log in!
-    is($rh->equities_by_id('c7d4323d-9512-4b15-977a-7cb2d1381d00'), ())
-        ;                                   # Fake id
+    my $rh = t::Utility::rh_instance(0);                                      # Do not log in!
+    is( $rh->equities_by_id('c7d4323d-9512-4b15-977a-7cb2d1381d00'), () );    # Fake id
 }
 
 =head1 LEGAL

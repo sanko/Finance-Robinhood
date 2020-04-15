@@ -21,31 +21,32 @@ Finance::Robinhood::Currency::Portfolio - Represents a Forex Account Portfolio
 sub _test__init {
     my $rh        = t::Utility::rh_instance(1);
     my $portfoios = $rh->currency_portfolios;
-    isa_ok($portfoios->current, __PACKAGE__);
-    t::Utility::stash('PORTFOLIO', $portfoios->current); #  Store it for later
+    isa_ok( $portfoios->current, __PACKAGE__ );
+    t::Utility::stash( 'PORTFOLIO', $portfoios->current );    #  Store it for later
 }
 use Moo;
 use MooX::Enumeration;
-use Types::Standard
-    qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
+use Types::Standard qw[ArrayRef Bool Dict Enum InstanceOf Maybe Num Str StrMatch];
 use experimental 'signatures';
 #
 use Finance::Robinhood::Types qw[UUID Timestamp];
 #
-use overload '""' => sub ($s, @) { $s->id }, fallback => 1;
+use overload '""' => sub ( $s, @ ) { $s->id }, fallback => 1;
 #
 sub _test_stringify {
     t::Utility::stash('PORTFOLIO') // skip_all();
-    like(+t::Utility::stash('PORTFOLIO'),
-         qr[^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$]i);
+    like(
+        +t::Utility::stash('PORTFOLIO'),
+        qr[^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$]i
+    );
 }
 #
 
 =head1 METHODS
 
 =cut
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+
+has robinhood => ( is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood'] );
 #
 
 =head2 C<account_id( )>
@@ -76,15 +77,14 @@ Returns a Time::Moment object.
 
 =cut
 
-has account_id => (is => 'ro', isa => UUID, required => 1);
-has equity     => (is => 'ro', isa => Num,  required => 1);
-has extended_hours_equity => (is => 'ro', isa => Maybe [Num], required => 1);
-has extended_hours_market_value =>
-    (is => 'ro', isa => Maybe [Num], required => 1);
-has id             => (is => 'ro', isa => UUID, required => 1);
-has market_value   => (is => 'ro', isa => Num,  required => 1);
-has previous_close => (is => 'ro', isa => Num,  required => 1);
-has updated_at => (is => 'ro', isa => Timestamp, coerce => 1, required => 1);
+has account_id => ( is => 'ro', isa => UUID, required => 1 );
+has equity     => ( is => 'ro', isa => Num,  required => 1 );
+has extended_hours_equity       => ( is => 'ro', isa => Maybe [Num], required => 1 );
+has extended_hours_market_value => ( is => 'ro', isa => Maybe [Num], required => 1 );
+has id             => ( is => 'ro', isa => UUID,      required => 1 );
+has market_value   => ( is => 'ro', isa => Num,       required => 1 );
+has previous_close => ( is => 'ro', isa => Num,       required => 1 );
+has updated_at     => ( is => 'ro', isa => Timestamp, coerce   => 1, required => 1 );
 
 =head1 LEGAL
 

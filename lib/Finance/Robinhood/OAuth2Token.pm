@@ -1,4 +1,4 @@
-package Finance::Robinhood::OAuth2Token;
+package Finance::Robinhood::OAuth2Token {
 
 =encoding utf-8
 
@@ -14,33 +14,34 @@ Finance::Robinhood::OAuth2Token - Private Authorization Data
 
 =cut
 
-# RH produces basic JWT auth tokens with useful data
-our $VERSION = '0.92_003';
-#
-use Moo;
-use Time::Moment;
-use Types::Standard qw[ArrayRef Enum InstanceOf Maybe Num Split Str];
-use experimental 'signatures';
-#
-#has robinhood =>
-#    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
-#
-has expires_in => (is => 'ro', isa => Num, required => 1);
-has [qw[access_token refresh_token token_type]] =>
-    (is => 'ro', isa => Str, required => 1);
-has scope => (is  => 'ro',
-              isa => (ArrayRef [Enum [qw[internal read banking]]])
-                  ->plus_coercions(Split [qr[\|]]),
-              coerce   => 1,
-              required => 1
-);
-has [qw[backup_code mfa_code]] =>
-    (is => 'ro', isa => Maybe [Str], required => 1, predicate => 1);
-has birth => (is       => 'ro',
-              default  => sub ($s) { Time::Moment->now },
-              init_arg => undef,
-              isa      => InstanceOf ['Time::Moment']
-);
+    # RH produces basic JWT auth tokens with useful data
+    our $VERSION = '0.92_003';
+    #
+    use Moo;
+    use Time::Moment;
+    use Types::Standard qw[ArrayRef Enum InstanceOf Maybe Num Split Str];
+    use experimental 'signatures';
+    #
+    #
+    has [qw[access_token refresh_token]] => ( is => 'ro', isa => Str, required => 1 );
+    #
+    has expires_in => ( is => 'ro', isa => Num );
+    has token_type => ( is => 'ro', isa => Str, default => 'Bearer' );
+    has scope => (
+        is  => 'ro',
+        isa => ( ArrayRef [ Enum [qw[internal read banking]] ] )->plus_coercions( Split [qr[\|]] ),
+        coerce   => 1,
+        required => 1,
+        default  => sub { ['internal'] }
+    );
+    has [qw[backup_code mfa_code]] => ( is => 'ro', isa => Maybe [Str], predicate => 1 );
+    #
+    has birth => (
+        is       => 'ro',
+        default  => sub ($s) { Time::Moment->now },
+        init_arg => undef,
+        isa      => InstanceOf ['Time::Moment']
+    );
 
 =head1 LEGAL
 
@@ -67,4 +68,5 @@ Sanko Robinson E<lt>sanko@cpan.orgE<gt>
 
 =cut
 
-1;
+    1;
+}

@@ -29,6 +29,7 @@ values if the challenge was met successfully.
 =head1 METHODS
 
 =cut
+
 use strictures 2;
 use namespace::clean;
 use Moo;
@@ -110,12 +111,12 @@ sub email ($s) {
         POST => sprintf( 'https://api.robinhood.com/challenge/%s/replace/', $s->id ),
         form => { challenge_type => 'email' }
     );
-    $_[0] = $res->is_success ?
-        Finance::Robinhood::Device::Challenge->new(
+    $_[0] = $res->is_success
+        ? Finance::Robinhood::Device::Challenge->new(
         robinhood => $s->robinhood,
         %{ $res->json->{challenge} }
-        ) :
-        $res;
+        )
+        : $res;
 }
 
 =head2 C<sms( )>
@@ -132,12 +133,12 @@ sub sms ($s) {
         POST => sprintf( 'https://api.robinhood.com/challenge/%s/replace/', $s->id ),
         form => { challenge_type => 'sms' }
     );
-    $_[0] = $res->is_success ?
-        Finance::Robinhood::Device::Challenge->new(
+    $_[0] = $res->is_success
+        ? Finance::Robinhood::Device::Challenge->new(
         robinhood => $s->robinhood,
         %{ $res->json->{challenge} }
-        ) :
-        $res;
+        )
+        : $res;
 }
 
 =head2 C<respond( ... )>

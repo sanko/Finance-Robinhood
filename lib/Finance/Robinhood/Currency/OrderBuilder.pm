@@ -101,6 +101,7 @@ Use this to change the order side.
 =end internal
 
 =cut
+
 has side => ( is => 'rw', isa => Enum [qw[buy sell]], required => 1, chained => 1 );
 
 sub _test_buy {
@@ -108,7 +109,8 @@ sub _test_buy {
     my $order = t::Utility::stash('BTC_USD')->buy(3);
     is(
         { $order->_dump(1) },
-        {   account          => '--private--',
+        {
+            account          => '--private--',
             currency_pair_id => '3d961844-d360-45fc-989b-f6fca761d511',
             price            => '5.00',
             quantity         => '3.00000000',
@@ -126,7 +128,8 @@ sub _test_sell {
     my $order = t::Utility::stash('BTC_USD')->sell(3);
     is(
         { $order->_dump(1) },
-        {   account          => '--private--',
+        {
+            account          => '--private--',
             currency_pair_id => '3d961844-d360-45fc-989b-f6fca761d511',
             price            => '5.00',
             quantity         => '3.00000000',
@@ -163,7 +166,8 @@ sub _test_limit {
     my $order = t::Utility::stash('BTC_USD')->buy(3)->limit(3.40);
     is(
         { $order->_dump(1) },
-        {   account          => '--private--',
+        {
+            account          => '--private--',
             currency_pair_id => '3d961844-d360-45fc-989b-f6fca761d511',
             price            => '3.40',
             quantity         => '3.00000000',
@@ -181,7 +185,8 @@ sub _test_market {
     my $order = t::Utility::stash('BTC_USD')->sell(3);
     is(
         { $order->_dump(1) },
-        {   account          => '--private--',
+        {
+            account          => '--private--',
             currency_pair_id => '3d961844-d360-45fc-989b-f6fca761d511',
             price            => '5.00',
             quantity         => '3.00000000',
@@ -240,7 +245,8 @@ sub _test_gtc {
     my $order = t::Utility::stash('BTC_USD')->sell(3)->gtc();
     is(
         { $order->_dump(1) },
-        {   account          => '--private--',
+        {
+            account          => '--private--',
             currency_pair_id => '3d961844-d360-45fc-989b-f6fca761d511',
             price            => '5.00',
             quantity         => '3.00000000',
@@ -258,7 +264,8 @@ sub _test_ioc {
     my $order = t::Utility::stash('BTC_USD')->sell(3)->ioc();
     is(
         { $order->_dump(1) },
-        {   account          => '--private--',
+        {
+            account          => '--private--',
             currency_pair_id => '3d961844-d360-45fc-989b-f6fca761d511',
             price            => '5.00',
             quantity         => '3.00000000',
@@ -313,10 +320,11 @@ sub _dump ( $s, $test = 0 ) {
         account          => $test ? '--private--' : $s->account->id,
         side             => $s->side,
         price            => sprintf(
-            '%1.' . ( -1 + index $s->pair->min_order_price_increment, '1' ) . 'f', (
-                $s->has_limit ? $s->limit :
-                    $test     ? '5.00' :
-                    ( $s->limit // $s->pair->quote->last_trade_price )
+            '%1.' . ( -1 + index $s->pair->min_order_price_increment, '1' ) . 'f',
+            (
+                  $s->has_limit ? $s->limit
+                : $test         ? '5.00'
+                :                 ( $s->limit // $s->pair->quote->last_trade_price )
             )
         ),
         ref_id   => $test ? '00000000-0000-0000-0000-000000000000' : gen_uuid(),
