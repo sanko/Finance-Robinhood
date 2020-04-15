@@ -27,6 +27,7 @@ use URI;
 use Time::Moment;
 use Data::Dump;
 use experimental 'signatures';
+use lib '../../../../lib';
 use Finance::Robinhood::Types qw[:all];
 use Finance::Robinhood::Utilities::Iterator;
 #
@@ -331,7 +332,7 @@ sub top_spent ( $s, $all = 0 ) {     $s->robinhood->_req(         GET =>
 
 =head2 C<get_image_url( [$config] )>
 
-Returns a URI obect containing a link to of a PNG (with transparency) that can
+Returns a URI object containing a link to of a PNG (with transparency) that can
 be layed over a template card.
 
 C<$config> is optional. It's a hash ref with the following keys:

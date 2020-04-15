@@ -179,7 +179,7 @@ for my $class ( sort @classes ) {
     #subtest_streamed $class => sub {
     eval <<"T"; bail_out("$class did not compile: $@") if $@;
 use lib '../lib';
-{package $class;eval 'use MooX::StrictConstructor' if defined \$ENV{RHSTRICT}};
+{package $class;eval 'use MooX::StrictConstructor;use MooX::InsideOut;' if defined \$ENV{RHSTRICT}};
 use $class;
 package $class;
 use strictures 2;
@@ -206,9 +206,9 @@ package    # Hide it!
     t::Utility;
 my %state;
 use Test2::V0;
+use experimental 'signatures';
 
-sub rh_instance {
-    my $auth = shift // !1;
+sub rh_instance($auth = 0) {
     if ( !defined $state{$auth} ) {
         eval 'require Finance::Robinhood';
         bail_out("Oh junk!: $@") if $@;

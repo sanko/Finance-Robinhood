@@ -22,8 +22,8 @@ use Time::Moment;
 use Types::Standard qw[ArrayRef Enum InstanceOf Maybe Num Split Str];
 use experimental 'signatures';
 #
-has robinhood =>
-    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
+#has robinhood =>
+#    (is => 'ro', required => 1, isa => InstanceOf ['Finance::Robinhood']);
 #
 has expires_in => (is => 'ro', isa => Num, required => 1);
 has [qw[access_token refresh_token token_type]] =>
