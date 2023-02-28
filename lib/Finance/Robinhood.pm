@@ -163,6 +163,7 @@ official app and use the C<internal> scope with full access.
         isa     => InstanceOf ['HTTP::Tiny'],
         default => sub ($s) {
             HTTP::Tiny->new(
+                verify_SSL => 1,
                 agent =>
                     sprintf( 'Perl/%s (%s) %s/%s', ( $^V =~ m[([\.\d]+)] ), $^O, ref $s, $VERSION ),
                 default_headers => {
